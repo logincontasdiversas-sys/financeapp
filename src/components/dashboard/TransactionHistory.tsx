@@ -150,9 +150,9 @@ export const TransactionHistory = () => {
                   'bg-blue-100 text-blue-600'
                 }`}>
                   {transaction.kind === 'income' ? (
-                    <ArrowDownIcon className="h-4 w-4" />
-                  ) : transaction.kind === 'expense' ? (
                     <ArrowUpIcon className="h-4 w-4" />
+                  ) : transaction.kind === 'expense' ? (
+                    <ArrowDownIcon className="h-4 w-4" />
                   ) : (
                     <ArrowRightLeftIcon className="h-4 w-4" />
                   )}
@@ -168,35 +168,35 @@ export const TransactionHistory = () => {
                     <p className="font-medium text-sm truncate">{transaction.title}</p>
                   </div>
                   
-                  {/* Data e status */}
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(transaction.date)}
+                  {/* Data, status e valor na mesma linha */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(transaction.date)}
+                      </p>
+                      <Badge variant={getStatusBadge(transaction.status).variant} className="text-xs">
+                        {getStatusBadge(transaction.status).label}
+                      </Badge>
+                    </div>
+                    
+                    {/* Valor */}
+                    <p className={`font-bold text-sm ${
+                      transaction.kind === 'income' ? 'text-green-600' : 
+                      transaction.kind === 'expense' ? 'text-red-600' : 
+                      'text-blue-600'
+                    }`}>
+                      {transaction.kind === 'income' ? '+' : 
+                       transaction.kind === 'expense' ? '-' : 
+                       '↔'}{formatCurrency(transaction.amount)}
                     </p>
-                    <Badge variant={getStatusBadge(transaction.status).variant} className="text-xs">
-                      {getStatusBadge(transaction.status).label}
-                    </Badge>
                   </div>
                   
                   {/* Categoria */}
                   {transaction.category && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {transaction.category.name}
                     </p>
                   )}
-                </div>
-                
-                {/* Valor */}
-                <div className="text-right flex-shrink-0">
-                  <p className={`font-bold text-sm ${
-                    transaction.kind === 'income' ? 'text-green-600' : 
-                    transaction.kind === 'expense' ? 'text-red-600' : 
-                    'text-blue-600'
-                  }`}>
-                    {transaction.kind === 'income' ? '+' : 
-                     transaction.kind === 'expense' ? '-' : 
-                     '↔'}{formatCurrency(transaction.amount)}
-                  </p>
                 </div>
               </div>
             ))}
