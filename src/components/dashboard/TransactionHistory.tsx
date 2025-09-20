@@ -140,11 +140,11 @@ export const TransactionHistory = () => {
             Nenhuma transação recebida/paga neste mês
           </p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {transactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+              <div key={transaction.id} className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
                 {/* Ícone do tipo de transação */}
-                <div className={`p-2 rounded-full flex-shrink-0 ${
+                <div className={`p-2.5 rounded-full flex-shrink-0 ${
                   transaction.kind === 'income' ? 'bg-green-100 text-green-600' : 
                   transaction.kind === 'expense' ? 'bg-red-100 text-red-600' : 
                   'bg-blue-100 text-blue-600'
