@@ -242,10 +242,12 @@ export const BanksSection = () => {
                   </div>
                   
                   <div className="text-left sm:text-right">
-                    <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
-                    <p className={`font-bold text-lg sm:text-xl ${bank.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(bank.currentBalance)}
-                    </p>
+                    <div className="flex items-center gap-2 sm:justify-end">
+                      <p className="text-xs text-muted-foreground">Saldo Atual:</p>
+                      <p className={`font-bold text-lg sm:text-xl ${bank.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatCurrency(bank.currentBalance)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
