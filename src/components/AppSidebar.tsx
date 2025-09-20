@@ -9,9 +9,19 @@ import {
   CreditCard as Debt,
   List,
   ClipboardCheck,
-  Settings
+  Settings,
+  User,
+  LogOut,
+  Bell
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { SyncStatus } from "@/components/SyncStatus";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 import {
   Sidebar,
@@ -45,8 +55,25 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { supported, permission, subscribe, requestPermission, saveSubscription, subscribing } = usePushNotifications();
+  const HAS_VAPID = Boolean(import.meta.env.VITE_VAPID_PUBLIC_KEY);
   
   const isCollapsed = state === "collapsed";
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({ title: "Logout realizado com sucesso!" });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer logout",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -86,6 +113,83 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Seção do Usuário - apenas em mobile/tablet */}
+        <SidebarGroup className="mt-auto lg:hidden">
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {/* Informações do usuário */}
+              <SidebarMenuItem>
+                <div className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground">
+                  <User className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{user?.email}</p>
+                    </div>
+                  )}
+                </div>
+              </SidebarMenuItem>
+
+              {/* Status de sincronização */}
+              <SidebarMenuItem>
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <SyncStatus />
+                  {!isCollapsed && <span className="text-sm text-sidebar-foreground">Sincronização</span>}
+                </div>
+              </SidebarMenuItem>
+
+              {/* Notificações Push */}
+              {supported && HAS_VAPID && permission !== "granted" && (
+                <SidebarMenuItem>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={subscribing}
+                    className="w-full justify-start gap-3 px-3 py-2 h-auto"
+                    onClick={async () => {
+                      const perm = await requestPermission();
+                      if (perm !== "granted") {
+                        toast({ title: "Permissão negada", description: "Ative as notificações nas configurações do navegador.", variant: "destructive" });
+                        return;
+                      }
+                      try {
+                        const sub = await subscribe();
+                        if (user?.id) await saveSubscription(user.id);
+                        if (sub) toast({ title: "Notificações ativadas!" });
+                      } catch (e: any) {
+                        toast({ title: "Erro ao ativar push", description: e.message, variant: "destructive" });
+                      }
+                    }}
+                  >
+                    <Bell className="h-5 w-5 flex-shrink-0" />
+                    {!isCollapsed && <span className="text-sm">Ativar Push</span>}
+                  </Button>
+                </SidebarMenuItem>
+              )}
+
+              {/* Toggle do tema */}
+              <SidebarMenuItem>
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <ThemeToggle />
+                  {!isCollapsed && <span className="text-sm text-sidebar-foreground">Tema</span>}
+                </div>
+              </SidebarMenuItem>
+
+              {/* Logout */}
+              <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="w-full justify-start gap-3 px-3 py-2 h-auto text-sidebar-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <LogOut className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && <span className="text-sm">Sair</span>}
+                </Button>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

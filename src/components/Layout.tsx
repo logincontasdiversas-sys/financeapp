@@ -60,7 +60,8 @@ export function Layout({ children }: LayoutProps) {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            {/* Informações do usuário apenas em desktop/notebook */}
+            <div className="hidden lg:flex items-center gap-3">
               <SyncStatus />
               {supported && HAS_VAPID && permission !== "granted" && (
                 <Button
