@@ -148,11 +148,11 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
               <div className="h-4 w-20 bg-muted rounded"></div>
               <div className="h-4 w-4 bg-muted rounded"></div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-1 sm:pt-0">
               <div className="h-8 w-24 bg-muted rounded"></div>
             </CardContent>
           </Card>
@@ -164,13 +164,13 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
   return (
     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             {getPeriodTitle("Total de Despesas do Mês")}
           </CardTitle>
           <ArrowDownIcon className="h-4 w-4 text-red-600" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className="text-2xl font-bold text-red-600">
             {formatCurrency(summary.totalDespesas)}
           </div>
@@ -178,13 +178,13 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             Despesas Pagas
           </CardTitle>
           <CheckCircle className="h-4 w-4 text-green-600" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className="text-2xl font-bold text-red-600">
             {formatCurrency(summary.despesasPagas)}
           </div>
@@ -192,13 +192,13 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             Despesas Pendentes
           </CardTitle>
           <ClockIcon className="h-4 w-4 text-yellow-600" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className="text-2xl font-bold text-yellow-600">
             {formatCurrency(summary.despesasPendentes)}
           </div>

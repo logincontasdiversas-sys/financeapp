@@ -25,11 +25,11 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
               <div className="h-4 w-20 bg-muted rounded"></div>
               <div className="h-4 w-4 bg-muted rounded"></div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-1 sm:pt-0">
               <div className="h-8 w-24 bg-muted rounded"></div>
             </CardContent>
           </Card>
@@ -41,13 +41,13 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
   return (
     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             {isMaximum ? "Saldo Inicial" : "Saldo do Mês Passado"}
           </CardTitle>
           <TrendingUpIcon className={`h-4 w-4 ${(saldoMesPassado || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`} />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className={`text-2xl font-bold ${(saldoMesPassado || 0) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
             {formatCurrency(saldoMesPassado || 0)}
           </div>
@@ -60,14 +60,14 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             {isMaximum ? "Total Receitas Histórico" : 
              isProjection ? "Receitas Previstas" : "Receitas do Mês"}
           </CardTitle>
           <ArrowUpIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(totalReceitas)}
           </div>
@@ -85,14 +85,14 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             {isMaximum ? "Total Despesas Histórico" : 
              isProjection ? "Despesas Previstas" : "Despesas do Mês"}
           </CardTitle>
           <ArrowDownIcon className="h-4 w-4 text-destructive" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className="text-2xl font-bold text-destructive">
             {formatCurrency(totalDespesas)}
           </div>
@@ -110,14 +110,14 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
       </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
             {isMaximum ? "Saldo Histórico Total" : 
              isProjection ? "Saldo Projetado" : "Saldo Total"}
           </CardTitle>
           <TrendingUpIcon className={`h-4 w-4 ${saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`} />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-1 sm:pt-0">
           <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
             {formatCurrency(saldo)}
           </div>
