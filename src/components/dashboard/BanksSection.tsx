@@ -223,14 +223,14 @@ export const BanksSection = () => {
             {banks.map((bank) => (
               <div key={bank.id} className="p-4 bg-muted/50 rounded-lg border">
                 {/* Header do banco com nome */}
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-lg">{bank.name}</h3>
                 </div>
 
 
                 {/* Informações do mês vigente e saldo atual */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
+                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="text-green-600 text-xs">Receitas do Mês:</span>
                       <span className="text-green-600 font-medium">{formatCurrency(bank.monthlyIncome)}</span>
