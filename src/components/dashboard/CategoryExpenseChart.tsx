@@ -1,0 +1,331 @@
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, LabelList } from "recharts";
+import { PieChartIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useStableAuth } from "@/hooks/useStableAuth";
+import { useTenant } from "@/hooks/useTenant";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+
+interface CategoryData {
+  id: string;
+  name: string;
+  emoji: string;
+  value: number;
+  color: string;
+  percentage?: number;
+}
+
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+interface CategoryExpenseChartProps {
+  dateFilter?: DateRange | null;
+}
+
+const COLORS = [
+  '#9333EA', '#DC2626', '#059669', '#D97706', '#2563EB', '#DB2777',
+  '#7C3AED', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#F97316',
+  '#84CC16', '#06B6D4', '#8B5A2B', '#EC4899', '#6366F1', '#14B8A6',
+  '#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#F97316', '#84CC16',
+  '#06B6D4', '#8B5A2B', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B',
+  '#EF4444', '#8B5CF6', '#10B981', '#F97316', '#84CC16', '#06B6D4',
+  '#8B5A2B', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B', '#EF4444',
+  '#8B5CF6', '#10B981', '#F97316', '#84CC16', '#06B6D4', '#8B5A2B',
+  '#EC4899', '#6366F1', '#14B8A6', '#F59E0B', '#EF4444', '#8B5CF6'
+];
+
+export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) => {
+  const { user } = useStableAuth();
+  const { tenantId } = useTenant();
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Check if we're looking at a future period
+  const today = new Date();
+  const isFuturePeriod = dateFilter && dateFilter.to && 
+    (dateFilter.to.getFullYear() > today.getFullYear() || 
+     (dateFilter.to.getFullYear() === today.getFullYear() && 
+      dateFilter.to.getMonth() > today.getMonth()));
+
+  useEffect(() => {
+    if (user && tenantId) {
+      loadCategoryData();
+    }
+  }, [user, tenantId, dateFilter]);
+
+  useRealtimeSync({
+    table: 'transactions',
+    debounceMs: 700,
+    onInsert: () => setTimeout(() => loadCategoryData(), 200),
+    onUpdate: () => setTimeout(() => loadCategoryData(), 200),
+    onDelete: () => setTimeout(() => loadCategoryData(), 200),
+  });
+
+  const toDateStr = (d: Date) => {
+    const localDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    return localDate.toISOString().split('T')[0];
+  };
+
+  const loadCategoryData = async () => {
+    try {
+      setLoading(true);
+      
+      let query = supabase
+        .from('transactions')
+        .select(`
+          amount,
+          categories (
+            id,
+            name,
+            emoji
+          )
+        `)
+        .eq('kind', 'expense')
+        .eq('tenant_id', tenantId)
+        .not('categories', 'is', null);
+
+      // Include pending transactions for future periods
+      if (isFuturePeriod) {
+        // For future periods, include both settled and pending
+        query = query.in('status', ['settled', 'pending']);
+      } else {
+        // For past/current periods, only settled
+        query = query.eq('status', 'settled');
+      }
+
+      // Apply date filter if provided
+      if (dateFilter && dateFilter.from && dateFilter.to) {
+        const startDate = toDateStr(dateFilter.from);
+        const endDate = toDateStr(dateFilter.to);
+        query = query.gte('date', startDate).lte('date', endDate);
+      } else if (dateFilter !== null) {
+        // Default to current month if no specific filter
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        const endOfMonth = new Date();
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+        endOfMonth.setDate(0);
+        const startDate = startOfMonth.toISOString().split('T')[0];
+        const endDate = endOfMonth.toISOString().split('T')[0];
+        query = query.gte('date', startDate).lte('date', endDate);
+      }
+      
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Group by category
+      const categoryMap = new Map<string, { name: string; emoji: string; total: number }>();
+      
+      data?.forEach((transaction) => {
+        if (transaction.categories) {
+          const category = transaction.categories;
+          const existing = categoryMap.get(category.id);
+          
+          if (existing) {
+            existing.total += Number(transaction.amount);
+          } else {
+            categoryMap.set(category.id, {
+              name: category.name,
+              emoji: category.emoji,
+              total: Number(transaction.amount)
+            });
+          }
+        }
+      });
+
+      // Convert to array and add unique colors
+      const categoryArray = Array.from(categoryMap.entries()).map(([id, data], index) => ({
+        id,
+        name: data.name,
+        emoji: data.emoji,
+        value: data.total,
+        color: COLORS[index] // Use direct index to ensure unique colors
+      }));
+
+      // Sort by value descending
+      categoryArray.sort((a, b) => b.value - a.value);
+
+      // Calculate percentages
+      const total = categoryArray.reduce((sum, item) => sum + item.value, 0);
+      const categoryWithPercentage = categoryArray.map(item => ({
+        ...item,
+        percentage: total > 0 ? (item.value / total) * 100 : 0
+      }));
+
+      // Keep all categories visible - no grouping
+      setCategoryData(categoryWithPercentage);
+    } catch (error) {
+      console.error('Error loading category data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
+  };
+
+  // Custom label component with external labels and connecting lines
+  const CustomLabel = (props: any) => {
+    const { cx, cy, midAngle, innerRadius, outerRadius, percentage, name } = props;
+    
+    if (percentage < 1) return null; // Don't show labels for very small slices
+    
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 20; // Position labels outside the donut
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    // Calculate line end points
+    const lineX = cx + (outerRadius + 10) * Math.cos(-midAngle * RADIAN);
+    const lineY = cy + (outerRadius + 10) * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <g>
+        {/* Connecting line */}
+        <line
+          x1={cx + outerRadius * Math.cos(-midAngle * RADIAN)}
+          y1={cy + outerRadius * Math.sin(-midAngle * RADIAN)}
+          x2={lineX}
+          y2={lineY}
+          stroke="currentColor"
+          strokeWidth="1"
+          className="text-muted-foreground"
+        />
+        {/* Label */}
+        <text 
+          x={x} 
+          y={y} 
+          fill="currentColor" 
+          textAnchor={x > cx ? 'start' : 'end'} 
+          dominantBaseline="central"
+          fontSize="11"
+          fontWeight="500"
+          className="text-foreground"
+        >
+          {percentage > 1 ? `${percentage.toFixed(0)}%` : `${percentage.toFixed(1)}%`}
+        </text>
+      </g>
+    );
+  };
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-background border rounded-lg p-3 shadow-md max-w-xs">
+          <div className="flex items-center gap-2 mb-1">
+            <span>{data.emoji}</span>
+            <span className="font-medium">{data.name}</span>
+          </div>
+          <div className="text-sm">
+            <div>Valor: {formatCurrency(data.value)}</div>
+            <div>Porcentagem: {data.percentage?.toFixed(1)}%</div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PieChartIcon className="h-5 w-5" />
+            Distribuição de Gastos por Categoria
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse">
+            <div className="h-64 bg-muted rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <PieChartIcon className="h-5 w-5" />
+          {isFuturePeriod ? "Distribuição Prevista de Gastos por Categoria" : "Distribuição de Gastos por Categoria"}
+        </CardTitle>
+        <div className="text-sm text-muted-foreground">
+          {isFuturePeriod 
+            ? "Despesas previstas por categoria no período selecionado" 
+            : "Despesas por categoria no período selecionado"
+          }
+        </div>
+      </CardHeader>
+      <CardContent>
+        {categoryData.length === 0 ? (
+          <p className="text-muted-foreground text-center py-8">
+            Nenhum gasto registrado no período
+          </p>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <ResponsiveContainer width="100%" height={500}>
+                <PieChart margin={{ top: 20, right: 80, bottom: 20, left: 80 }}>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={CustomLabel}
+                    outerRadius={120}
+                    innerRadius={50}
+                    fill="hsl(var(--muted))"
+                    dataKey="value"
+                    stroke="hsl(var(--border))"
+                    strokeWidth={1}
+                    paddingAngle={1}
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            <div className="space-y-2">
+              <h4 className="font-medium mb-3">Legenda</h4>
+              <div className="max-h-80 overflow-y-auto">
+                {categoryData.map((category) => (
+                  <div key={category.id} className="flex items-center justify-between text-sm py-1 hover:bg-muted/50 rounded px-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div 
+                        className="w-3 h-3 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="text-base">{category.emoji}</span>
+                      <span className="truncate" title={category.name}>{category.name}</span>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <div className="font-medium text-xs">{formatCurrency(category.value)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {category.percentage?.toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
