@@ -140,9 +140,9 @@ export const TransactionHistory = () => {
             Nenhuma transação recebida/paga neste mês
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 w-full">
             {transactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+              <div key={transaction.id} className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg w-full min-w-0">
                 {/* Ícone do tipo de transação */}
                 <div className={`p-2.5 rounded-full flex-shrink-0 ${
                   transaction.kind === 'income' ? 'bg-green-100 text-green-600' : 
@@ -174,7 +174,8 @@ export const TransactionHistory = () => {
                       <p className="text-xs text-muted-foreground">
                         {formatDate(transaction.date)}
                       </p>
-                      <Badge variant={getStatusBadge(transaction.status).variant} className="text-xs">
+                      {/* Badge apenas em telas maiores que mobile */}
+                      <Badge variant={getStatusBadge(transaction.status).variant} className="text-xs hidden sm:inline-flex">
                         {getStatusBadge(transaction.status).label}
                       </Badge>
                     </div>
