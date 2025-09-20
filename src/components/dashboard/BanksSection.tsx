@@ -229,7 +229,7 @@ export const BanksSection = () => {
 
 
                 {/* Informações do mês vigente e saldo atual */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-green-600 text-xs">Receitas do Mês:</span>
@@ -241,9 +241,9 @@ export const BanksSection = () => {
                     </div>
                   </div>
                   
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
-                    <p className={`font-bold text-xl ${bank.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`font-bold text-lg sm:text-xl ${bank.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {formatCurrency(bank.currentBalance)}
                     </p>
                   </div>
