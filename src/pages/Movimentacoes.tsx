@@ -465,9 +465,9 @@ const Movimentacoes = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Movimentações</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Movimentações</h2>
         <p className="text-muted-foreground">
           Centralize todas as suas transações financeiras
         </p>

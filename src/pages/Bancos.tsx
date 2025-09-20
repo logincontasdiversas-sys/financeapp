@@ -224,10 +224,10 @@ const Bancos = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Bancos</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Bancos</h2>
           <p className="text-muted-foreground">
             Gerencie suas contas bancárias
           </p>
