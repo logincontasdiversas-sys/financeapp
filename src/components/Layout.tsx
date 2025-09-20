@@ -46,8 +46,8 @@ export function Layout({ children }: LayoutProps) {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         
-        <div className="flex-1 flex flex-col">
-          <header className="h-16 border-b bg-gradient-card backdrop-blur-sm flex items-center justify-between px-6">
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-16 border-b bg-gradient-card backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-4">
               <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-primary" />
               <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </header>
           
-          <main className="flex-1 p-6 bg-gradient-to-br from-background to-muted/20">
+          <main className="flex-1 p-4 sm:p-6 bg-gradient-to-br from-background to-muted/20">
             {children}
           </main>
         </div>

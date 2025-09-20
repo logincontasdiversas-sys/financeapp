@@ -1106,10 +1106,10 @@ const Despesas = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Despesas</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Despesas</h2>
           <p className="text-muted-foreground">
             Controle seus gastos e despesas
           </p>
@@ -1124,7 +1124,7 @@ const Despesas = () => {
               Nova Despesa
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] sm:w-full sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingDespesa ? "Editar Despesa" : "Nova Despesa"}
@@ -1478,7 +1478,8 @@ const Despesas = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
@@ -1672,6 +1673,7 @@ const Despesas = () => {
               ))}
             </TableBody>
           </Table>
+          </div>
           
           {/* Total da Lista */}
           {getFilteredAndSortedDespesas().length > 0 && (

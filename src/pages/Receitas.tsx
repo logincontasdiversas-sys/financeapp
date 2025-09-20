@@ -629,10 +629,10 @@ const Receitas = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Receitas</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Receitas</h2>
           <p className="text-muted-foreground">
             Gerencie suas fontes de renda
           </p>
@@ -647,7 +647,7 @@ const Receitas = () => {
               Nova Receita
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] sm:w-full sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingReceita ? "Editar Receita" : "Nova Receita"}
@@ -851,7 +851,8 @@ const Receitas = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
@@ -967,6 +968,7 @@ const Receitas = () => {
               ))}
             </TableBody>
           </Table>
+          </div>
           
           {/* Total da Lista */}
           {getFilteredAndSortedReceitas().length > 0 && (
