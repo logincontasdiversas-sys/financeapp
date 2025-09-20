@@ -1419,8 +1419,8 @@ const Despesas = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <CardTitle>Lista de Despesas</CardTitle>
               {selectedItems.length > 0 && (
                 <div className="flex items-center gap-2">
@@ -1453,8 +1453,8 @@ const Despesas = () => {
                 </div>
               )}
             </div>
-            <div className="flex gap-2">
-              <div className="w-48">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="w-full sm:w-48">
                 <Select value={paymentMethodFilter} onValueChange={(value: 'all' | 'normal' | 'credit_card') => setPaymentMethodFilter(value)}>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Filtrar por tipo" />
@@ -1466,7 +1466,7 @@ const Despesas = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="w-72">
+              <div className="w-full sm:w-72">
                 <Input
                   placeholder="Filtrar por título, categoria, banco, valor..."
                   value={textFilter}
