@@ -48,16 +48,19 @@ export function Layout({ children }: LayoutProps) {
         
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 border-b bg-gradient-card backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
-            <div className="flex items-center gap-4">
+            {/* Botão do menu lateral */}
+            <div className="flex items-center">
               <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-primary" />
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">F</span>
-                </div>
-                <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                  FinanceApp
-                </h1>
+            </div>
+            
+            {/* Logo e marca centralizados */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">F</span>
               </div>
+              <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                FinanceApp
+              </h1>
             </div>
             
             {/* Informações do usuário apenas em desktop/notebook */}
