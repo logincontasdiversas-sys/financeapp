@@ -897,11 +897,12 @@ const Receitas = () => {
                   <div className="grid grid-cols-12 gap-2 relative">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {receitasOfDate.length > 1 && (
-                      <div className="absolute w-1 bg-orange-500 rounded-full" 
+                      <div className="absolute col-start-3 col-span-1 w-1 bg-orange-500 rounded-full" 
                            style={{ 
                              top: '3.25rem', // Centro do primeiro ponto
                              height: `${(receitasOfDate.length - 1) * 3.5}rem`,
-                             left: 'calc(33.33% + 8.33% - 2px)' // Posição exata da coluna 3
+                             left: '50%',
+                             transform: 'translateX(-50%)'
                            }}></div>
                     )}
                     
