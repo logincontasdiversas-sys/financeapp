@@ -1524,12 +1524,12 @@ const Despesas = () => {
                   <div className="grid grid-cols-12 gap-2 relative border-2 border-dashed border-blue-500">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
-                      <div className="absolute col-start-3 col-span-1 w-1 bg-orange-500 rounded-full" 
+                      <div className="absolute w-1 bg-orange-500 rounded-full" 
                            style={{ 
                              top: '3.25rem', // Centro do primeiro ponto
                              height: `${(despesasOfDate.length - 1) * 3.5}rem`,
-                             left: '50%',
-                             transform: 'translateX(-50%)'
+                             left: 'calc(16.66% + 8.33% + 1px)', // Centro exato da coluna 3
+                             zIndex: 5
                            }}></div>
                     )}
                     
