@@ -693,7 +693,7 @@ const Receitas = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um banco" />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border z-50">
+                  <SelectContent className="bg-background border z-50 overflow-y-auto">
                     {banks.map((bank) => (
                       <SelectItem key={bank.id} value={bank.id}>
                         {bank.name}
@@ -711,7 +711,7 @@ const Receitas = () => {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border z-50">
+                  <SelectContent className="bg-background border z-50 overflow-y-auto">
                     <SelectItem value="settled">Recebido</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
                   </SelectContent>

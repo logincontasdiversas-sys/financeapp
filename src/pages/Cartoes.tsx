@@ -576,7 +576,7 @@ const Cartoes = () => {
                      <SelectTrigger>
                        <SelectValue placeholder="Selecione a bandeira" />
                      </SelectTrigger>
-                     <SelectContent>
+                     <SelectContent className="overflow-y-auto">
                        <SelectItem value="Visa">Visa</SelectItem>
                        <SelectItem value="Mastercard">Mastercard</SelectItem>
                        <SelectItem value="Elo">Elo</SelectItem>
@@ -793,7 +793,7 @@ const Cartoes = () => {
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="overflow-y-auto">
                   <SelectItem value="">Sem categoria</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>

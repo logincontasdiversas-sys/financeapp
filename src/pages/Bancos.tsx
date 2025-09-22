@@ -289,7 +289,7 @@ const Bancos = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo de conta" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="overflow-y-auto">
                     <SelectItem value="checking">Conta Corrente</SelectItem>
                     <SelectItem value="savings">Poupança</SelectItem>
                     <SelectItem value="investment">Investimento</SelectItem>

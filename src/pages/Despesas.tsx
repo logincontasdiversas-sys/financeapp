@@ -1188,7 +1188,7 @@ const Despesas = () => {
                     <SelectTrigger className="border-primary/30">
                       <SelectValue placeholder="Ex: 12-24" />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border z-50">
+                    <SelectContent className="bg-background border z-50 overflow-y-auto">
                       {getValidMonthYearOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
@@ -1210,7 +1210,7 @@ const Despesas = () => {
                    <SelectTrigger>
                      <SelectValue placeholder="Selecione a forma" />
                    </SelectTrigger>
-                   <SelectContent className="bg-background border z-50">
+                   <SelectContent className="bg-background border z-50 overflow-y-auto">
                      <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                        Métodos Convencionais
                      </div>
@@ -1238,7 +1238,7 @@ const Despesas = () => {
                      <SelectTrigger>
                        <SelectValue placeholder="Selecione um banco" />
                      </SelectTrigger>
-                     <SelectContent className="bg-background border z-50">
+                     <SelectContent className="bg-background border z-50 overflow-y-auto">
                        {banks.map((bank) => (
                          <SelectItem key={bank.id} value={bank.id}>
                            {bank.name}
@@ -1279,7 +1279,7 @@ const Despesas = () => {
                          <SelectTrigger>
                            <SelectValue placeholder="Selecione o banco de destino" />
                          </SelectTrigger>
-                         <SelectContent className="bg-background border z-50">
+                         <SelectContent className="bg-background border z-50 overflow-y-auto">
                            {banks
                              .filter(bank => bank.id !== formData.bank_id)
                              .map((bank) => (
@@ -1306,7 +1306,7 @@ const Despesas = () => {
                      <SelectTrigger className="border-blue-300">
                        <SelectValue placeholder="Selecione o cartão" />
                      </SelectTrigger>
-                     <SelectContent className="bg-background border z-50">
+                     <SelectContent className="bg-background border z-50 overflow-y-auto">
                        {creditCards.map((card) => (
                          <SelectItem key={card.id} value={card.id}>
                            {card.name}
@@ -1325,7 +1325,7 @@ const Despesas = () => {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-background border z-50">
+                         <SelectContent className="bg-background border z-50 overflow-y-auto">
                     <SelectItem value="settled">Pago</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
                   </SelectContent>

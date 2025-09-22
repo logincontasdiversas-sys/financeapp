@@ -93,7 +93,7 @@ export const PDFReportButton = ({ className }: PDFReportButtonProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o mês" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="overflow-y-auto">
                 {months.map((month) => (
                   <SelectItem key={month.value} value={month.value.toString()}>
                     {month.label}
@@ -109,7 +109,7 @@ export const PDFReportButton = ({ className }: PDFReportButtonProps) => {
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o ano" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="overflow-y-auto">
                 {years.map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}

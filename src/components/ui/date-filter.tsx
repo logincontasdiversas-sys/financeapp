@@ -152,7 +152,7 @@ export function DateFilter({ onFilterChange, className }: DateFilterProps) {
         <SelectTrigger className="w-full sm:w-[180px]">
           <SelectValue placeholder="Filtrar por período" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="overflow-y-auto">
           <SelectItem value="thisWeek">Esta semana</SelectItem>
           <SelectItem value="thisMonth">Este mês</SelectItem>
           <SelectItem value="lastMonth">Mês passado</SelectItem>

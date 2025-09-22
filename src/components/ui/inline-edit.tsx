@@ -273,7 +273,7 @@ export function InlineEditSelect({
         <SelectTrigger className="h-8 text-sm w-auto min-w-[120px]">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="bg-background border z-50">
+        <SelectContent className="bg-background border z-50 overflow-y-auto">
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}

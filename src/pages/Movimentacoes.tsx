@@ -512,7 +512,7 @@ const Movimentacoes = () => {
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
-                <SelectContent className="bg-background border z-50">
+                <SelectContent className="bg-background border z-50 overflow-y-auto">
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="income">Receitas</SelectItem>
                   <SelectItem value="expense">Despesas</SelectItem>

@@ -223,7 +223,7 @@ export const TransferDialog = () => {
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o banco de origem" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="overflow-y-auto">
                 {banks.map((bank) => (
                   <SelectItem key={bank.id} value={bank.id}>
                     {bank.name}
@@ -242,7 +242,7 @@ export const TransferDialog = () => {
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o banco de destino" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="overflow-y-auto">
                 {banks.map((bank) => (
                   <SelectItem key={bank.id} value={bank.id}>
                     {bank.name}

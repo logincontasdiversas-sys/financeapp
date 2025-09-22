@@ -722,7 +722,7 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
             <SelectTrigger>
               <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="overflow-y-auto">
               <SelectItem value="auto">Automático (baseado nos dados)</SelectItem>
               <SelectItem value="expense">Todas como Despesas</SelectItem>
               <SelectItem value="income">Todas como Receitas</SelectItem>
@@ -789,7 +789,7 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="overflow-y-auto">
                           <SelectItem value="ignore">🚫 Ignorar</SelectItem>
                           <SelectItem value="title">📝 Título/Descrição</SelectItem>
                           <SelectItem value="amount">💰 Valor</SelectItem>
