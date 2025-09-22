@@ -894,12 +894,12 @@ const Receitas = () => {
               return Object.entries(groupedByDate).map(([date, receitasOfDate]) => (
                 <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
                   {/* Grid Padronizado - 12 colunas */}
-                  <div className="grid grid-cols-12 gap-2 relative border-2 border-dashed border-blue-500">
+                  <div className="grid grid-cols-12 gap-2 relative">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {receitasOfDate.length > 1 && (
                       <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-2">
                         <div className="col-start-3 relative justify-self-center">
-                          <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.75rem', height: `${(receitasOfDate.length - 1) * 56}px` }} />
+                          <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.6rem', height: `${(receitasOfDate.length - 1) * 56}px` }} />
                         </div>
                       </div>
                     )}
@@ -908,7 +908,7 @@ const Receitas = () => {
                       <div key={receita.id} className="contents">
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
-                          <div className="col-span-2 text-center border border-dashed border-red-500 p-1">
+                          <div className="col-span-2 text-center">
                             <div className="text-lg font-bold">
                               {formatDateForMobile(receita.date).day}
                             </div>
@@ -920,12 +920,12 @@ const Receitas = () => {
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
-                          <div className="col-span-2 border border-dashed border-red-500 p-1">
+                          <div className="col-span-2">
                           </div>
                         )}
                         
                         {/* Ponto da Timeline - Coluna 3 */}
-                        <div className="col-span-1 flex items-center justify-center relative z-10 border border-dashed border-green-500 p-1">
+                        <div className="col-span-1 flex items-center justify-center relative z-10">
                           <div className={`w-3 h-3 rounded-full ${
                             receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
                           }`} />
@@ -933,19 +933,19 @@ const Receitas = () => {
                         
                         {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
                         {selectedItems.length > 0 ? (
-                          <div className="col-span-1 flex items-center justify-center border border-dashed border-purple-500 p-1">
+                          <div className="col-span-1 flex items-center justify-center">
                             <Checkbox
                               checked={selectedItems.includes(receita.id)}
                               onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
                             />
                           </div>
                         ) : (
-                          <div className="col-span-1 border border-dashed border-purple-500 p-1">
+                          <div className="col-span-1">
                           </div>
                         )}
                         
                         {/* Descrição - Colunas 5-9 */}
-                        <div className="col-span-5 min-w-0 border border-dashed border-yellow-500 p-1">
+                        <div className="col-span-5 min-w-0">
                           <p className="font-medium text-sm truncate">{receita.title}</p>
                           {receita.banks?.name && (
                             <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
@@ -953,7 +953,7 @@ const Receitas = () => {
                         </div>
                         
                         {/* Valor - Colunas 10-12 */}
-                        <div className="col-span-3 text-right border border-dashed border-pink-500 p-1">
+                        <div className="col-span-3 text-right">
                           <p className={`font-bold text-sm ${
                             receita.amount > 0 ? 'text-green-600' : 'text-red-600'
                           }`}>
