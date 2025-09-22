@@ -14,7 +14,6 @@ import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
 import { logger } from "@/utils/logger";
 import { CalendarSection } from "@/components/dashboard/CalendarSection";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
-import { PDFReportButton } from "@/components/dashboard/PDFReportButton";
 
 interface DashboardStats {
   totalReceitas: number;
@@ -296,7 +295,6 @@ const Dashboard = () => {
             Visão geral das suas finanças
           </p>
         </div>
-        <PDFReportButton />
       </div>
 
       {/* Seção de Resumo Financeiro */}

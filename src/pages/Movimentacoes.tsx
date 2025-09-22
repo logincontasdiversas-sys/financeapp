@@ -13,6 +13,7 @@ import { FinancialSummary } from "@/components/dashboard/FinancialSummary";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
 import { CategoryExpenseChart } from "@/components/dashboard/CategoryExpenseChart";
 import { MovimentacoesCalendar } from "@/components/dashboard/MovimentacoesCalendar";
+import { PDFReportButton } from "@/components/dashboard/PDFReportButton";
 import { formatDateForDisplay } from "@/utils/dateUtils";
 
 interface Transaction {
@@ -466,11 +467,14 @@ const Movimentacoes = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Movimentações</h2>
-        <p className="text-muted-foreground">
-          Centralize todas as suas transações financeiras
-        </p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Movimentações</h2>
+          <p className="text-muted-foreground">
+            Centralize todas as suas transações financeiras
+          </p>
+        </div>
+        <PDFReportButton />
       </div>
 
       {/* Resumo Financeiro */}
