@@ -1491,7 +1491,7 @@ const Despesas = () => {
               }, {} as Record<string, typeof despesas>);
 
               return Object.entries(groupedByDate).map(([date, despesasOfDate]) => (
-                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
+                <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
                   {/* Cabeçalho da Data */}
                   <div className="flex items-center gap-3 mb-3">
                     <div className="flex-shrink-0 w-16 text-center">
@@ -1503,24 +1503,22 @@ const Despesas = () => {
                       </div>
                     </div>
                     
-                    {/* Timeline Principal */}
-                    <div className="flex-1 relative">
-                      <div className="w-full h-1 bg-muted rounded-full relative">
-                        {/* Pontos da Timeline */}
-                        {despesasOfDate.map((despesa, index) => (
-                          <div key={despesa.id} className="absolute w-4 h-4 rounded-full transform -translate-x-1/2 -translate-y-1/2" 
-                               style={{ left: `${(index / (despesasOfDate.length - 1)) * 100}%`, top: '50%' }}>
-                            <div className="w-4 h-4 rounded-full border-2 border-background bg-red-500" />
-                          </div>
-                        ))}
-                      </div>
+                    {/* Timeline Vertical */}
+                    <div className="flex-shrink-0 w-1 bg-muted rounded-full relative" style={{ height: `${despesasOfDate.length * 2.5}rem` }}>
+                      {/* Pontos da Timeline */}
+                      {despesasOfDate.map((despesa, index) => (
+                        <div key={despesa.id} className="absolute w-3 h-3 rounded-full transform -translate-x-1/2 -translate-y-1/2" 
+                             style={{ top: `${(index * 2.5) + 1.25}rem` }}>
+                          <div className="w-3 h-3 rounded-full bg-red-500" />
+                        </div>
+                      ))}
                     </div>
                   </div>
                   
                   {/* Lista de Lançamentos */}
-                  <div className="space-y-2">
+                  <div className="ml-20 space-y-2">
                     {despesasOfDate.map((despesa, index) => (
-                      <div key={despesa.id} className="flex items-center gap-3 p-3 bg-background rounded-md border">
+                      <div key={despesa.id} className="flex items-center gap-3 p-2 bg-background/50 rounded-md">
                         {/* Checkbox */}
                         <Checkbox
                           checked={selectedItems.includes(despesa.id)}
