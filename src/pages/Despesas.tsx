@@ -1522,10 +1522,10 @@ const Despesas = () => {
                 <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4 relative">
                   {/* Removido checkbox global do grupo (lado direito) */}
                   {/* Grid Padronizado - 12 colunas */}
-                  <div className="grid grid-cols-12 gap-2 relative auto-rows-[56px] -ml-[5px]">
+                  <div className="grid grid-cols-12 gap-1.5 relative auto-rows-[56px] -ml-[10px]">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
-                      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-2">
+                      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-1.5">
                         <div className="col-start-3 relative justify-self-center">
                           <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.05rem', height: `${(despesasOfDate.length - 1) * 64}px` }} />
                         </div>
