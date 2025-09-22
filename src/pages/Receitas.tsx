@@ -893,35 +893,37 @@ const Receitas = () => {
 
               return Object.entries(groupedByDate).map(([date, receitasOfDate]) => (
                 <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
-                  {/* Cabeçalho da Data */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex-shrink-0 w-16 text-center">
-                      <div className="text-lg font-bold">
-                        {formatDateForMobile(receitasOfDate[0].date).day}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatDateForMobile(receitasOfDate[0].date).month}
-                      </div>
-                    </div>
+                  {/* Timeline com Lançamentos */}
+                  <div className="relative">
+                    {/* Linha Vertical Principal */}
+                    <div className="absolute left-8 top-0 bottom-0 w-1 bg-muted rounded-full"></div>
                     
-                    {/* Timeline Vertical */}
-                    <div className="flex-shrink-0 w-1 bg-muted rounded-full relative" style={{ height: `${receitasOfDate.length * 2.5}rem` }}>
-                      {/* Pontos da Timeline - um para cada lançamento */}
-                      {receitasOfDate.map((receita, index) => (
-                        <div key={receita.id} className="absolute w-3 h-3 rounded-full transform -translate-x-1/2 -translate-y-1/2" 
-                             style={{ top: `${(index * 2.5) + 1.25}rem` }}>
+                    {receitasOfDate.map((receita, index) => (
+                      <div key={receita.id} className="flex items-center gap-3 py-2 relative">
+                        {/* Data - apenas no primeiro item */}
+                        {index === 0 && (
+                          <div className="flex-shrink-0 w-16 text-center">
+                            <div className="text-lg font-bold">
+                              {formatDateForMobile(receita.date).day}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatDateForMobile(receita.date).month}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Espaçador quando não é o primeiro item */}
+                        {index > 0 && (
+                          <div className="flex-shrink-0 w-16"></div>
+                        )}
+                        
+                        {/* Ponto da Timeline */}
+                        <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center">
                           <div className={`w-3 h-3 rounded-full ${
                             receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
                           }`} />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Lista de Lançamentos */}
-                  <div className="ml-20 space-y-2">
-                    {receitasOfDate.map((receita, index) => (
-                      <div key={receita.id} className="flex items-center gap-3 p-2 bg-background/50 rounded-md">
+                        
                         {/* Checkbox - só aparece se seleção estiver ativa */}
                         {selectedItems.length > 0 && (
                           <Checkbox
