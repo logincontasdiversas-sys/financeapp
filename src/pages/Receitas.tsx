@@ -895,7 +895,7 @@ const Receitas = () => {
                 <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
                   {/* Timeline com Lançamentos */}
                   <div className="relative">
-                    {/* Linha Vertical Principal - conecta todos os pontos */}
+                    {/* Linha Vertical Contínua - como no extrato bancário */}
                     {receitasOfDate.length > 1 && (
                       <div className="absolute left-8 w-1 bg-muted rounded-full" 
                            style={{ 
@@ -903,17 +903,6 @@ const Receitas = () => {
                              height: `${(receitasOfDate.length - 1) * 2.5}rem` 
                            }}></div>
                     )}
-                    
-                    {/* Segmentos de linha conectando cada ponto */}
-                    {receitasOfDate.map((receita, index) => (
-                      index < receitasOfDate.length - 1 && (
-                        <div key={`line-${receita.id}`} className="absolute left-8 w-1 bg-muted rounded-full" 
-                             style={{ 
-                               top: `${2.5 + (index * 2.5)}rem`, 
-                               height: '2.5rem' 
-                             }}></div>
-                      )
-                    ))}
                     
                     {receitasOfDate.map((receita, index) => (
                       <div key={receita.id} className="flex items-center gap-3 py-2 relative">

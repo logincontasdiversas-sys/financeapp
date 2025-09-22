@@ -1522,7 +1522,7 @@ const Despesas = () => {
                 <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
                   {/* Timeline com Lançamentos */}
                   <div className="relative">
-                    {/* Linha Vertical Principal - conecta todos os pontos */}
+                    {/* Linha Vertical Contínua - como no extrato bancário */}
                     {despesasOfDate.length > 1 && (
                       <div className="absolute left-8 w-1 bg-muted rounded-full" 
                            style={{ 
@@ -1530,17 +1530,6 @@ const Despesas = () => {
                              height: `${(despesasOfDate.length - 1) * 2.5}rem` 
                            }}></div>
                     )}
-                    
-                    {/* Segmentos de linha conectando cada ponto */}
-                    {despesasOfDate.map((despesa, index) => (
-                      index < despesasOfDate.length - 1 && (
-                        <div key={`line-${despesa.id}`} className="absolute left-8 w-1 bg-muted rounded-full" 
-                             style={{ 
-                               top: `${2.5 + (index * 2.5)}rem`, 
-                               height: '2.5rem' 
-                             }}></div>
-                      )
-                    ))}
                     
                     {despesasOfDate.map((despesa, index) => (
                       <div key={despesa.id} className="flex items-center gap-3 py-2 relative">
