@@ -1572,7 +1572,7 @@ const Despesas = () => {
                         </div>
                         
                         {/* Descrição + Valor - Colunas 4-12 */}
-                        <div className="col-span-9 min-w-0">
+                        <div className="col-span-9 min-w-0 relative h-full">
                           <div className="flex items-start justify-between gap-3">
                             <p className="font-medium text-sm truncate">{despesa.title}</p>
                             <p className="font-bold text-sm text-red-600 whitespace-nowrap">-{formatCurrency(despesa.amount)}</p>
@@ -1591,10 +1591,7 @@ const Despesas = () => {
                               <span className="truncate">• {despesa.credit_cards.name}</span>
                             )}
                           </div>
-                        </div>
-                        {/* Status abaixo (opcional) */}
-                        <div className="col-span-9 col-start-4 -mt-2">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">
                             {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
                           </p>
                         </div>
