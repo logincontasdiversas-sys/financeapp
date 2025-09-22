@@ -1522,11 +1522,11 @@ const Despesas = () => {
                 <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
                   {/* Grid Padronizado - 12 colunas */}
                   <div className="grid grid-cols-12 gap-2 relative">
-                    {/* Linha Vertical - posicionada na coluna 3 (centro da área de pontos) */}
+                    {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
                       <div className="absolute col-start-3 col-span-1 w-1 bg-orange-500 rounded-full" 
                            style={{ 
-                             top: '2.5rem', 
+                             top: '3.25rem', // Centro do primeiro ponto
                              height: `${(despesasOfDate.length - 1) * 3.5}rem`,
                              left: 'calc(50% - 2px)' // Centraliza na coluna
                            }}></div>
