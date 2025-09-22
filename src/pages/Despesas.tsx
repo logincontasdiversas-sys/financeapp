@@ -1519,23 +1519,24 @@ const Despesas = () => {
               }, {} as Record<string, typeof despesas>);
 
               return Object.entries(groupedByDate).map(([date, despesasOfDate]) => (
-                <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
-                  {/* Timeline com Lançamentos */}
-                  <div className="relative">
-                    {/* Linha Vertical Contínua - como no extrato bancário */}
+                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
+                  {/* Grid Padronizado - 12 colunas */}
+                  <div className="grid grid-cols-12 gap-2 relative">
+                    {/* Linha Vertical - posicionada na coluna 3 (centro da área de pontos) */}
                     {despesasOfDate.length > 1 && (
-                      <div className="absolute left-8 w-1 bg-orange-400 rounded-full" 
+                      <div className="absolute col-start-3 col-span-1 w-1 bg-orange-500 rounded-full" 
                            style={{ 
                              top: '2.5rem', 
-                             height: `${(despesasOfDate.length - 1) * 2.5}rem` 
+                             height: `${(despesasOfDate.length - 1) * 3.5}rem`,
+                             left: 'calc(50% - 2px)' // Centraliza na coluna
                            }}></div>
                     )}
                     
                     {despesasOfDate.map((despesa, index) => (
-                      <div key={despesa.id} className="flex items-center gap-3 py-2 relative">
-                        {/* Data - apenas no primeiro item */}
+                      <div key={despesa.id} className="contents">
+                        {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
-                          <div className="flex-shrink-0 w-16 text-center">
+                          <div className="col-span-2 text-center">
                             <div className="text-lg font-bold">
                               {formatDateForMobile(despesa.date).day}
                             </div>
@@ -1547,51 +1548,53 @@ const Despesas = () => {
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
-                          <div className="flex-shrink-0 w-16"></div>
+                          <div className="col-span-2"></div>
                         )}
                         
-                        {/* Ponto da Timeline */}
-                        <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center relative z-10">
+                        {/* Ponto da Timeline - Coluna 3 */}
+                        <div className="col-span-1 flex items-center justify-center relative z-10">
                           <div className="w-3 h-3 rounded-full bg-red-500" />
                         </div>
                         
-                        {/* Checkbox - só aparece se seleção estiver ativa */}
-                        {selectedItems.length > 0 && (
-                          <Checkbox
-                            checked={selectedItems.includes(despesa.id)}
-                            onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
-                          />
+                        {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
+                        {selectedItems.length > 0 ? (
+                          <div className="col-span-1 flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedItems.includes(despesa.id)}
+                              onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="col-span-1"></div>
                         )}
                         
-                        {/* Descrição e Valor */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{despesa.title}</p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                {despesa.categories?.emoji && (
-                                  <span>{despesa.categories.emoji}</span>
-                                )}
-                                <span className="truncate">
-                                  {despesa.categories?.name || 'Sem categoria'}
-                                </span>
-                                {despesa.banks?.name && (
-                                  <span className="truncate">• {despesa.banks.name}</span>
-                                )}
-                                {despesa.credit_cards?.name && (
-                                  <span className="truncate">• {despesa.credit_cards.name}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex-shrink-0 text-right">
-                              <p className="font-bold text-sm text-red-600">
-                                -{formatCurrency(despesa.amount)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
-                              </p>
-                            </div>
+                        {/* Descrição - Colunas 5-9 */}
+                        <div className="col-span-5 min-w-0">
+                          <p className="font-medium text-sm truncate">{despesa.title}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {despesa.categories?.emoji && (
+                              <span>{despesa.categories.emoji}</span>
+                            )}
+                            <span className="truncate">
+                              {despesa.categories?.name || 'Sem categoria'}
+                            </span>
+                            {despesa.banks?.name && (
+                              <span className="truncate">• {despesa.banks.name}</span>
+                            )}
+                            {despesa.credit_cards?.name && (
+                              <span className="truncate">• {despesa.credit_cards.name}</span>
+                            )}
                           </div>
+                        </div>
+                        
+                        {/* Valor - Colunas 10-12 */}
+                        <div className="col-span-3 text-right">
+                          <p className="font-bold text-sm text-red-600">
+                            -{formatCurrency(despesa.amount)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
+                          </p>
                         </div>
                       </div>
                     ))}

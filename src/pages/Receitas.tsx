@@ -892,23 +892,24 @@ const Receitas = () => {
               }, {} as Record<string, typeof receitas>);
 
               return Object.entries(groupedByDate).map(([date, receitasOfDate]) => (
-                <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
-                  {/* Timeline com Lançamentos */}
-                  <div className="relative">
-                    {/* Linha Vertical Contínua - como no extrato bancário */}
+                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
+                  {/* Grid Padronizado - 12 colunas */}
+                  <div className="grid grid-cols-12 gap-2 relative">
+                    {/* Linha Vertical - posicionada na coluna 3 (centro da área de pontos) */}
                     {receitasOfDate.length > 1 && (
-                      <div className="absolute left-8 w-1 bg-orange-400 rounded-full" 
+                      <div className="absolute col-start-3 col-span-1 w-1 bg-orange-500 rounded-full" 
                            style={{ 
                              top: '2.5rem', 
-                             height: `${(receitasOfDate.length - 1) * 2.5}rem` 
+                             height: `${(receitasOfDate.length - 1) * 3.5}rem`,
+                             left: 'calc(50% - 2px)' // Centraliza na coluna
                            }}></div>
                     )}
                     
                     {receitasOfDate.map((receita, index) => (
-                      <div key={receita.id} className="flex items-center gap-3 py-2 relative">
-                        {/* Data - apenas no primeiro item */}
+                      <div key={receita.id} className="contents">
+                        {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
-                          <div className="flex-shrink-0 w-16 text-center">
+                          <div className="col-span-2 text-center">
                             <div className="text-lg font-bold">
                               {formatDateForMobile(receita.date).day}
                             </div>
@@ -920,44 +921,46 @@ const Receitas = () => {
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
-                          <div className="flex-shrink-0 w-16"></div>
+                          <div className="col-span-2"></div>
                         )}
                         
-                        {/* Ponto da Timeline */}
-                        <div className="flex-shrink-0 w-4 h-4 flex items-center justify-center relative z-10">
+                        {/* Ponto da Timeline - Coluna 3 */}
+                        <div className="col-span-1 flex items-center justify-center relative z-10">
                           <div className={`w-3 h-3 rounded-full ${
                             receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
                           }`} />
                         </div>
                         
-                        {/* Checkbox - só aparece se seleção estiver ativa */}
-                        {selectedItems.length > 0 && (
-                          <Checkbox
-                            checked={selectedItems.includes(receita.id)}
-                            onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
-                          />
+                        {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
+                        {selectedItems.length > 0 ? (
+                          <div className="col-span-1 flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedItems.includes(receita.id)}
+                              onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="col-span-1"></div>
                         )}
                         
-                        {/* Descrição e Valor */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{receita.title}</p>
-                              {receita.banks?.name && (
-                                <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
-                              )}
-                            </div>
-                            <div className="flex-shrink-0 text-right">
-                              <p className={`font-bold text-sm ${
-                                receita.amount > 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {receita.amount > 0 ? '+' : ''}{formatCurrency(receita.amount)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
-                              </p>
-                            </div>
-                          </div>
+                        {/* Descrição - Colunas 5-9 */}
+                        <div className="col-span-5 min-w-0">
+                          <p className="font-medium text-sm truncate">{receita.title}</p>
+                          {receita.banks?.name && (
+                            <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
+                          )}
+                        </div>
+                        
+                        {/* Valor - Colunas 10-12 */}
+                        <div className="col-span-3 text-right">
+                          <p className={`font-bold text-sm ${
+                            receita.amount > 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {receita.amount > 0 ? '+' : ''}{formatCurrency(receita.amount)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
+                          </p>
                         </div>
                       </div>
                     ))}
