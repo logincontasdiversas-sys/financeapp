@@ -853,54 +853,80 @@ const Receitas = () => {
         <CardContent>
           {/* Layout Mobile - Cards */}
           <div className="block sm:hidden space-y-3">
-            {getFilteredAndSortedReceitas().map((receita) => (
-              <div key={receita.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                {/* Checkbox */}
-                <Checkbox
-                  checked={selectedItems.includes(receita.id)}
-                  onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
-                />
-                
-                {/* Data */}
-                <div className="flex-shrink-0 w-16 text-center">
-                  <div className="text-sm font-medium">
-                    {new Date(receita.date).getDate()}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(receita.date).toLocaleDateString('pt-BR', { month: 'short' })}
-                  </div>
-                </div>
-                
-                {/* Linha vertical com ponto colorido */}
-                <div className="flex-shrink-0 w-1 h-8 bg-muted rounded-full relative">
-                  <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${
-                    receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
-                  }`} />
-                </div>
-                
-                {/* Descrição e Valor */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{receita.title}</p>
-                      {receita.banks?.name && (
-                        <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
+            {(() => {
+              const groupedByDate = getFilteredAndSortedReceitas().reduce((acc, receita) => {
+                const date = receita.date;
+                if (!acc[date]) {
+                  acc[date] = [];
+                }
+                acc[date].push(receita);
+                return acc;
+              }, {} as Record<string, typeof receitas>);
+
+              return Object.entries(groupedByDate).map(([date, receitasOfDate]) => (
+                <div key={date} className="space-y-1">
+                  {receitasOfDate.map((receita, index) => (
+                    <div key={receita.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      {/* Checkbox */}
+                      <Checkbox
+                        checked={selectedItems.includes(receita.id)}
+                        onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
+                      />
+                      
+                      {/* Data - apenas no primeiro item do dia */}
+                      {index === 0 && (
+                        <div className="flex-shrink-0 w-16 text-center">
+                          <div className="text-sm font-medium">
+                            {new Date(receita.date).getDate()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(receita.date).toLocaleDateString('pt-BR', { month: 'short' })}
+                          </div>
+                        </div>
                       )}
+                      
+                      {/* Espaçador quando não é o primeiro item */}
+                      {index > 0 && (
+                        <div className="flex-shrink-0 w-16"></div>
+                      )}
+                      
+                      {/* Linha vertical com ponto colorido */}
+                      <div className="flex-shrink-0 w-1 h-8 bg-muted rounded-full relative">
+                        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${
+                          receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
+                        }`} />
+                        {/* Linha vertical que conecta com o próximo item se existir */}
+                        {index < receitasOfDate.length - 1 && (
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-muted" />
+                        )}
+                      </div>
+                      
+                      {/* Descrição e Valor */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{receita.title}</p>
+                            {receita.banks?.name && (
+                              <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className={`font-bold text-sm ${
+                              receita.amount > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {receita.amount > 0 ? '+' : ''}{formatCurrency(receita.amount)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-shrink-0 text-right">
-                      <p className={`font-bold text-sm ${
-                        receita.amount > 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {receita.amount > 0 ? '+' : ''}{formatCurrency(receita.amount)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
 
           {/* Layout Desktop - Tabela */}

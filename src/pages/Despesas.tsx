@@ -1480,61 +1480,87 @@ const Despesas = () => {
         <CardContent>
           {/* Layout Mobile - Cards */}
           <div className="block sm:hidden space-y-3">
-            {getFilteredAndSortedDespesas().map((despesa) => (
-              <div key={despesa.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                {/* Checkbox */}
-                <Checkbox
-                  checked={selectedItems.includes(despesa.id)}
-                  onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
-                />
-                
-                {/* Data */}
-                <div className="flex-shrink-0 w-16 text-center">
-                  <div className="text-sm font-medium">
-                    {new Date(despesa.date).getDate()}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(despesa.date).toLocaleDateString('pt-BR', { month: 'short' })}
-                  </div>
-                </div>
-                
-                {/* Linha vertical com ponto colorido */}
-                <div className="flex-shrink-0 w-1 h-8 bg-muted rounded-full relative">
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-red-500" />
-                </div>
-                
-                {/* Descrição e Valor */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{despesa.title}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {despesa.categories?.emoji && (
-                          <span>{despesa.categories.emoji}</span>
-                        )}
-                        <span className="truncate">
-                          {despesa.categories?.name || 'Sem categoria'}
-                        </span>
-                        {despesa.banks?.name && (
-                          <span className="truncate">• {despesa.banks.name}</span>
-                        )}
-                        {despesa.credit_cards?.name && (
-                          <span className="truncate">• {despesa.credit_cards.name}</span>
+            {(() => {
+              const groupedByDate = getFilteredAndSortedDespesas().reduce((acc, despesa) => {
+                const date = despesa.date;
+                if (!acc[date]) {
+                  acc[date] = [];
+                }
+                acc[date].push(despesa);
+                return acc;
+              }, {} as Record<string, typeof despesas>);
+
+              return Object.entries(groupedByDate).map(([date, despesasOfDate]) => (
+                <div key={date} className="space-y-1">
+                  {despesasOfDate.map((despesa, index) => (
+                    <div key={despesa.id} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                      {/* Checkbox */}
+                      <Checkbox
+                        checked={selectedItems.includes(despesa.id)}
+                        onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
+                      />
+                      
+                      {/* Data - apenas no primeiro item do dia */}
+                      {index === 0 && (
+                        <div className="flex-shrink-0 w-16 text-center">
+                          <div className="text-sm font-medium">
+                            {new Date(despesa.date).getDate()}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(despesa.date).toLocaleDateString('pt-BR', { month: 'short' })}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Espaçador quando não é o primeiro item */}
+                      {index > 0 && (
+                        <div className="flex-shrink-0 w-16"></div>
+                      )}
+                      
+                      {/* Linha vertical com ponto colorido */}
+                      <div className="flex-shrink-0 w-1 h-8 bg-muted rounded-full relative">
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-red-500" />
+                        {/* Linha vertical que conecta com o próximo item se existir */}
+                        {index < despesasOfDate.length - 1 && (
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 w-0.5 h-8 bg-muted" />
                         )}
                       </div>
+                      
+                      {/* Descrição e Valor */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{despesa.title}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              {despesa.categories?.emoji && (
+                                <span>{despesa.categories.emoji}</span>
+                              )}
+                              <span className="truncate">
+                                {despesa.categories?.name || 'Sem categoria'}
+                              </span>
+                              {despesa.banks?.name && (
+                                <span className="truncate">• {despesa.banks.name}</span>
+                              )}
+                              {despesa.credit_cards?.name && (
+                                <span className="truncate">• {despesa.credit_cards.name}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="font-bold text-sm text-red-600">
+                              -{formatCurrency(despesa.amount)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-shrink-0 text-right">
-                      <p className="font-bold text-sm text-red-600">
-                        -{formatCurrency(despesa.amount)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
 
           {/* Layout Desktop - Tabela */}
