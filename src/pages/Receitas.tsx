@@ -877,16 +877,8 @@ const Receitas = () => {
                     </div>
                     
                     {/* Timeline Vertical */}
-                    <div className="flex-shrink-0 w-1 bg-muted rounded-full relative" style={{ height: `${receitasOfDate.length * 2.5}rem` }}>
-                      {/* Pontos da Timeline */}
-                      {receitasOfDate.map((receita, index) => (
-                        <div key={receita.id} className="absolute w-3 h-3 rounded-full transform -translate-x-1/2 -translate-y-1/2" 
-                             style={{ top: `${(index * 2.5) + 1.25}rem` }}>
-                          <div className={`w-3 h-3 rounded-full ${
-                            receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
-                          }`} />
-                        </div>
-                      ))}
+                    <div className="flex-shrink-0 w-1 h-8 bg-muted rounded-full relative">
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-green-500" />
                     </div>
                   </div>
                   
