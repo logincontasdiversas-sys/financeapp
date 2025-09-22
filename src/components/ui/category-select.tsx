@@ -98,7 +98,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         <SelectTrigger>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="bg-background border z-50 max-h-[300px]">
+        <SelectContent className="bg-background border z-50 max-h-[300px] overflow-y-auto">
           {/* Opção para criar nova categoria */}
           {showCreateOption && (
             <>
