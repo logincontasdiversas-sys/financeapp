@@ -896,11 +896,13 @@ const Receitas = () => {
                   {/* Timeline com Lançamentos */}
                   <div className="relative">
                     {/* Linha Vertical Principal - conecta todos os pontos */}
-                    <div className="absolute left-8 w-1 bg-muted rounded-full" 
-                         style={{ 
-                           top: '2.5rem', 
-                           height: `${(receitasOfDate.length - 1) * 2.5}rem` 
-                         }}></div>
+                    {receitasOfDate.length > 1 && (
+                      <div className="absolute left-8 w-1 bg-muted rounded-full" 
+                           style={{ 
+                             top: '2.5rem', 
+                             height: `${(receitasOfDate.length - 1) * 2.5}rem` 
+                           }}></div>
+                    )}
                     
                     {receitasOfDate.map((receita, index) => (
                       <div key={receita.id} className="flex items-center gap-3 py-2 relative">

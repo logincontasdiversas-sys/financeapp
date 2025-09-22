@@ -1523,11 +1523,13 @@ const Despesas = () => {
                   {/* Timeline com Lançamentos */}
                   <div className="relative">
                     {/* Linha Vertical Principal - conecta todos os pontos */}
-                    <div className="absolute left-8 w-1 bg-muted rounded-full" 
-                         style={{ 
-                           top: '2.5rem', 
-                           height: `${(despesasOfDate.length - 1) * 2.5}rem` 
-                         }}></div>
+                    {despesasOfDate.length > 1 && (
+                      <div className="absolute left-8 w-1 bg-muted rounded-full" 
+                           style={{ 
+                             top: '2.5rem', 
+                             height: `${(despesasOfDate.length - 1) * 2.5}rem` 
+                           }}></div>
+                    )}
                     
                     {despesasOfDate.map((despesa, index) => (
                       <div key={despesa.id} className="flex items-center gap-3 py-2 relative">
