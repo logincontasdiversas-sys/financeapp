@@ -904,6 +904,17 @@ const Receitas = () => {
                            }}></div>
                     )}
                     
+                    {/* Segmentos de linha conectando cada ponto */}
+                    {receitasOfDate.map((receita, index) => (
+                      index < receitasOfDate.length - 1 && (
+                        <div key={`line-${receita.id}`} className="absolute left-8 w-1 bg-muted rounded-full" 
+                             style={{ 
+                               top: `${2.5 + (index * 2.5)}rem`, 
+                               height: '2.5rem' 
+                             }}></div>
+                      )
+                    ))}
+                    
                     {receitasOfDate.map((receita, index) => (
                       <div key={receita.id} className="flex items-center gap-3 py-2 relative">
                         {/* Data - apenas no primeiro item */}
