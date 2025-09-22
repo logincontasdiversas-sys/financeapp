@@ -1524,13 +1524,15 @@ const Despesas = () => {
                   <div className="grid grid-cols-12 gap-2 relative border-2 border-dashed border-blue-500">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
-                      <div className="absolute w-1 bg-orange-500 rounded-full" 
-                           style={{ 
-                             top: '3.25rem', // Centro do primeiro ponto
-                             height: `${(despesasOfDate.length - 1) * 3.5}rem`,
-                             left: 'calc(33.33% + 4.165%)', // Centro exato da coluna 3 (33.33% + metade de 8.33%)
-                             zIndex: 5
-                           }}></div>
+                      <div 
+                        className="absolute w-1 bg-orange-500 rounded-full" 
+                        style={{ 
+                          top: '3.25rem', // Centro do primeiro ponto
+                          height: `${(despesasOfDate.length - 1) * 3.5}rem`,
+                          left: 'calc(16.66% + 4.165%)', // Centro da coluna 3: 16.66% (col 1-2) + metade de 8.33% (col 3)
+                          zIndex: 5
+                        }}
+                      />
                     )}
                     
                     {despesasOfDate.map((despesa, index) => (
