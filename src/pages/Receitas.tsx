@@ -863,8 +863,11 @@ const Receitas = () => {
                 
                 {/* Data */}
                 <div className="flex-shrink-0 w-16 text-center">
+                  <div className="text-sm font-medium">
+                    {new Date(receita.date).getDate()}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(receita.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    {new Date(receita.date).toLocaleDateString('pt-BR', { month: 'short' })}
                   </div>
                 </div>
                 

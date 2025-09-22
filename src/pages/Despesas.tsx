@@ -1490,8 +1490,11 @@ const Despesas = () => {
                 
                 {/* Data */}
                 <div className="flex-shrink-0 w-16 text-center">
+                  <div className="text-sm font-medium">
+                    {new Date(despesa.date).getDate()}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(despesa.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    {new Date(despesa.date).toLocaleDateString('pt-BR', { month: 'short' })}
                   </div>
                 </div>
                 
