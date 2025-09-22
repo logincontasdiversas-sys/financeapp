@@ -899,7 +899,7 @@ const Receitas = () => {
                     {receitasOfDate.length > 1 && (
                       <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-2">
                         <div className="col-start-3 relative justify-self-center">
-                          <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '3.25rem', height: `${(receitasOfDate.length - 1) * 56}px` }} />
+                          <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.9rem', height: `${(receitasOfDate.length - 1) * 56}px` }} />
                         </div>
                       </div>
                     )}
