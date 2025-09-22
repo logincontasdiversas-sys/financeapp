@@ -1,3 +1,4 @@
+import React from "react";
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -52,7 +53,7 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
   const { user } = useAuth();
@@ -61,6 +62,11 @@ export function AppSidebar() {
   const HAS_VAPID = Boolean(import.meta.env.VITE_VAPID_PUBLIC_KEY);
   
   const isCollapsed = state === "collapsed";
+
+  // Fechar sidebar automaticamente quando a rota muda (apenas no mobile)
+  React.useEffect(() => {
+    setOpenMobile(false);
+  }, [currentPath, setOpenMobile]);
 
   const handleLogout = async () => {
     try {
