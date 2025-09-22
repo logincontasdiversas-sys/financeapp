@@ -1525,8 +1525,8 @@ const Despesas = () => {
                     {/* Linha Vertical Principal - conecta todos os pontos */}
                     <div className="absolute left-8 w-1 bg-muted rounded-full" 
                          style={{ 
-                           top: '2rem', 
-                           height: `${(despesasOfDate.length - 1) * 3}rem` 
+                           top: '2.5rem', 
+                           height: `${(despesasOfDate.length - 1) * 2.5}rem` 
                          }}></div>
                     
                     {despesasOfDate.map((despesa, index) => (
