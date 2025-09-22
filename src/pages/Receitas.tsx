@@ -894,7 +894,7 @@ const Receitas = () => {
               return Object.entries(groupedByDate).map(([date, receitasOfDate]) => (
                 <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
                   {/* Grid Padronizado - 12 colunas */}
-                  <div className="grid grid-cols-12 gap-2 relative">
+                  <div className="grid grid-cols-12 gap-2 relative border-2 border-dashed border-blue-500">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {receitasOfDate.length > 1 && (
                       <div className="absolute col-start-3 col-span-1 w-1 bg-orange-500 rounded-full" 
@@ -910,50 +910,58 @@ const Receitas = () => {
                       <div key={receita.id} className="contents">
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
-                          <div className="col-span-2 text-center">
+                          <div className="col-span-2 text-center border border-dashed border-red-500 p-1">
                             <div className="text-lg font-bold">
                               {formatDateForMobile(receita.date).day}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {formatDateForMobile(receita.date).month}
                             </div>
+                            <div className="text-xs text-red-500">Col 1-2</div>
                           </div>
                         )}
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
-                          <div className="col-span-2"></div>
+                          <div className="col-span-2 border border-dashed border-red-500 p-1">
+                            <div className="text-xs text-red-500">Col 1-2</div>
+                          </div>
                         )}
                         
                         {/* Ponto da Timeline - Coluna 3 */}
-                        <div className="col-span-1 flex items-center justify-center relative z-10">
+                        <div className="col-span-1 flex items-center justify-center relative z-10 border border-dashed border-green-500 p-1">
                           <div className={`w-3 h-3 rounded-full ${
                             receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
                           }`} />
+                          <div className="text-xs text-green-500 absolute -bottom-4">Col 3</div>
                         </div>
                         
                         {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
                         {selectedItems.length > 0 ? (
-                          <div className="col-span-1 flex items-center justify-center">
+                          <div className="col-span-1 flex items-center justify-center border border-dashed border-purple-500 p-1">
                             <Checkbox
                               checked={selectedItems.includes(receita.id)}
                               onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
                             />
+                            <div className="text-xs text-purple-500 absolute -bottom-4">Col 4</div>
                           </div>
                         ) : (
-                          <div className="col-span-1"></div>
+                          <div className="col-span-1 border border-dashed border-purple-500 p-1">
+                            <div className="text-xs text-purple-500">Col 4</div>
+                          </div>
                         )}
                         
                         {/* Descrição - Colunas 5-9 */}
-                        <div className="col-span-5 min-w-0">
+                        <div className="col-span-5 min-w-0 border border-dashed border-yellow-500 p-1">
                           <p className="font-medium text-sm truncate">{receita.title}</p>
                           {receita.banks?.name && (
                             <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
                           )}
+                          <div className="text-xs text-yellow-500">Col 5-9</div>
                         </div>
                         
                         {/* Valor - Colunas 10-12 */}
-                        <div className="col-span-3 text-right">
+                        <div className="col-span-3 text-right border border-dashed border-pink-500 p-1">
                           <p className={`font-bold text-sm ${
                             receita.amount > 0 ? 'text-green-600' : 'text-red-600'
                           }`}>
@@ -962,6 +970,7 @@ const Receitas = () => {
                           <p className="text-xs text-muted-foreground">
                             {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
                           </p>
+                          <div className="text-xs text-pink-500">Col 10-12</div>
                         </div>
                       </div>
                     ))}
