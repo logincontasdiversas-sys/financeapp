@@ -853,6 +853,34 @@ const Receitas = () => {
         <CardContent>
           {/* Layout Mobile - Cards */}
           <div className="block sm:hidden space-y-3">
+            {/* Botão de Seleção Global - Mobile */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={selectedItems.length === receitas.length && receitas.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedItems(receitas.map(r => r.id));
+                    } else {
+                      setSelectedItems([]);
+                    }
+                  }}
+                />
+                <span className="text-sm font-medium">
+                  {selectedItems.length > 0 ? `Selecionados: ${selectedItems.length}` : 'Selecionar todos'}
+                </span>
+              </div>
+              {selectedItems.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedItems([])}
+                >
+                  Cancelar
+                </Button>
+              )}
+            </div>
+
             {(() => {
               const groupedByDate = getFilteredAndSortedReceitas().reduce((acc, receita) => {
                 const date = receita.date;
@@ -894,11 +922,13 @@ const Receitas = () => {
                   <div className="ml-20 space-y-2">
                     {receitasOfDate.map((receita, index) => (
                       <div key={receita.id} className="flex items-center gap-3 p-2 bg-background/50 rounded-md">
-                        {/* Checkbox */}
-                        <Checkbox
-                          checked={selectedItems.includes(receita.id)}
-                          onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
-                        />
+                        {/* Checkbox - só aparece se seleção estiver ativa */}
+                        {selectedItems.length > 0 && (
+                          <Checkbox
+                            checked={selectedItems.includes(receita.id)}
+                            onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
+                          />
+                        )}
                         
                         {/* Descrição e Valor */}
                         <div className="flex-1 min-w-0">
