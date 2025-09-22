@@ -1548,6 +1548,18 @@ const Despesas = () => {
                     
                     {despesasOfDate.map((despesa, index) => (
                       <div key={despesa.id} className="contents">
+                        {/* Checkbox individual à esquerda, fora do campo de lançamentos */}
+                        {selectedItems.length > 0 && (
+                          <div
+                            className="absolute -left-[10px] z-20"
+                            style={{ top: `calc(2.05rem + ${index * 64}px - 12px)` }}
+                          >
+                            <Checkbox
+                              checked={selectedItems.includes(despesa.id)}
+                              onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
+                            />
+                          </div>
+                        )}
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
                           <div className="col-span-2 text-center">
