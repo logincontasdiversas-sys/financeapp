@@ -1522,8 +1522,8 @@ const Despesas = () => {
                 <div key={date} className="bg-muted/50 rounded-lg p-3 mb-4">
                   {/* Timeline com Lançamentos */}
                   <div className="relative">
-                    {/* Linha Vertical Principal */}
-                    <div className="absolute left-8 top-0 bottom-0 w-1 bg-muted rounded-full"></div>
+                    {/* Linha Vertical Principal - começa abaixo da data */}
+                    <div className="absolute left-8 top-8 bottom-0 w-1 bg-muted rounded-full"></div>
                     
                     {despesasOfDate.map((despesa, index) => (
                       <div key={despesa.id} className="flex items-center gap-3 py-2 relative">
