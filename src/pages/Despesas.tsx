@@ -179,7 +179,7 @@ const Despesas = () => {
     onUpdate: () => {
       logger.info('DESPESAS_REALTIME', 'UPDATE em transactions');
       clearQueryCache();
-      loadDespesas();
+        loadDespesas();
       setSummaryRefreshKey(k => k + 1);
     },
     onDelete: () => {
@@ -866,7 +866,7 @@ const Despesas = () => {
       }));
 
       // Garantia extra: recarregar
-      loadDespesas();
+        loadDespesas();
       setSummaryRefreshKey(k => k + 1);
     } catch (error: any) {
       console.error('[DESPESAS] Error updating inline:', error);
@@ -1201,15 +1201,15 @@ const Despesas = () => {
                   </p>
                 </div>
               )}
-               <div className="space-y-2">
-                 <Label htmlFor="payment_method">Forma de Pagamento</Label>
-                 <Select
-                   value={formData.payment_method}
-                   onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
-                 >
-                   <SelectTrigger>
-                     <SelectValue placeholder="Selecione a forma" />
-                   </SelectTrigger>
+              <div className="space-y-2">
+                <Label htmlFor="payment_method">Forma de Pagamento</Label>
+                <Select
+                  value={formData.payment_method}
+                  onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a forma" />
+                  </SelectTrigger>
                    <SelectContent className="bg-background border z-50 overflow-y-auto">
                      <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                        Métodos Convencionais
@@ -1442,14 +1442,14 @@ const Despesas = () => {
                     <Copy className="h-4 w-4" />
                     Duplicar
                   </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={handleBulkDelete}
-                    className="flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
+                <Button
+                  variant="destructive"
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
                     Excluir ({selectedItems.length})
-                  </Button>
+                </Button>
                 </div>
               )}
             </div>
@@ -1467,12 +1467,12 @@ const Despesas = () => {
                 </Select>
               </div>
               <div className="w-full sm:w-72">
-                <Input
-                  placeholder="Filtrar por título, categoria, banco, valor..."
-                  value={textFilter}
-                  onChange={(e) => setTextFilter(e.target.value)}
-                  className="h-9"
-                />
+              <Input
+                placeholder="Filtrar por título, categoria, banco, valor..."
+                value={textFilter}
+                onChange={(e) => setTextFilter(e.target.value)}
+                className="h-9"
+              />
               </div>
             </div>
           </div>
@@ -1536,11 +1536,11 @@ const Despesas = () => {
                     </div>
                   )}
                   {/* Grid Padronizado - 12 colunas */}
-                  <div className="grid grid-cols-12 gap-2 relative auto-rows-[56px]">
+                  <div className="grid grid-cols-12 gap-2 relative auto-rows-[56px] -ml-[5px]">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
                       <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-2">
-                        <div className="col-start-3 relative justify-self-center -ml-1">
+                        <div className="col-start-3 relative justify-self-center">
                           <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.05rem', height: `${(despesasOfDate.length - 1) * 64}px` }} />
                         </div>
                       </div>
@@ -1550,7 +1550,7 @@ const Despesas = () => {
                       <div key={despesa.id} className="contents">
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
-                          <div className="col-span-2 text-center -ml-1">
+                          <div className="col-span-2 text-center">
                             <div className="text-lg font-bold">
                               {formatDateForMobile(despesa.date).day}
                             </div>
@@ -1562,12 +1562,12 @@ const Despesas = () => {
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
-                          <div className="col-span-2 -ml-1">
+                          <div className="col-span-2">
                           </div>
                         )}
                         
                         {/* Ponto da Timeline - Coluna 3 */}
-                        <div className="col-span-1 flex items-center justify-center relative z-10 -ml-1">
+                        <div className="col-span-1 flex items-center justify-center relative z-10">
                           <div className="w-3 h-3 rounded-full bg-red-500" />
                         </div>
                         
@@ -1608,7 +1608,7 @@ const Despesas = () => {
 
           {/* Layout Desktop - Tabela */}
           <div className="hidden sm:block overflow-x-auto">
-            <Table>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
