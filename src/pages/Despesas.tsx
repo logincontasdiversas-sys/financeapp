@@ -1519,13 +1519,28 @@ const Despesas = () => {
               }, {} as Record<string, typeof despesas>);
 
               return Object.entries(groupedByDate).map(([date, despesasOfDate]) => (
-                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
+                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4 relative">
+                  {/* Checkbox global do grupo (fora do grid), aparece na linha da data */}
+                  {selectedItems.length > 0 && (
+                    <div className="absolute right-3 top-3">
+                      <Checkbox
+                        checked={selectedItems.length === despesasOfDate.length && despesasOfDate.length > 0}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedItems(prev => Array.from(new Set([...prev, ...despesasOfDate.map(d => d.id)])));
+                          } else {
+                            setSelectedItems(prev => prev.filter(id => !despesasOfDate.some(d => d.id === id)));
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                   {/* Grid Padronizado - 12 colunas */}
                   <div className="grid grid-cols-12 gap-2 relative auto-rows-[56px]">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
                       <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-2">
-                        <div className="col-start-3 relative justify-self-center">
+                        <div className="col-start-3 relative justify-self-center -ml-1">
                           <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.05rem', height: `${(despesasOfDate.length - 1) * 64}px` }} />
                         </div>
                       </div>
@@ -1535,7 +1550,7 @@ const Despesas = () => {
                       <div key={despesa.id} className="contents">
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
-                          <div className="col-span-2 text-center">
+                          <div className="col-span-2 text-center -ml-1">
                             <div className="text-lg font-bold">
                               {formatDateForMobile(despesa.date).day}
                             </div>
@@ -1547,31 +1562,21 @@ const Despesas = () => {
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
-                          <div className="col-span-2">
+                          <div className="col-span-2 -ml-1">
                           </div>
                         )}
                         
                         {/* Ponto da Timeline - Coluna 3 */}
-                        <div className="col-span-1 flex items-center justify-center relative z-10">
+                        <div className="col-span-1 flex items-center justify-center relative z-10 -ml-1">
                           <div className="w-3 h-3 rounded-full bg-red-500" />
                         </div>
                         
-                        {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
-                        {selectedItems.length > 0 ? (
-                          <div className="col-span-1 flex items-center justify-center">
-                            <Checkbox
-                              checked={selectedItems.includes(despesa.id)}
-                              onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
-                            />
+                        {/* Descrição + Valor - Colunas 4-12 */}
+                        <div className="col-span-9 min-w-0">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-medium text-sm truncate">{despesa.title}</p>
+                            <p className="font-bold text-sm text-red-600 whitespace-nowrap">-{formatCurrency(despesa.amount)}</p>
                           </div>
-                        ) : (
-                          <div className="col-span-1">
-                          </div>
-                        )}
-                        
-                        {/* Descrição - Colunas 5-9 */}
-                        <div className="col-span-5 min-w-0">
-                          <p className="font-medium text-sm truncate">{despesa.title}</p>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {despesa.categories?.emoji && (
                               <span>{despesa.categories.emoji}</span>
@@ -1587,12 +1592,8 @@ const Despesas = () => {
                             )}
                           </div>
                         </div>
-                        
-                        {/* Valor - Colunas 10-12 */}
-                        <div className="col-span-3 text-right">
-                          <p className="font-bold text-sm text-red-600">
-                            -{formatCurrency(despesa.amount)}
-                          </p>
+                        {/* Status abaixo (opcional) */}
+                        <div className="col-span-9 col-start-4 -mt-2">
                           <p className="text-xs text-muted-foreground">
                             {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
                           </p>
