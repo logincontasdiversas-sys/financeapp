@@ -1528,7 +1528,7 @@ const Despesas = () => {
                            style={{ 
                              top: '3.25rem', // Centro do primeiro ponto
                              height: `${(despesasOfDate.length - 1) * 3.5}rem`,
-                             left: 'calc(16.66% + 8.33% - 2px)' // Posição exata da coluna 3
+                             left: 'calc(33.33% + 8.33% - 2px)' // Posição exata da coluna 3
                            }}></div>
                     )}
                     
