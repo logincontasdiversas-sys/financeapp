@@ -1544,21 +1544,18 @@ const Despesas = () => {
                             <div className="text-sm text-muted-foreground">
                               {formatDateForMobile(despesa.date).month}
                             </div>
-                            <div className="text-xs text-red-500">Col 1-2</div>
                           </div>
                         )}
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
                           <div className="col-span-2 border border-dashed border-red-500 p-1">
-                            <div className="text-xs text-red-500">Col 1-2</div>
                           </div>
                         )}
                         
                         {/* Ponto da Timeline - Coluna 3 */}
                         <div className="col-span-1 flex items-center justify-center relative z-10 border border-dashed border-green-500 p-1">
                           <div className="w-3 h-3 rounded-full bg-red-500" />
-                          <div className="text-xs text-green-500 absolute -bottom-4">Col 3</div>
                         </div>
                         
                         {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
@@ -1568,11 +1565,9 @@ const Despesas = () => {
                               checked={selectedItems.includes(despesa.id)}
                               onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
                             />
-                            <div className="text-xs text-purple-500 absolute -bottom-4">Col 4</div>
                           </div>
                         ) : (
                           <div className="col-span-1 border border-dashed border-purple-500 p-1">
-                            <div className="text-xs text-purple-500">Col 4</div>
                           </div>
                         )}
                         
@@ -1593,7 +1588,6 @@ const Despesas = () => {
                               <span className="truncate">• {despesa.credit_cards.name}</span>
                             )}
                           </div>
-                          <div className="text-xs text-yellow-500">Col 5-9</div>
                         </div>
                         
                         {/* Valor - Colunas 10-12 */}
@@ -1604,7 +1598,6 @@ const Despesas = () => {
                           <p className="text-xs text-muted-foreground">
                             {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
                           </p>
-                          <div className="text-xs text-pink-500">Col 10-12</div>
                         </div>
                       </div>
                     ))}

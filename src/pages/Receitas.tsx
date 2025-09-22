@@ -917,14 +917,12 @@ const Receitas = () => {
                             <div className="text-sm text-muted-foreground">
                               {formatDateForMobile(receita.date).month}
                             </div>
-                            <div className="text-xs text-red-500">Col 1-2</div>
                           </div>
                         )}
                         
                         {/* Espaçador quando não é o primeiro item */}
                         {index > 0 && (
                           <div className="col-span-2 border border-dashed border-red-500 p-1">
-                            <div className="text-xs text-red-500">Col 1-2</div>
                           </div>
                         )}
                         
@@ -933,7 +931,6 @@ const Receitas = () => {
                           <div className={`w-3 h-3 rounded-full ${
                             receita.amount > 0 ? 'bg-green-500' : 'bg-red-500'
                           }`} />
-                          <div className="text-xs text-green-500 absolute -bottom-4">Col 3</div>
                         </div>
                         
                         {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
@@ -943,11 +940,9 @@ const Receitas = () => {
                               checked={selectedItems.includes(receita.id)}
                               onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
                             />
-                            <div className="text-xs text-purple-500 absolute -bottom-4">Col 4</div>
                           </div>
                         ) : (
                           <div className="col-span-1 border border-dashed border-purple-500 p-1">
-                            <div className="text-xs text-purple-500">Col 4</div>
                           </div>
                         )}
                         
@@ -957,7 +952,6 @@ const Receitas = () => {
                           {receita.banks?.name && (
                             <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
                           )}
-                          <div className="text-xs text-yellow-500">Col 5-9</div>
                         </div>
                         
                         {/* Valor - Colunas 10-12 */}
@@ -970,7 +964,6 @@ const Receitas = () => {
                           <p className="text-xs text-muted-foreground">
                             {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
                           </p>
-                          <div className="text-xs text-pink-500">Col 10-12</div>
                         </div>
                       </div>
                     ))}
