@@ -1524,7 +1524,7 @@ const Despesas = () => {
                   <div className="relative">
                     {/* Linha Vertical Contínua - como no extrato bancário */}
                     {despesasOfDate.length > 1 && (
-                      <div className="absolute left-8 w-1 bg-muted rounded-full" 
+                      <div className="absolute left-8 w-1 bg-orange-400 rounded-full" 
                            style={{ 
                              top: '2.5rem', 
                              height: `${(despesasOfDate.length - 1) * 2.5}rem` 
