@@ -1520,21 +1520,7 @@ const Despesas = () => {
 
               return Object.entries(groupedByDate).map(([date, despesasOfDate]) => (
                 <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4 relative">
-                  {/* Checkbox global do grupo (fora do grid), aparece na linha da data */}
-                  {selectedItems.length > 0 && (
-                    <div className="absolute right-3 top-3">
-                      <Checkbox
-                        checked={selectedItems.length === despesasOfDate.length && despesasOfDate.length > 0}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedItems(prev => Array.from(new Set([...prev, ...despesasOfDate.map(d => d.id)])));
-                          } else {
-                            setSelectedItems(prev => prev.filter(id => !despesasOfDate.some(d => d.id === id)));
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
+                  {/* Removido checkbox global do grupo (lado direito) */}
                   {/* Grid Padronizado - 12 colunas */}
                   <div className="grid grid-cols-12 gap-2 relative auto-rows-[56px] -ml-[5px]">
                     {/* Linha Vertical - conecta ponto a ponto */}
@@ -1549,17 +1535,15 @@ const Despesas = () => {
                     {despesasOfDate.map((despesa, index) => (
                       <div key={despesa.id} className="contents">
                         {/* Checkbox individual à esquerda, fora do campo de lançamentos */}
-                        {selectedItems.length > 0 && (
-                          <div
-                            className="absolute -left-[10px] z-20"
-                            style={{ top: `calc(2.05rem + ${index * 64}px - 12px)` }}
-                          >
-                            <Checkbox
-                              checked={selectedItems.includes(despesa.id)}
-                              onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
-                            />
-                          </div>
-                        )}
+                        <div
+                          className="absolute -left-[16px] z-20"
+                          style={{ top: `calc(2.05rem + ${index * 64}px - 12px)` }}
+                        >
+                          <Checkbox
+                            checked={selectedItems.includes(despesa.id)}
+                            onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
+                          />
+                        </div>
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
                           <div className="col-span-2 text-center">
