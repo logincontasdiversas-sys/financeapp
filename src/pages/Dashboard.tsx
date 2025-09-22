@@ -14,6 +14,7 @@ import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
 import { logger } from "@/utils/logger";
 import { CalendarSection } from "@/components/dashboard/CalendarSection";
 import { MonthlyChart } from "@/components/dashboard/MonthlyChart";
+import { getCurrentDateBrasilia } from "@/utils/dateUtils";
 
 interface DashboardStats {
   totalReceitas: number;
@@ -88,14 +89,14 @@ const Dashboard = () => {
       console.log('[DASHBOARD_DEBUG] User:', user);
       console.log('[DASHBOARD_DEBUG] Tenant ID:', tenantId);
       
-      // Get current month transactions
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
+      // Get current month transactions using Brasília timezone
+      const now = new Date();
+      const brasiliaDate = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+      
+      const startOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
       const startDate = startOfMonth.toISOString().split('T')[0];
       
-      const endOfMonth = new Date();
-      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-      endOfMonth.setDate(0);
+      const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
       const endDate = endOfMonth.toISOString().split('T')[0];
       
       console.log('[DASHBOARD_DEBUG] Date range:', { startDate, endDate });
@@ -171,10 +172,9 @@ const Dashboard = () => {
       const totalReceitas = filteredIncomeData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
       const totalDespesas = expenseData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
       
-      // Calculate cumulative balance from the beginning until current month
-      const currentDate = new Date();
-      const currentYear = currentDate.getFullYear();
-      const currentMonth = currentDate.getMonth();
+      // Calculate cumulative balance from the beginning until current month using Brasília timezone
+      const currentYear = brasiliaDate.getFullYear();
+      const currentMonth = brasiliaDate.getMonth();
       
       // Get all transactions from the beginning until current month (including transfers for balance calculation)
       const { data: allTransactionsUntilNow } = await supabase
@@ -218,9 +218,8 @@ const Dashboard = () => {
         totalDespesas
       });
 
-      // Calculate previous month's balance
-      const previousMonth = new Date();
-      previousMonth.setMonth(previousMonth.getMonth() - 1);
+      // Calculate previous month's balance using Brasília timezone
+      const previousMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() - 1, 1);
       const prevMonthEndDate = new Date(previousMonth.getFullYear(), previousMonth.getMonth() + 1, 0);
       const prevMonthEndDateStr = prevMonthEndDate.toISOString().split('T')[0];
 

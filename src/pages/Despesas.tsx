@@ -15,7 +15,7 @@ import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
 import { logger } from "@/utils/logger";
-import { formatDateForDisplay, dateInputToISO } from "@/utils/dateUtils";
+import { formatDateForDisplay, dateInputToISO, formatDateForMobile } from "@/utils/dateUtils";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { ImportCSV } from '@/components/ImportCSV';
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
@@ -1504,10 +1504,10 @@ const Despesas = () => {
                       {index === 0 && (
                         <div className="flex-shrink-0 w-16 text-center">
                           <div className="text-sm font-medium">
-                            {new Date(despesa.date).getDate()}
+                            {formatDateForMobile(despesa.date).day}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(despesa.date).toLocaleDateString('pt-BR', { month: 'short' })}
+                            {formatDateForMobile(despesa.date).month}
                           </div>
                         </div>
                       )}

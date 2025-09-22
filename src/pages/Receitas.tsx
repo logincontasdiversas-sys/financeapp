@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
-import { dateInputToISO, formatDateForDisplay } from "@/utils/dateUtils";
+import { dateInputToISO, formatDateForDisplay, formatDateForMobile } from "@/utils/dateUtils";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { ImportCSVReceitas } from '@/components/ImportCSVReceitas';
 import { SingleLineChart } from "@/components/dashboard/SingleLineChart";
@@ -877,10 +877,10 @@ const Receitas = () => {
                       {index === 0 && (
                         <div className="flex-shrink-0 w-16 text-center">
                           <div className="text-sm font-medium">
-                            {new Date(receita.date).getDate()}
+                            {formatDateForMobile(receita.date).day}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(receita.date).toLocaleDateString('pt-BR', { month: 'short' })}
+                            {formatDateForMobile(receita.date).month}
                           </div>
                         </div>
                       )}
