@@ -107,6 +107,8 @@ const Despesas = () => {
   const [editingDespesa, setEditingDespesa] = useState<Transaction | null>(null);
   const [summaryRefreshKey, setSummaryRefreshKey] = useState(0);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [lastSelectAll, setLastSelectAll] = useState(false);
   const [showInvoiceField, setShowInvoiceField] = useState(false);
   const [showCardField, setShowCardField] = useState(false);
   const [sortField, setSortField] = useState<string | null>(null);
@@ -929,6 +931,7 @@ const Despesas = () => {
   };
 
   const handleSelectItem = (id: string, checked: boolean) => {
+    setLastSelectAll(false);
     if (checked) {
       setSelectedItems([...selectedItems, id]);
     } else {
@@ -1480,32 +1483,56 @@ const Despesas = () => {
         <CardContent>
           {/* Layout Mobile - Cards */}
           <div className="block sm:hidden space-y-3">
-            {/* Botão de Seleção Global - Mobile */}
+            {/* Barra de seleção - Mobile */}
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (!selectionMode) {
+                    setSelectionMode(true);
+                    setLastSelectAll(false);
+                  } else {
+                    const all = getFilteredAndSortedDespesas();
+                    setSelectedItems(all.map(d => d.id));
+                    setLastSelectAll(true);
+                  }
+                }}
+              >
+                {selectionMode ? 'Selecionar Todos' : 'Selecionar'}
+              </Button>
               <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedItems.length === despesas.length && despesas.length > 0}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedItems(despesas.map(d => d.id));
-                    } else {
-                      setSelectedItems([]);
-                    }
-                  }}
-                />
-                <span className="text-sm font-medium">
-                  {selectedItems.length > 0 ? `Selecionados: ${selectedItems.length}` : 'Selecionar todos'}
-                </span>
+                {selectedItems.length > 0 && (
+                  lastSelectAll ? (
+                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                      Excluir
+                    </Button>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" onClick={handleEditSelected} className="flex items-center gap-2">
+                        <Pencil className="h-4 w-4" />
+                        Editar
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={handleDuplicateSelected} className="flex items-center gap-2">
+                        <Copy className="h-4 w-4" />
+                        Duplicar
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="flex items-center gap-2">
+                        <Trash2 className="h-4 w-4" />
+                        Excluir
+                      </Button>
+                    </>
+                  )
+                )}
+                {selectionMode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSelectionMode(false); setSelectedItems([]); setLastSelectAll(false); }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
               </div>
-              {selectedItems.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedItems([])}
-                >
-                  Cancelar
-                </Button>
-              )}
             </div>
 
             {(() => {
@@ -1535,15 +1562,17 @@ const Despesas = () => {
                     {despesasOfDate.map((despesa, index) => (
                       <div key={despesa.id} className="contents">
                         {/* Checkbox individual à esquerda, fora do campo de lançamentos */}
-                        <div
-                          className="absolute -left-[20px] z-20"
-                          style={{ top: `calc(28px + ${index * 60}px - 12px)` }}
-                        >
-                          <Checkbox
-                            checked={selectedItems.includes(despesa.id)}
-                            onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
-                          />
-                        </div>
+                        {selectionMode && (
+                          <div
+                            className="absolute -left-[20px] z-20"
+                            style={{ top: `calc(28px + ${index * 60}px - 12px)` }}
+                          >
+                            <Checkbox
+                              checked={selectedItems.includes(despesa.id)}
+                              onCheckedChange={(checked) => handleSelectItem(despesa.id, checked as boolean)}
+                            />
+                          </div>
+                        )}
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
                           <div className="col-span-2 text-center">
