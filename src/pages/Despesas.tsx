@@ -1587,9 +1587,9 @@ const Despesas = () => {
                               <span className="truncate">• {despesa.credit_cards.name}</span>
                             )}
                           </div>
-                          <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">
-                            {despesa.status === 'settled' ? 'Pago' : 'Pendente'}
-                          </p>
+                          {despesa.status !== 'settled' && (
+                            <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">Pendente</p>
+                          )}
                         </div>
                       </div>
                     ))}

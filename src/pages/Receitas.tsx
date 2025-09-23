@@ -956,9 +956,9 @@ const Receitas = () => {
                               <span className="truncate">{receita.banks.name}</span>
                             )}
                           </div>
-                          <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">
-                            {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
-                          </p>
+                          {receita.status !== 'settled' && (
+                            <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">Pendente</p>
+                          )}
                         </div>
                       </div>
                     ))}
