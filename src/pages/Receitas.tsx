@@ -892,20 +892,30 @@ const Receitas = () => {
               }, {} as Record<string, typeof receitas>);
 
               return Object.entries(groupedByDate).map(([date, receitasOfDate]) => (
-                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4">
+                <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4 relative">
                   {/* Grid Padronizado - 12 colunas */}
-                  <div className="grid grid-cols-12 gap-2 relative">
+                  <div className="grid grid-cols-12 gap-1 relative auto-rows-[56px] -ml-[14px]">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {receitasOfDate.length > 1 && (
-                      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-2">
+                      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-1">
                         <div className="col-start-3 relative justify-self-center">
-                          <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.35rem', height: `${(receitasOfDate.length - 1) * 56}px` }} />
+                          <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '28px', height: `${(receitasOfDate.length - 1) * 60}px` }} />
                         </div>
                       </div>
                     )}
                     
                     {receitasOfDate.map((receita, index) => (
                       <div key={receita.id} className="contents">
+                        {/* Checkbox individual à esquerda, sempre visível */}
+                        <div
+                          className="absolute -left-[20px] z-20"
+                          style={{ top: `calc(28px + ${index * 60}px - 12px)` }}
+                        >
+                          <Checkbox
+                            checked={selectedItems.includes(receita.id)}
+                            onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
+                          />
+                        </div>
                         {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                         {index === 0 && (
                           <div className="col-span-2 text-center">
@@ -931,35 +941,22 @@ const Receitas = () => {
                           }`} />
                         </div>
                         
-                        {/* Checkbox - Coluna 4 (só aparece se seleção estiver ativa) */}
-                        {selectedItems.length > 0 ? (
-                          <div className="col-span-1 flex items-center justify-center">
-                            <Checkbox
-                              checked={selectedItems.includes(receita.id)}
-                              onCheckedChange={(checked) => handleSelectItem(receita.id, checked as boolean)}
-                            />
+                        {/* Descrição + Valor - Colunas 4-12 */}
+                        <div className="col-span-9 min-w-0 relative h-full">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="font-medium text-sm truncate">{receita.title}</p>
+                            <p className={`font-bold text-sm whitespace-nowrap ${
+                              receita.amount > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {receita.amount > 0 ? '+' : ''}{formatCurrency(receita.amount)}
+                            </p>
                           </div>
-                        ) : (
-                          <div className="col-span-1">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {receita.banks?.name && (
+                              <span className="truncate">{receita.banks.name}</span>
+                            )}
                           </div>
-                        )}
-                        
-                        {/* Descrição - Colunas 5-9 */}
-                        <div className="col-span-5 min-w-0">
-                          <p className="font-medium text-sm truncate">{receita.title}</p>
-                          {receita.banks?.name && (
-                            <p className="text-xs text-muted-foreground truncate">{receita.banks.name}</p>
-                          )}
-                        </div>
-                        
-                        {/* Valor - Colunas 10-12 */}
-                        <div className="col-span-3 text-right">
-                          <p className={`font-bold text-sm ${
-                            receita.amount > 0 ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {receita.amount > 0 ? '+' : ''}{formatCurrency(receita.amount)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">
                             {receita.status === 'settled' ? 'Recebido' : 'Pendente'}
                           </p>
                         </div>
