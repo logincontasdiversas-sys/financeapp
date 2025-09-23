@@ -808,20 +808,20 @@ const Receitas = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <CardTitle>Lista de Receitas</CardTitle>
-              {selectedItems.length > 0 && (
-                <div className="flex items-center gap-1 flex-wrap">
+              {selectionMode && selectedItems.length > 0 && (
+                <div className="flex items-center gap-2 sm:gap-2 flex-wrap max-w-full">
                   {lastSelectAll ? (
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={handleBulkDelete}
-                      className="h-8 px-2 text-xs flex items-center gap-1"
+                      className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
                     >
                       <Trash2 className="h-3 w-3" />
-                      Excluir ({selectedItems.length})
+                      Excluir
                     </Button>
                   ) : (
                     <>
@@ -829,7 +829,7 @@ const Receitas = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditSelected()}
-                        className="h-8 px-2 text-xs flex items-center gap-1"
+                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
                       >
                         <Pencil className="h-3 w-3" />
                         Editar
@@ -838,7 +838,7 @@ const Receitas = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDuplicateSelected()}
-                        className="h-8 px-2 text-xs flex items-center gap-1"
+                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
                       >
                         <Copy className="h-3 w-3" />
                         Duplicar
@@ -847,10 +847,10 @@ const Receitas = () => {
                         variant="destructive"
                         size="sm"
                         onClick={handleBulkDelete}
-                        className="h-8 px-2 text-xs flex items-center gap-1"
+                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
                       >
                         <Trash2 className="h-3 w-3" />
-                        Excluir ({selectedItems.length})
+                        Excluir
                       </Button>
                     </>
                   )}
