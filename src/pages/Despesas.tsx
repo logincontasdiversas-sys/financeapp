@@ -1522,10 +1522,10 @@ const Despesas = () => {
                 <div key={date} className="bg-muted/50 rounded-lg p-4 mb-4 relative">
                   {/* Removido checkbox global do grupo (lado direito) */}
                   {/* Grid Padronizado - 12 colunas */}
-                  <div className="grid grid-cols-12 gap-1.5 relative auto-rows-[56px] -ml-[10px]">
+                  <div className="grid grid-cols-12 gap-1 relative auto-rows-[56px] -ml-[14px]">
                     {/* Linha Vertical - conecta ponto a ponto */}
                     {despesasOfDate.length > 1 && (
-                      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-1.5">
+                      <div className="pointer-events-none absolute inset-0 grid grid-cols-12 gap-1">
                         <div className="col-start-3 relative justify-self-center">
                           <div className="absolute left-1/2 -translate-x-1/2 w-[3px] bg-orange-500 rounded-full" style={{ top: '2.05rem', height: `${(despesasOfDate.length - 1) * 64}px` }} />
                         </div>
@@ -1536,7 +1536,7 @@ const Despesas = () => {
                       <div key={despesa.id} className="contents">
                         {/* Checkbox individual à esquerda, fora do campo de lançamentos */}
                         <div
-                          className="absolute -left-[16px] z-20"
+                          className="absolute -left-[20px] z-20"
                           style={{ top: `calc(2.05rem + ${index * 64}px - 12px)` }}
                         >
                           <Checkbox
