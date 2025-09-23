@@ -1500,24 +1500,24 @@ const Despesas = () => {
               >
                 {selectionMode ? 'Selecionar Todos' : 'Selecionar'}
               </Button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 flex-wrap">
                 {selectedItems.length > 0 && (
                   lastSelectAll ? (
-                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                    <Button variant="destructive" size="sm" className="h-8 px-2 text-xs" onClick={handleBulkDelete}>
                       Excluir
                     </Button>
                   ) : (
                     <>
-                      <Button variant="outline" size="sm" onClick={handleEditSelected} className="flex items-center gap-2">
-                        <Pencil className="h-4 w-4" />
+                      <Button variant="outline" size="sm" onClick={handleEditSelected} className="h-8 px-2 text-xs flex items-center gap-1">
+                        <Pencil className="h-3 w-3" />
                         Editar
                       </Button>
-                      <Button variant="outline" size="sm" onClick={handleDuplicateSelected} className="flex items-center gap-2">
-                        <Copy className="h-4 w-4" />
+                      <Button variant="outline" size="sm" onClick={handleDuplicateSelected} className="h-8 px-2 text-xs flex items-center gap-1">
+                        <Copy className="h-3 w-3" />
                         Duplicar
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="flex items-center gap-2">
-                        <Trash2 className="h-4 w-4" />
+                      <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8 px-2 text-xs flex items-center gap-1">
+                        <Trash2 className="h-3 w-3" />
                         Excluir
                       </Button>
                     </>
@@ -1527,6 +1527,7 @@ const Despesas = () => {
                   <Button
                     variant="outline"
                     size="sm"
+                    className="h-8 px-2 text-xs"
                     onClick={() => { setSelectionMode(false); setSelectedItems([]); setLastSelectAll(false); }}
                   >
                     Cancelar
