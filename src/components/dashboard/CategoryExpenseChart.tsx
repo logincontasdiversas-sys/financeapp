@@ -36,6 +36,8 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
   const { tenantId } = useTenant();
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [percentOfRevenue, setPercentOfRevenue] = useState<number>(0);
+  const [baseIncome, setBaseIncome] = useState<number>(0);
+  const [totalExpenses, setTotalExpenses] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   
   // Check if we're looking at a future period
@@ -212,6 +214,8 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
 
       // Meta: quanto as despesas representam da receita (0 se receita 0)
       setPercentOfRevenue(totalIncome > 0 ? (expenseTotal / totalIncome) * 100 : 0);
+      setBaseIncome(totalIncome);
+      setTotalExpenses(expenseTotal);
     } catch (error) {
       console.error('Error loading category data:', error);
     } finally {
@@ -276,7 +280,7 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
           {isFuturePeriod ? "Distribuição Prevista de Gastos por Categoria" : "Distribuição de Gastos por Categoria"}
         </CardTitle>
         <div className="text-sm text-muted-foreground">
-          {`Porcentagem dos gastos em relação às receitas do período (${percentOfRevenue.toFixed(1)}% das receitas)`}
+          {`Base: RECEITAS do período (R$ ${baseIncome.toFixed(2).replace('.', ',')}). Gastos: R$ ${totalExpenses.toFixed(2).replace('.', ',')} (${percentOfRevenue.toFixed(1)}% da receita)`}
         </div>
       </CardHeader>
       <CardContent>
