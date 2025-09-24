@@ -200,18 +200,17 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       // Sort by value descending
       categoryArray.sort((a, b) => b.value - a.value);
 
-      // Calculate percentages SOBRE A RECEITA do período
-      const total = totalIncome; // base da porcentagem
+      // Percentuais: preferencialmente sobre RECEITA; fallback sobre total das DESPESAS
+      const expenseTotal = categoryArray.reduce((sum, i) => sum + i.value, 0);
+      const base = totalIncome > 0 ? totalIncome : expenseTotal;
       const categoryWithPercentage = categoryArray.map(item => ({
         ...item,
-        percentage: total > 0 ? (item.value / total) * 100 : 0
+        percentage: base > 0 ? (item.value / base) * 100 : 0
       }));
 
-      // Keep all categories visible - no grouping
       setCategoryData(categoryWithPercentage);
 
-      // Meta: quanto as despesas representam da receita
-      const expenseTotal = categoryArray.reduce((sum, i) => sum + i.value, 0);
+      // Meta: quanto as despesas representam da receita (0 se receita 0)
       setPercentOfRevenue(totalIncome > 0 ? (expenseTotal / totalIncome) * 100 : 0);
     } catch (error) {
       console.error('Error loading category data:', error);
