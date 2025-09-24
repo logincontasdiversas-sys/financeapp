@@ -587,14 +587,14 @@ const Movimentacoes = () => {
 
                             {/* Descrição + Valor - Colunas 4-12 */}
                             <div className="col-span-9 min-w-0 relative h-full">
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center justify-between gap-3 h-full">
                                 <p className="font-medium text-sm truncate">{item.title}</p>
                                 <p className={`font-bold text-sm whitespace-nowrap ${item.kind === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                   {item.kind === 'income' ? '+' : '-'}{formatCurrency(item.amount)}
                                 </p>
                               </div>
                               {item.status !== 'settled' && (
-                                <p className="absolute left-0 bottom-0 text-xs text-muted-foreground">Pendente</p>
+                                <p className="absolute left-0 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">Pendente</p>
                               )}
                             </div>
                           </div>
