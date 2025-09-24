@@ -25,16 +25,10 @@ interface CategoryExpenseChartProps {
   dateFilter?: DateRange | null;
 }
 
+// Paleta igual à do gráfico do Dashboard
 const COLORS = [
-  '#9333EA', '#DC2626', '#059669', '#D97706', '#2563EB', '#DB2777',
-  '#7C3AED', '#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#F97316',
-  '#84CC16', '#06B6D4', '#8B5A2B', '#EC4899', '#6366F1', '#14B8A6',
-  '#F59E0B', '#EF4444', '#8B5CF6', '#10B981', '#F97316', '#84CC16',
-  '#06B6D4', '#8B5A2B', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B',
-  '#EF4444', '#8B5CF6', '#10B981', '#F97316', '#84CC16', '#06B6D4',
-  '#8B5A2B', '#EC4899', '#6366F1', '#14B8A6', '#F59E0B', '#EF4444',
-  '#8B5CF6', '#10B981', '#F97316', '#84CC16', '#06B6D4', '#8B5A2B',
-  '#EC4899', '#6366F1', '#14B8A6', '#F59E0B', '#EF4444', '#8B5CF6'
+  '#4472C4', '#0F4761', '#E15759', '#C5504B', '#70AD47', '#F79646',
+  '#9966CC', '#4BACC6', '#8C8C8C'
 ];
 
 export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) => {
@@ -315,7 +309,7 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
           {isFuturePeriod ? "Distribuição Prevista de Gastos por Categoria" : "Distribuição de Gastos por Categoria"}
         </CardTitle>
         <div className="text-sm text-muted-foreground">
-          {`Porcentagem dos gastos em relação às receitas do mês (${percentOfRevenue.toFixed(1)}% das receitas)`}
+          {`Porcentagem dos gastos em relação às receitas do período (${percentOfRevenue.toFixed(1)}% das receitas)`}
         </div>
       </CardHeader>
       <CardContent>
@@ -334,13 +328,12 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
                     cy="50%"
                     labelLine={false}
                     label={CustomLabel}
-                    outerRadius={120}
-                    innerRadius={50}
+                    outerRadius={140}
+                    innerRadius={0}
                     fill="hsl(var(--muted))"
                     dataKey="value"
                     stroke="hsl(var(--border))"
-                    strokeWidth={1}
-                    paddingAngle={1}
+                    strokeWidth={2}
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -353,26 +346,19 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
             
             <div className="space-y-2">
               <h4 className="font-medium mb-3">Legenda</h4>
-              <div className="max-h-80 overflow-y-auto">
-                {categoryData.map((category) => (
-                  <div key={category.id} className="flex items-center justify-between text-sm py-1 hover:bg-muted/50 rounded px-2">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div 
-                        className="w-3 h-3 rounded-full flex-shrink-0" 
-                        style={{ backgroundColor: category.color }}
-                      />
-                      <span className="text-base">{category.emoji}</span>
-                      <span className="truncate" title={category.name}>{category.name}</span>
-                    </div>
-                    <div className="text-right flex-shrink-0 ml-2">
-                      <div className="font-medium text-xs">{formatCurrency(category.value)}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {category.percentage?.toFixed(1)}%
-                      </div>
-                    </div>
+              {categoryData.map((category) => (
+                <div key={category.id} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }} />
+                    <span>{category.emoji}</span>
+                    <span className="font-medium">{category.name}</span>
                   </div>
-                ))}
-              </div>
+                  <div className="text-right">
+                    <div className="font-bold text-destructive">{formatCurrency(category.value)}</div>
+                    <div className="text-xs text-muted-foreground">{category.percentage?.toFixed(1)}%</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
