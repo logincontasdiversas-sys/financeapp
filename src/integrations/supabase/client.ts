@@ -2,22 +2,30 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  // eslint-disable-next-line no-console
-  console.error('Supabase env vars não configuradas. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
-  throw new Error('Supabase configuration missing');
-}
-
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+// Em ambientes sem ENV (ex.: build do Vercel sem variáveis), evitamos quebrar o build.
+// No runtime, qualquer uso do cliente sem ENV válidas mostrará um erro claro.
+export const supabase = ((): any => {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    // eslint-disable-next-line no-console
+    console.error('Supabase env vars não configuradas. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
+    return new Proxy({}, {
+      get() {
+        throw new Error('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no ambiente.');
+      }
+    }) as unknown as ReturnType<typeof createClient<Database>>;
   }
-});
+
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  });
+})();
