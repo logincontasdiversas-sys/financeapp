@@ -188,7 +188,7 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
         name: data.name,
         emoji: data.emoji,
         value: data.total,
-        color: COLORS[index] // Use direct index to ensure unique colors
+        color: COLORS[index % COLORS.length]
       }));
 
       // Sort by value descending
@@ -220,48 +220,9 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
     }).format(value);
   };
 
-  // Custom label component with external labels and connecting lines
-  const CustomLabel = (props: any) => {
-    const { cx, cy, midAngle, innerRadius, outerRadius, percentage, name } = props;
-    
-    if (percentage < 1) return null; // Don't show labels for very small slices
-    
-    const RADIAN = Math.PI / 180;
-    const radius = outerRadius + 20; // Position labels outside the donut
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    
-    // Calculate line end points
-    const lineX = cx + (outerRadius + 10) * Math.cos(-midAngle * RADIAN);
-    const lineY = cy + (outerRadius + 10) * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <g>
-        {/* Connecting line */}
-        <line
-          x1={cx + outerRadius * Math.cos(-midAngle * RADIAN)}
-          y1={cy + outerRadius * Math.sin(-midAngle * RADIAN)}
-          x2={lineX}
-          y2={lineY}
-          stroke="currentColor"
-          strokeWidth="1"
-          className="text-muted-foreground"
-        />
-        {/* Label */}
-        <text 
-          x={x} 
-          y={y} 
-          fill="currentColor" 
-          textAnchor={x > cx ? 'start' : 'end'} 
-          dominantBaseline="central"
-          fontSize="11"
-          fontWeight="500"
-          className="text-foreground"
-        >
-          {percentage > 1 ? `${percentage.toFixed(0)}%` : `${percentage.toFixed(1)}%`}
-        </text>
-      </g>
-    );
+  // Labels iguais às do Dashboard (apenas número no slice, sem linhas)
+  const CustomLabel = ({ percentage }: any) => {
+    return percentage >= 3 ? `${percentage.toFixed(0)}%` : '';
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
