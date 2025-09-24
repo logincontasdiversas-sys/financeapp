@@ -1422,55 +1422,9 @@ const Despesas = () => {
 
       <Card>
         <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <CardTitle>Lista de Despesas</CardTitle>
-              {selectionMode && selectedItems.length > 0 && (
-                <div className="flex items-center gap-2 sm:gap-2 flex-wrap max-w-full">
-                  {lastSelectAll ? (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleBulkDelete}
-                      className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Excluir
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditSelected()}
-                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                      >
-                        <Pencil className="h-3 w-3" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDuplicateSelected()}
-                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                      >
-                        <Copy className="h-3 w-3" />
-                        Duplicar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleBulkDelete}
-                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Excluir
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CardTitle>Lista de Despesas</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="w-full sm:w-48">
                 <Select value={paymentMethodFilter} onValueChange={(value: 'all' | 'normal' | 'credit_card') => setPaymentMethodFilter(value)}>
                   <SelectTrigger className="h-9">
@@ -1484,17 +1438,65 @@ const Despesas = () => {
                 </Select>
               </div>
               <div className="w-full sm:w-72">
-              <Input
-                placeholder="Filtrar por título, categoria, banco, valor..."
-                value={textFilter}
-                onChange={(e) => setTextFilter(e.target.value)}
-                className="h-9"
-              />
+                <Input
+                  placeholder="Filtrar por título, categoria, banco, valor..."
+                  value={textFilter}
+                  onChange={(e) => setTextFilter(e.target.value)}
+                  className="h-9"
+                />
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {/* Barra de ações dentro do campo da lista (mobile e desktop) */}
+          {selectedItems.length > 0 && (
+            <div className="mb-3 px-1 sm:px-0">
+              <div className="hidden sm:flex items-center gap-2 flex-wrap">
+                {lastSelectAll ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8 px-2 text-xs flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Excluir
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
           {/* Layout Mobile - Cards */}
           <div className="block sm:hidden space-y-3">
             {/* Barra de seleção - Mobile */}
@@ -1527,6 +1529,53 @@ const Despesas = () => {
                 )}
               </div>
             </div>
+
+            {/* Ações quando itens selecionados (mobile) */}
+            {selectionMode && selectedItems.length > 0 && (
+              <div className="px-3 -mt-2 mb-1 flex items-center gap-2 flex-wrap">
+                {lastSelectAll ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8 px-2 text-xs flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Excluir
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
 
             {(() => {
               const groupedByDate = getFilteredAndSortedDespesas().reduce((acc, despesa) => {
