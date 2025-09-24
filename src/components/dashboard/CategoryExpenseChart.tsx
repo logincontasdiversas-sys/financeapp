@@ -80,7 +80,8 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
         `)
         .eq('kind', 'expense')
         .eq('tenant_id', tenantId)
-        .not('categories', 'is', null);
+        .not('categories', 'is', null)
+        .not('categories.name', 'eq', 'Transferência entre Bancos');
 
       // Include pending transactions for future periods
       if (isFuturePeriod) {
@@ -168,6 +169,11 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       data?.forEach((transaction) => {
         if (transaction.categories) {
           const category = transaction.categories;
+          const categoryName = (category.name || '').toLowerCase();
+          const isCreditCardInvoice = categoryName.includes('- fatura');
+          if (isCreditCardInvoice) {
+            return; // alinhar com Dashboard: não somar categorias de fatura
+          }
           const existing = categoryMap.get(category.id);
           
           if (existing) {
