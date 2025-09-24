@@ -41,6 +41,7 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
   const { user } = useStableAuth();
   const { tenantId } = useTenant();
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [percentOfRevenue, setPercentOfRevenue] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   
   // Check if we're looking at a future period
@@ -118,37 +119,54 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       if (error) throw error;
 
       // Buscar total de receitas para ser a base da porcentagem (excluindo transferências entre bancos)
-      let incomeQuery = supabase
+      // 1) Todas as receitas (sem join) para evitar filtros que descartem nulos
+      let incomeAllQuery = supabase
+        .from('transactions')
+        .select('amount')
+        .eq('tenant_id', tenantId)
+        .eq('kind', 'income');
+      if (isFuturePeriod) incomeAllQuery = incomeAllQuery.in('status', ['settled', 'pending']);
+      else incomeAllQuery = incomeAllQuery.eq('status', 'settled');
+      if (dateFilter && dateFilter.from && dateFilter.to) {
+        const startDate = toDateStr(dateFilter.from);
+        const endDate = toDateStr(dateFilter.to);
+        incomeAllQuery = incomeAllQuery.gte('date', startDate).lte('date', endDate);
+      } else if (dateFilter !== null) {
+        const startOfMonth = new Date(); startOfMonth.setDate(1);
+        const endOfMonth = new Date(); endOfMonth.setMonth(endOfMonth.getMonth() + 1); endOfMonth.setDate(0);
+        const startDate = startOfMonth.toISOString().split('T')[0];
+        const endDate = endOfMonth.toISOString().split('T')[0];
+        incomeAllQuery = incomeAllQuery.gte('date', startDate).lte('date', endDate);
+      }
+      const { data: incomeAll, error: incomeAllErr } = await incomeAllQuery;
+      if (incomeAllErr) throw incomeAllErr;
+
+      // 2) Receitas apenas da categoria "Transferência entre Bancos" para subtrair
+      let transferIncomeQuery = supabase
         .from('transactions')
         .select('amount, categories(name)')
         .eq('tenant_id', tenantId)
         .eq('kind', 'income')
-        .not('categories.name', 'eq', 'Transferência entre Bancos');
-
-      if (isFuturePeriod) {
-        incomeQuery = incomeQuery.in('status', ['settled', 'pending']);
-      } else {
-        incomeQuery = incomeQuery.eq('status', 'settled');
-      }
-
+        .eq('categories.name', 'Transferência entre Bancos');
+      if (isFuturePeriod) transferIncomeQuery = transferIncomeQuery.in('status', ['settled', 'pending']);
+      else transferIncomeQuery = transferIncomeQuery.eq('status', 'settled');
       if (dateFilter && dateFilter.from && dateFilter.to) {
         const startDate = toDateStr(dateFilter.from);
         const endDate = toDateStr(dateFilter.to);
-        incomeQuery = incomeQuery.gte('date', startDate).lte('date', endDate);
+        transferIncomeQuery = transferIncomeQuery.gte('date', startDate).lte('date', endDate);
       } else if (dateFilter !== null) {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        const endOfMonth = new Date();
-        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-        endOfMonth.setDate(0);
+        const startOfMonth = new Date(); startOfMonth.setDate(1);
+        const endOfMonth = new Date(); endOfMonth.setMonth(endOfMonth.getMonth() + 1); endOfMonth.setDate(0);
         const startDate = startOfMonth.toISOString().split('T')[0];
         const endDate = endOfMonth.toISOString().split('T')[0];
-        incomeQuery = incomeQuery.gte('date', startDate).lte('date', endDate);
+        transferIncomeQuery = transferIncomeQuery.gte('date', startDate).lte('date', endDate);
       }
+      const { data: transferIncome, error: transferErr } = await transferIncomeQuery;
+      if (transferErr) throw transferErr;
 
-      const { data: incomeData, error: incomeErr } = await incomeQuery;
-      if (incomeErr) throw incomeErr;
-      const totalIncome = (incomeData || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+      const sumAllIncome = (incomeAll || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+      const sumTransferIncome = (transferIncome || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+      const totalIncome = Math.max(0, sumAllIncome - sumTransferIncome);
 
       // Group by category
       const categoryMap = new Map<string, { name: string; emoji: string; total: number }>();
@@ -191,6 +209,10 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
 
       // Keep all categories visible - no grouping
       setCategoryData(categoryWithPercentage);
+
+      // Meta: quanto as despesas representam da receita
+      const expenseTotal = categoryArray.reduce((sum, i) => sum + i.value, 0);
+      setPercentOfRevenue(totalIncome > 0 ? (expenseTotal / totalIncome) * 100 : 0);
     } catch (error) {
       console.error('Error loading category data:', error);
     } finally {
@@ -294,10 +316,7 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
           {isFuturePeriod ? "Distribuição Prevista de Gastos por Categoria" : "Distribuição de Gastos por Categoria"}
         </CardTitle>
         <div className="text-sm text-muted-foreground">
-          {isFuturePeriod 
-            ? "Despesas previstas por categoria no período selecionado" 
-            : "Despesas por categoria no período selecionado"
-          }
+          {`Porcentagem dos gastos em relação às receitas do mês (${percentOfRevenue.toFixed(1)}% das receitas)`}
         </div>
       </CardHeader>
       <CardContent>
