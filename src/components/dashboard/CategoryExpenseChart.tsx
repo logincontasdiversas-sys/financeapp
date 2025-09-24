@@ -117,6 +117,39 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
 
       if (error) throw error;
 
+      // Buscar total de receitas para ser a base da porcentagem (excluindo transferências entre bancos)
+      let incomeQuery = supabase
+        .from('transactions')
+        .select('amount, categories(name)')
+        .eq('tenant_id', tenantId)
+        .eq('kind', 'income')
+        .not('categories.name', 'eq', 'Transferência entre Bancos');
+
+      if (isFuturePeriod) {
+        incomeQuery = incomeQuery.in('status', ['settled', 'pending']);
+      } else {
+        incomeQuery = incomeQuery.eq('status', 'settled');
+      }
+
+      if (dateFilter && dateFilter.from && dateFilter.to) {
+        const startDate = toDateStr(dateFilter.from);
+        const endDate = toDateStr(dateFilter.to);
+        incomeQuery = incomeQuery.gte('date', startDate).lte('date', endDate);
+      } else if (dateFilter !== null) {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        const endOfMonth = new Date();
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+        endOfMonth.setDate(0);
+        const startDate = startOfMonth.toISOString().split('T')[0];
+        const endDate = endOfMonth.toISOString().split('T')[0];
+        incomeQuery = incomeQuery.gte('date', startDate).lte('date', endDate);
+      }
+
+      const { data: incomeData, error: incomeErr } = await incomeQuery;
+      if (incomeErr) throw incomeErr;
+      const totalIncome = (incomeData || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+
       // Group by category
       const categoryMap = new Map<string, { name: string; emoji: string; total: number }>();
       
@@ -149,8 +182,8 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       // Sort by value descending
       categoryArray.sort((a, b) => b.value - a.value);
 
-      // Calculate percentages
-      const total = categoryArray.reduce((sum, item) => sum + item.value, 0);
+      // Calculate percentages SOBRE A RECEITA do período
+      const total = totalIncome; // base da porcentagem
       const categoryWithPercentage = categoryArray.map(item => ({
         ...item,
         percentage: total > 0 ? (item.value / total) * 100 : 0
