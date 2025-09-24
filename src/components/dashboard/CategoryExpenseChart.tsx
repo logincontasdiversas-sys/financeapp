@@ -138,6 +138,10 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       const { data: incomeAll, error: incomeAllErr } = await incomeAllQuery;
       if (incomeAllErr) throw incomeAllErr;
 
+      // Debug: verificar as receitas encontradas
+      console.log('[CATEGORY_CHART] Receitas encontradas:', incomeAll?.length || 0, 'transações');
+      console.log('[CATEGORY_CHART] Detalhes das receitas:', incomeAll?.map(r => ({ amount: r.amount, date: r.date })));
+
       // 2) Receitas apenas da categoria "Transferência entre Bancos" para subtrair
       let transferIncomeQuery = supabase
         .from('transactions')
@@ -164,6 +168,13 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       const sumAllIncome = (incomeAll || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
       const sumTransferIncome = (transferIncome || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
       const totalIncome = Math.max(0, sumAllIncome - sumTransferIncome);
+
+      // Debug logs para verificar os valores
+      console.log('[CATEGORY_CHART] Debug dos valores:');
+      console.log('Receitas totais do período:', sumAllIncome);
+      console.log('Transferências entre bancos:', sumTransferIncome);
+      console.log('Receitas líquidas (base para %):', totalIncome);
+      console.log('Período filtrado:', dateFilter ? `${dateFilter.from?.toLocaleDateString('pt-BR')} - ${dateFilter.to?.toLocaleDateString('pt-BR')}` : 'mês atual');
 
       // Group by category
       const categoryMap = new Map<string, { name: string; emoji: string; total: number }>();
@@ -209,6 +220,13 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
         ...item,
         percentage: base > 0 ? (item.value / base) * 100 : 0
       }));
+
+      // Debug logs para verificar o cálculo
+      console.log('[CATEGORY_CHART] Cálculo das porcentagens:');
+      console.log('Total das despesas:', expenseTotal);
+      console.log('Base para cálculo (receitas):', totalIncome);
+      console.log('Base final usada:', base);
+      console.log('Categorias com porcentagens:', categoryWithPercentage.map(c => ({ name: c.name, value: c.value, percentage: c.percentage })));
 
       setCategoryData(categoryWithPercentage);
 
