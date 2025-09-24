@@ -148,6 +148,7 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
         .select('amount, categories(name)')
         .eq('tenant_id', tenantId)
         .eq('kind', 'income')
+        .not('categories', 'is', null)
         .eq('categories.name', 'Transferência entre Bancos');
       if (isFuturePeriod) transferIncomeQuery = transferIncomeQuery.in('status', ['settled', 'pending']);
       else transferIncomeQuery = transferIncomeQuery.eq('status', 'settled');
@@ -164,6 +165,10 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       }
       const { data: transferIncome, error: transferErr } = await transferIncomeQuery;
       if (transferErr) throw transferErr;
+
+      // Debug: verificar as transferências encontradas
+      console.log('[CATEGORY_CHART] Transferências encontradas:', transferIncome?.length || 0, 'transações');
+      console.log('[CATEGORY_CHART] Detalhes das transferências:', transferIncome?.map(t => ({ amount: t.amount, category: t.categories?.name })));
 
       const sumAllIncome = (incomeAll || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
       const sumTransferIncome = (transferIncome || []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
