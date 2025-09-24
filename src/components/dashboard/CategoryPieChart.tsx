@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 import { PieChartIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
+import { useTenant } from "@/hooks/useTenant";
 
 interface CategoryData {
   id: string;
@@ -31,10 +32,11 @@ export const CategoryPieChart = () => {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [loading, setLoading] = useState(true);
+  const { tenantId } = useTenant();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (tenantId) loadData();
+  }, [tenantId]);
 
   // Atualização automática quando transactions mudarem
   useRealtimeSync({
@@ -46,6 +48,7 @@ export const CategoryPieChart = () => {
   });
 
   const loadData = async () => {
+    if (!tenantId) return;
     console.log('[PIE_CHART] Iniciando carregamento de dados...');
     try {
       // Get current month dates
@@ -58,20 +61,46 @@ export const CategoryPieChart = () => {
       endOfMonth.setDate(0);
       const endDate = endOfMonth.toISOString().split('T')[0];
 
-      // Get total income for the month (excluir transferências)
-      const { data: incomeData } = await supabase
+      // Total de receitas do mês (sem join, para não perder receitas sem categoria)
+      let incomeAllQuery = supabase
         .from('transactions')
-        .select(`
-          amount,
-          categories!inner(name)
-        `)
+        .select('amount')
+        .eq('tenant_id', tenantId)
         .eq('kind', 'income')
         .eq('status', 'settled')
-        .not('categories.name', 'eq', 'Transferência entre Bancos') // Excluir transferências
         .gte('date', startDate)
         .lte('date', endDate);
+      const { data: incomeAll } = await incomeAllQuery;
 
-      const monthlyIncome = incomeData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
+      // Receitas da categoria "Transferência entre Bancos" (para subtrair)
+      let incomeTransferQuery = supabase
+        .from('transactions')
+        .select('amount, categories(name)')
+        .eq('tenant_id', tenantId)
+        .eq('kind', 'income')
+        .eq('status', 'settled')
+        .eq('categories.name', 'Transferência entre Bancos')
+        .gte('date', startDate)
+        .lte('date', endDate);
+      const { data: incomeTransfers } = await incomeTransferQuery;
+
+      const sumIncomeAll = (incomeAll || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      const sumIncomeTransfers = (incomeTransfers || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      let monthlyIncome = Math.max(0, sumIncomeAll - sumIncomeTransfers);
+
+      // Fallback: se ainda zerado, tenta via join (alguns datasets têm tudo categorizado)
+      if (monthlyIncome === 0) {
+        const { data: incomeJoin } = await supabase
+          .from('transactions')
+          .select('amount, categories(name)')
+          .eq('tenant_id', tenantId)
+          .eq('kind', 'income')
+          .eq('status', 'settled')
+          .not('categories.name', 'eq', 'Transferência entre Bancos')
+          .gte('date', startDate)
+          .lte('date', endDate);
+        monthlyIncome = (incomeJoin || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
+      }
       setTotalIncome(monthlyIncome);
 
       // Get expenses by category (excluir transferências)
@@ -87,6 +116,7 @@ export const CategoryPieChart = () => {
         `)
         .eq('kind', 'expense')
         .eq('status', 'settled')
+        .eq('tenant_id', tenantId)
         .not('categories.name', 'eq', 'Transferência entre Bancos') // Excluir transferências
         .gte('date', startDate)
         .lte('date', endDate);
