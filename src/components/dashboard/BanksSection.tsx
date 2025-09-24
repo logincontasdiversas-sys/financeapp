@@ -219,32 +219,32 @@ export const BanksSection = () => {
             Nenhum banco cadastrado
           </p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {banks.map((bank) => (
-              <div key={bank.id} className="p-4 bg-muted/50 rounded-lg border">
+              <div key={bank.id} className="p-3 bg-muted/50 rounded-lg border">
                 {/* Header do banco com nome */}
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-lg">{bank.name}</h3>
+                <div className="flex items-center justify-between mb-1.5">
+                  <h3 className="font-semibold text-base sm:text-lg leading-tight">{bank.name}</h3>
                 </div>
 
 
                 {/* Informações do mês vigente e saldo atual */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-600 text-xs">Receitas do Mês:</span>
-                      <span className="text-green-600 font-medium">{formatCurrency(bank.monthlyIncome)}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-2 text-[13px] leading-tight">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-green-600 text-[11px]">Receitas do Mês:</span>
+                      <span className="text-green-600 font-medium text-[13px]">{formatCurrency(bank.monthlyIncome)}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-red-600 text-xs">Despesas do Mês:</span>
-                      <span className="text-red-600 font-medium">{formatCurrency(bank.monthlyExpense)}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-red-600 text-[11px]">Despesas do Mês:</span>
+                      <span className="text-red-600 font-medium text-[13px]">{formatCurrency(bank.monthlyExpense)}</span>
                     </div>
                   </div>
                   
                   <div className="text-left sm:text-right">
-                    <div className="flex items-center gap-2 sm:justify-end">
-                      <p className="text-xs text-muted-foreground">Saldo Atual:</p>
-                      <p className={`font-bold text-lg sm:text-xl ${bank.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className="flex items-center gap-1.5 sm:justify-end">
+                      <p className="text-[11px] text-muted-foreground">Saldo Atual:</p>
+                      <p className={`font-bold text-base sm:text-lg leading-tight ${bank.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {formatCurrency(bank.currentBalance)}
                       </p>
                     </div>
