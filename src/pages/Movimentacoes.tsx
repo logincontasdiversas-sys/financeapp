@@ -605,94 +605,96 @@ const Movimentacoes = () => {
                 });
             })()}
           </div>
-          {loading ? (
-            <div className="space-y-2">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
-              ))}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <SortableHeader 
-                      label="Data"
-                      sortKey="date"
-                      currentSort={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </TableHead>
-                  <TableHead>
-                    <SortableHeader 
-                      label="Descrição"
-                      sortKey="title"
-                      currentSort={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </TableHead>
-                  <TableHead>
-                    <SortableHeader 
-                      label="Tipo"
-                      sortKey="kind"
-                      currentSort={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </TableHead>
-                  <TableHead>
-                    <SortableHeader 
-                      label="Valor"
-                      sortKey="amount"
-                      currentSort={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </TableHead>
-                  <TableHead>
-                    <SortableHeader 
-                      label="Status"
-                      sortKey="status"
-                      currentSort={sortField}
-                      sortDirection={sortDirection}
-                      onSort={handleSort}
-                    />
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {getFilteredAndSortedTransactions().length === 0 ? (
+          <div className="hidden sm:block overflow-x-auto">
+            {loading ? (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
+                ))}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Nenhuma movimentação encontrada para o período selecionado.
-                    </TableCell>
+                    <TableHead>
+                      <SortableHeader 
+                        label="Data"
+                        sortKey="date"
+                        currentSort={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortableHeader 
+                        label="Descrição"
+                        sortKey="title"
+                        currentSort={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortableHeader 
+                        label="Tipo"
+                        sortKey="kind"
+                        currentSort={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortableHeader 
+                        label="Valor"
+                        sortKey="amount"
+                        currentSort={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
+                    <TableHead>
+                      <SortableHeader 
+                        label="Status"
+                        sortKey="status"
+                        currentSort={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                      />
+                    </TableHead>
                   </TableRow>
-                ) : (
-                  getFilteredAndSortedTransactions().map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell className="font-medium">
-                        {formatDate(transaction.date)}
-                      </TableCell>
-                      <TableCell>{transaction.title}</TableCell>
-                      <TableCell>
-                        {getKindBadge(transaction.kind)}
-                      </TableCell>
-                      <TableCell className={`font-bold ${
-                        transaction.kind === 'income' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {transaction.kind === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2).replace('.', ',')}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(transaction.status)}
+                </TableHeader>
+                <TableBody>
+                  {getFilteredAndSortedTransactions().length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        Nenhuma movimentação encontrada para o período selecionado.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          )}
+                  ) : (
+                    getFilteredAndSortedTransactions().map((transaction) => (
+                      <TableRow key={transaction.id}>
+                        <TableCell className="font-medium">
+                          {formatDate(transaction.date)}
+                        </TableCell>
+                        <TableCell>{transaction.title}</TableCell>
+                        <TableCell>
+                          {getKindBadge(transaction.kind)}
+                        </TableCell>
+                        <TableCell className={`font-bold ${
+                          transaction.kind === 'income' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {transaction.kind === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2).replace('.', ',')}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(transaction.status)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
         </CardContent>
       </Card>
 
