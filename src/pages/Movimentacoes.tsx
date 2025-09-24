@@ -1,6 +1,5 @@
 import { useState, useEffect, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,9 +14,7 @@ import { CategoryExpenseChart } from "@/components/dashboard/CategoryExpenseChar
 import { MovimentacoesCalendar } from "@/components/dashboard/MovimentacoesCalendar";
 import { PDFReportButton } from "@/components/dashboard/PDFReportButton";
 import { formatDateForDisplay } from "@/utils/dateUtils";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { Pencil, Copy, Trash2 } from "lucide-react";
+// Página de Movimentações não possui seleção/ações; layout unificado de lista
 
 interface Transaction {
   id: string;
@@ -44,7 +41,6 @@ interface Stats {
 const Movimentacoes = () => {
   const { user } = useStableAuth();
   const { tenantId } = useTenant();
-  const { toast } = useToast();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalReceitas: 0,
@@ -67,9 +63,7 @@ const Movimentacoes = () => {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [kindFilter, setKindFilter] = useState<'all' | 'income' | 'expense' | 'transfer'>('all');
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [lastSelectAll, setLastSelectAll] = useState(false);
+  // Sem seleção/ações nesta página
 
   useEffect(() => {
     if (user && tenantId) {
@@ -404,66 +398,6 @@ const Movimentacoes = () => {
     );
   };
 
-  const handleSelectAllDesktop = (checked: boolean) => {
-    if (checked) {
-      const visible = getFilteredAndSortedTransactions();
-      setSelectedItems(visible.map(t => t.id));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  const handleSelectItem = (id: string, checked: boolean) => {
-    setLastSelectAll(false);
-    if (checked) setSelectedItems(prev => [...prev, id]);
-    else setSelectedItems(prev => prev.filter(v => v !== id));
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedItems.length === 0) return;
-    if (!confirm(`Tem certeza que deseja excluir ${selectedItems.length} lançamento(s)?`)) return;
-    try {
-      const previous = transactions;
-      setTransactions(prev => prev.filter(t => !selectedItems.includes(t.id)));
-      // apagar em lotes
-      const batchSize = 50;
-      for (let i = 0; i < selectedItems.length; i += batchSize) {
-        const batch = selectedItems.slice(i, i + batchSize);
-        const { error } = await supabase
-          .from('transactions')
-          .delete()
-          .in('id', batch);
-        if (error) {
-          setTransactions(previous);
-          throw error;
-        }
-      }
-      toast({ title: `${selectedItems.length} lançamento(s) excluído(s).` });
-      setSelectedItems([]);
-      setSelectionMode(false);
-      setLastSelectAll(false);
-    } catch (error: any) {
-      console.error('[MOVIMENTACOES] Erro ao excluir:', error);
-      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
-    }
-  };
-
-  const handleEditSelected = () => {
-    if (selectedItems.length !== 1) {
-      toast({ title: 'Selecione apenas um lançamento para editar', variant: 'destructive' });
-      return;
-    }
-    // Observação: Edição/duplicação completa é feita nas telas específicas.
-    toast({ title: 'Abrir para edição', description: 'Use as telas de Receitas/Despesas para editar por enquanto.' });
-  };
-
-  const handleDuplicateSelected = () => {
-    if (selectedItems.length !== 1) {
-      toast({ title: 'Selecione apenas um lançamento para duplicar', variant: 'destructive' });
-      return;
-    }
-    toast({ title: 'Duplicar lançamento', description: 'Recurso disponível nas telas Receitas/Despesas.' });
-  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -599,109 +533,8 @@ const Movimentacoes = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Barra de ações dentro da área da lista (desktop) */}
-          {selectedItems.length > 0 && (
-            <div className="mb-3 hidden sm:flex items-center gap-2 flex-wrap">
-              {lastSelectAll ? (
-                <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8 px-2 text-xs flex items-center gap-1">
-                  <Trash2 className="h-3 w-3" />
-                  Excluir
-                </Button>
-              ) : (
-                <>
-                  <Button variant="outline" size="sm" onClick={handleEditSelected} className="h-8 px-2 text-xs flex items-center gap-1">
-                    <Pencil className="h-3 w-3" />
-                    Editar
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleDuplicateSelected} className="h-8 px-2 text-xs flex items-center gap-1">
-                    <Copy className="h-3 w-3" />
-                    Duplicar
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8 px-2 text-xs flex items-center gap-1">
-                    <Trash2 className="h-3 w-3" />
-                    Excluir
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Layout Mobile - Cards */}
+          {/* Layout Mobile - Cards (somente visualização) */}
           <div className="block sm:hidden space-y-3">
-            {/* Barra de seleção - Mobile */}
-            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (!selectionMode) {
-                    setSelectionMode(true);
-                    setLastSelectAll(false);
-                  } else {
-                    // selecionar todos os itens visíveis
-                    const visible = (() => {
-                      // Agrupar por data e pegar todos itens do período filtrado
-                      const byDate = transactions.reduce((acc, t) => {
-                        // respeita o filtro de tipo
-                        if (kindFilter !== 'all' && t.kind !== kindFilter) return acc;
-                        const d = t.date;
-                        (acc[d] = acc[d] || []).push(t);
-                        return acc;
-                      }, {} as Record<string, Transaction[]>);
-                      const all: Transaction[] = [];
-                      Object.values(byDate).forEach(list => {
-                        const sorted = [...list].sort((a, b) => a.kind === 'income' && b.kind === 'expense' ? -1 : a.kind === 'expense' && b.kind === 'income' ? 1 : 0);
-                        all.push(...sorted);
-                      });
-                      return all;
-                    })();
-                    setSelectedItems(visible.map(t => t.id));
-                    setLastSelectAll(true);
-                  }
-                }}
-              >
-                {selectionMode ? 'Selecionar Todos' : 'Selecionar'}
-              </Button>
-              <div className="flex items-center gap-1 flex-wrap">
-                {selectionMode && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => { setSelectionMode(false); setSelectedItems([]); setLastSelectAll(false); }}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Ações quando itens selecionados (mobile) */}
-            {selectionMode && selectedItems.length > 0 && (
-              <div className="px-3 -mt-2 mb-1 flex items-center gap-2 flex-wrap">
-                {lastSelectAll ? (
-                  <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8 px-2 text-xs flex items-center gap-1">
-                    <Trash2 className="h-3 w-3" />
-                    Excluir
-                  </Button>
-                ) : (
-                  <>
-                    <Button variant="outline" size="sm" onClick={handleEditSelected} className="h-8 px-2 text-xs flex items-center gap-1">
-                      <Pencil className="h-3 w-3" />
-                      Editar
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleDuplicateSelected} className="h-8 px-2 text-xs flex items-center gap-1">
-                      <Copy className="h-3 w-3" />
-                      Duplicar
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8 px-2 text-xs flex items-center gap-1">
-                      <Trash2 className="h-3 w-3" />
-                      Excluir
-                    </Button>
-                  </>
-                )}
-              </div>
-            )}
-
             {(() => {
               // Agrupar por data
               const groupedByDate = transactions.reduce((acc, t) => {
@@ -731,15 +564,7 @@ const Movimentacoes = () => {
 
                         {items.map((item, index) => (
                           <div key={item.id} className="contents">
-                            {/* Checkbox individual à esquerda (apenas em seleção) */}
-                            {selectionMode && (
-                              <div className="absolute -left-[20px] z-20" style={{ top: `calc(28px + ${index * 60}px - 12px)` }}>
-                                <Checkbox
-                                  checked={selectedItems.includes(item.id)}
-                                  onCheckedChange={(checked) => handleSelectItem(item.id, checked as boolean)}
-                                />
-                              </div>
-                            )}
+                            {/* Sem seleção nesta página */}
 
                             {/* Data - Colunas 1-2 (apenas no primeiro item) */}
                             {index === 0 ? (
@@ -790,12 +615,6 @@ const Movimentacoes = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={selectedItems.length === getFilteredAndSortedTransactions().length && getFilteredAndSortedTransactions().length > 0}
-                      onCheckedChange={handleSelectAllDesktop}
-                    />
-                  </TableHead>
                   <TableHead>
                     <SortableHeader 
                       label="Data"
@@ -846,19 +665,13 @@ const Movimentacoes = () => {
               <TableBody>
                 {getFilteredAndSortedTransactions().length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       Nenhuma movimentação encontrada para o período selecionado.
                     </TableCell>
                   </TableRow>
                 ) : (
                   getFilteredAndSortedTransactions().map((transaction) => (
                     <TableRow key={transaction.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedItems.includes(transaction.id)}
-                          onCheckedChange={(checked) => handleSelectItem(transaction.id, checked as boolean)}
-                        />
-                      </TableCell>
                       <TableCell className="font-medium">
                         {formatDate(transaction.date)}
                       </TableCell>
