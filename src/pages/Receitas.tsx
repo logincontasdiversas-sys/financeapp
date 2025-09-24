@@ -811,51 +811,6 @@ const Receitas = () => {
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <CardTitle>Lista de Receitas</CardTitle>
-              {selectionMode && selectedItems.length > 0 && (
-                <div className="flex items-center gap-2 sm:gap-2 flex-wrap max-w-full">
-                  {lastSelectAll ? (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={handleBulkDelete}
-                      className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Excluir
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditSelected()}
-                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                      >
-                        <Pencil className="h-3 w-3" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDuplicateSelected()}
-                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                      >
-                        <Copy className="h-3 w-3" />
-                        Duplicar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleBulkDelete}
-                        className="h-8 px-2 text-xs flex items-center gap-1 shrink-0"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Excluir
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
             <div className="w-72">
               <Input
@@ -868,6 +823,54 @@ const Receitas = () => {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Barra de ações dentro do campo da lista (mobile e desktop) */}
+          {selectedItems.length > 0 && (
+            <div className="mb-3 px-1 sm:px-0">
+              <div className="hidden sm:flex items-center gap-2 flex-wrap">
+                {lastSelectAll ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8 px-2 text-xs flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Excluir
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
           {/* Layout Mobile - Cards */}
           <div className="block sm:hidden space-y-3">
             {/* Barra de seleção - Mobile */}
@@ -900,6 +903,53 @@ const Receitas = () => {
                 )}
               </div>
             </div>
+
+            {/* Ações quando itens selecionados (mobile) */}
+            {selectionMode && selectedItems.length > 0 && (
+              <div className="px-3 -mt-2 mb-1 flex items-center gap-2 flex-wrap">
+                {lastSelectAll ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8 px-2 text-xs flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Excluir
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
 
             {(() => {
               const groupedByDate = getFilteredAndSortedReceitas().reduce((acc, receita) => {
