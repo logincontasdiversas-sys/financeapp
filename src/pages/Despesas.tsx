@@ -419,6 +419,11 @@ const Despesas = () => {
     e.preventDefault();
     if (!user || !tenantId) return;
 
+    console.log('[DEBUG] === INÍCIO DO SUBMIT ===');
+    console.log('[DEBUG] Categoria selecionada:', formData.category_id);
+    console.log('[DEBUG] Valor:', formData.amount);
+    console.log('[DEBUG] Status:', formData.status);
+
     try {
       // Processar category_id se for goal ou debt
       const processedFormData = { ...formData };
@@ -459,6 +464,7 @@ const Despesas = () => {
         }
       } else if (formData.category_id.startsWith('debt-')) {
         // É uma dívida - usar categoria padrão da dívida para contabilização
+        console.log('[DEBUG] === PROCESSANDO DÍVIDA ===');
         const debtId = formData.category_id.replace('debt-', '');
         const selectedDebt = debts.find(d => d.id === debtId);
         
@@ -504,6 +510,11 @@ const Despesas = () => {
             }
           }
         }
+      } else {
+        // Categoria normal - usar diretamente
+        console.log('[DEBUG] === CATEGORIA NORMAL ===');
+        console.log('[DEBUG] Categoria normal selecionada:', formData.category_id);
+        processedFormData.category_id = formData.category_id;
       }
 
       if (editingDespesa) {
