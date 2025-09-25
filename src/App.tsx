@@ -20,6 +20,7 @@ import Movimentacoes from "./pages/Movimentacoes";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 import PRDChecklist from "./pages/PRDChecklist";
+import AdminCorrection from "./pages/AdminCorrection";
 import { ErrorBoundary } from "react-error-boundary";
 
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
@@ -133,6 +134,11 @@ const App = () => (
                     </ProtectedRoute>
                   } />
                 )}
+                <Route path="/admin/correction" element={
+                  <ProtectedRoute>
+                    <AdminCorrection />
+                  </ProtectedRoute>
+                } />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
