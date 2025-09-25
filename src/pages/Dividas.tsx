@@ -24,9 +24,14 @@ interface Debt {
   settled: boolean;
   image_url: string | null;
   category_id: string | null;
+  special_category_id: string | null;
   observations: string | null;
   is_concluded: boolean;
   categories?: {
+    name: string;
+    emoji: string;
+  } | null;
+  special_categories?: {
     name: string;
     emoji: string;
   } | null;
@@ -67,7 +72,14 @@ const Dividas = () => {
     try {
       const { data, error } = await supabase
         .from('debts')
-        .select('*')
+        .select(`
+          *,
+          categories:category_id (
+            id,
+            name,
+            emoji
+          )
+        `)
         .order('settled', { ascending: true })
         .order('due_date', { ascending: true });
 
@@ -128,33 +140,29 @@ const Dividas = () => {
     if (!user || !tenantId) return;
 
     try {
-      let categoryId = null;
+      // Criar categoria especial para a dívida
+      const specialCategoryName = `Dívida - ${formData.title}`;
+      const { data: specialCategory, error: categoryError } = await supabase
+        .from('categories')
+        .insert({
+          name: specialCategoryName,
+          emoji: '💳',
+          is_system: true,
+          tenant_id: tenantId,
+          archived: false
+        })
+        .select()
+        .single();
 
-      if (!editingDebt) {
-        // Criar categoria especial para a dívida
-        const categoryName = `${formData.title} - Dívida`;
-        const { data: categoryData, error: categoryError } = await supabase
-          .from('categories')
-          .insert({
-            tenant_id: tenantId,
-            name: categoryName,
-            emoji: '💳',
-            archived: false,
-            is_system: true  // Marcar como categoria automática
-          })
-          .select()
-          .single();
-
-        if (categoryError) throw categoryError;
-        categoryId = categoryData.id;
-      }
+      if (categoryError) throw categoryError;
 
       const debtData = {
         title: formData.title,
         total_amount: parseFloat(formData.total_amount),
         due_date: formData.due_date || null,
         monthly_interest: parseFloat(formData.monthly_interest) || 0,
-        category_id: editingDebt ? editingDebt.category_id : categoryId,
+        category_id: formData.category_id || null, // Categoria padrão
+        special_category_id: specialCategory.id, // Categoria especial
         image_url: formData.image_url || null,
         observations: formData.observations || null,
         is_concluded: formData.is_concluded,
@@ -204,6 +212,7 @@ const Dividas = () => {
       image_url: debt.image_url || "",
       observations: debt.observations || "",
       is_concluded: debt.is_concluded || false,
+      category_id: debt.category_id || "",
     });
     setIsDialogOpen(true);
   };
@@ -218,6 +227,7 @@ const Dividas = () => {
       image_url: debt.image_url || "",
       observations: debt.observations || "",
       is_concluded: false, // Reset para false na cópia
+      category_id: debt.category_id || "",
     });
     setIsDialogOpen(true);
   };
