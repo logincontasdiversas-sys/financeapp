@@ -412,7 +412,8 @@ const Despesas = () => {
       console.log('[DEBUG] Dívidas carregadas:', data?.map(d => ({
         title: d.title,
         paid_amount: d.paid_amount,
-        category_id: d.category_id
+        category_id: d.category_id,
+        total_amount: d.total_amount || 'N/A'
       })));
       
       setDebts(data || []);
