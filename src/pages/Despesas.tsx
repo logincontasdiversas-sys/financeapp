@@ -408,6 +408,13 @@ const Despesas = () => {
         .order('title');
 
       if (error) throw error;
+      
+      console.log('[DEBUG] Dívidas carregadas:', data?.map(d => ({
+        title: d.title,
+        paid_amount: d.paid_amount,
+        category_id: d.category_id
+      })));
+      
       setDebts(data || []);
     } catch (error) {
       console.error('[DESPESAS] Error loading debts:', error);
