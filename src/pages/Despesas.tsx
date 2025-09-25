@@ -458,6 +458,9 @@ const Despesas = () => {
               .eq('id', goalId);
           }
 
+          // Adicionar goal_id para identificar que esta despesa é específica da meta
+          processedFormData.goal_id = goalId;
+
           // Usar a categoria da meta
           if (selectedGoal.category_id) {
             processedFormData.category_id = selectedGoal.category_id;
@@ -505,6 +508,9 @@ const Despesas = () => {
           } else {
             console.log('[DEBUG] Status não é "settled" - não atualizando paid_amount');
           }
+
+          // Adicionar debt_id para identificar que esta despesa é específica da dívida
+          processedFormData.debt_id = debtId;
 
           // Usar a categoria da dívida
           if (selectedDebt.category_id) {
