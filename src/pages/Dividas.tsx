@@ -105,6 +105,16 @@ const Dividas = () => {
         }
       }
 
+      console.log('[DEBUG] Dívidas carregadas com valores:');
+      debtsWithCategories.forEach(debt => {
+        console.log(`[DEBUG] Dívida: ${debt.title}`);
+        console.log(`[DEBUG] - Total: ${debt.total_amount}`);
+        console.log(`[DEBUG] - Pago: ${debt.paid_amount}`);
+        console.log(`[DEBUG] - Progresso: ${((debt.paid_amount / debt.total_amount) * 100).toFixed(1)}%`);
+        console.log(`[DEBUG] - Settled: ${debt.settled}`);
+        console.log(`[DEBUG] - Is Concluded: ${debt.is_concluded}`);
+      });
+      
       setDebts(debtsWithCategories);
     } catch (error) {
       console.error('[DIVIDAS] Error loading:', error);
