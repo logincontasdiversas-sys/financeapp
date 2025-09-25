@@ -336,6 +336,7 @@ const Dividas = () => {
       image_url: "",
       observations: "",
       is_concluded: false,
+      category_id: "",
     });
   };
 
@@ -447,6 +448,30 @@ const Dividas = () => {
                   value={formData.monthly_interest}
                   onChange={(e) => setFormData({ ...formData, monthly_interest: e.target.value })}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category_id">Categoria</Label>
+                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories
+                      .filter(cat => !cat.is_system)
+                      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <span className="flex items-center gap-2">
+                            <span>{category.emoji}</span>
+                            <span>{category.name}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  💡 Categoria onde os pagamentos desta dívida serão contabilizados
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="image_url">URL da Imagem (opcional)</Label>
