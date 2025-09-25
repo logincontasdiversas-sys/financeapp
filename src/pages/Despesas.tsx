@@ -464,6 +464,10 @@ const Despesas = () => {
         
         if (selectedDebt) {
           // Usar categoria padrão da dívida para contabilização
+          console.log('[DEBUG] Dívida selecionada:', selectedDebt.title);
+          console.log('[DEBUG] Categoria padrão da dívida:', selectedDebt.category_id);
+          console.log('[DEBUG] Categoria que será usada para contabilização:', selectedDebt.category_id);
+          
           processedFormData.category_id = selectedDebt.category_id;
           
           // Só atualizar o valor pago se o status for "settled" (Pago)
