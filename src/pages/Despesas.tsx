@@ -432,17 +432,19 @@ const Despesas = () => {
           // Usar categoria padrão da meta para contabilização
           processedFormData.category_id = selectedGoal.category_id;
           
-          // Atualizar a meta com o valor da despesa
-          const newAmount = selectedGoal.current_amount + parseFloat(formData.amount);
-          const isGoalAchieved = newAmount >= selectedGoal.target_amount;
-          
-          await supabase
-            .from('goals')
-            .update({ 
-              current_amount: newAmount,
-              is_concluded: isGoalAchieved // Marcar como concluída apenas se meta atingida
-            })
-            .eq('id', goalId);
+          // Só atualizar o valor da meta se o status for "settled" (Pago)
+          if (formData.status === 'settled') {
+            const newAmount = selectedGoal.current_amount + parseFloat(formData.amount);
+            const isGoalAchieved = newAmount >= selectedGoal.target_amount;
+            
+            await supabase
+              .from('goals')
+              .update({ 
+                current_amount: newAmount,
+                is_concluded: isGoalAchieved // Marcar como concluída apenas se meta atingida
+              })
+              .eq('id', goalId);
+          }
 
           // Usar a categoria da meta
           if (selectedGoal.category_id) {
@@ -464,17 +466,19 @@ const Despesas = () => {
           // Usar categoria padrão da dívida para contabilização
           processedFormData.category_id = selectedDebt.category_id;
           
-          // Atualizar a dívida com o valor pago
-          const newPaidAmount = selectedDebt.paid_amount + parseFloat(formData.amount);
-          const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
-          
-          await supabase
-            .from('debts')
-            .update({ 
-              paid_amount: newPaidAmount,
-              is_concluded: isFullyPaid // Marcar como concluída apenas se totalmente paga
-            })
-            .eq('id', debtId);
+          // Só atualizar o valor pago se o status for "settled" (Pago)
+          if (formData.status === 'settled') {
+            const newPaidAmount = selectedDebt.paid_amount + parseFloat(formData.amount);
+            const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
+            
+            await supabase
+              .from('debts')
+              .update({ 
+                paid_amount: newPaidAmount,
+                is_concluded: isFullyPaid // Marcar como concluída apenas se totalmente paga
+              })
+              .eq('id', debtId);
+          }
 
           // Usar a categoria da dívida
           if (selectedDebt.category_id) {
