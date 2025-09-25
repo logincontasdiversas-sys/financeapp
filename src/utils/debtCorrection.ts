@@ -27,7 +27,7 @@ export async function correctDebtValues(tenantId: string): Promise<void> {
     // 1. Buscar todas as dívidas ativas
     const { data: debts, error: debtsError } = await supabase
       .from('debts')
-      .select('id, title, paid_amount, total_amount, category_id')
+      .select('id, title, paid_amount, total_amount, category_id, special_category_id')
       .eq('tenant_id', tenantId)
       .eq('settled', false);
 
@@ -48,13 +48,13 @@ export async function correctDebtValues(tenantId: string): Promise<void> {
       console.log(`[DEBT_CORRECTION] Valor atual pago: ${debt.paid_amount}`);
       console.log(`[DEBT_CORRECTION] Valor total: ${debt.total_amount}`);
 
-      // 3. Buscar despesas específicas desta dívida (com debt_id)
+      // 3. Buscar despesas específicas desta dívida (categoria especial)
       const { data: specificTransactions, error: specificError } = await supabase
         .from('transactions')
-        .select('id, amount, status, category_id, debt_id')
+        .select('id, amount, status, category_id')
         .eq('tenant_id', tenantId)
         .eq('kind', 'expense')
-        .eq('debt_id', debt.id)
+        .eq('category_id', debt.special_category_id) // Usar categoria especial da dívida
         .eq('status', 'settled'); // Apenas despesas pagas
 
       if (specificError) {
@@ -119,9 +119,8 @@ export async function correctGoalValues(tenantId: string): Promise<void> {
     // 1. Buscar todas as metas ativas
     const { data: goals, error: goalsError } = await supabase
       .from('goals')
-      .select('id, title, current_amount, target_amount, category_id')
-      .eq('tenant_id', tenantId)
-      .eq('is_concluded', false);
+      .select('id, title, current_amount, target_amount, category_id, special_category_id')
+      .eq('tenant_id', tenantId);
 
     if (goalsError) {
       throw new Error(`Erro ao buscar metas: ${goalsError.message}`);
@@ -140,13 +139,13 @@ export async function correctGoalValues(tenantId: string): Promise<void> {
       console.log(`[GOAL_CORRECTION] Valor atual: ${goal.current_amount}`);
       console.log(`[GOAL_CORRECTION] Valor alvo: ${goal.target_amount}`);
 
-      // 3. Buscar despesas específicas desta meta (com goal_id)
+      // 3. Buscar despesas específicas desta meta (categoria especial)
       const { data: specificTransactions, error: specificError } = await supabase
         .from('transactions')
-        .select('id, amount, status, category_id, goal_id')
+        .select('id, amount, status, category_id')
         .eq('tenant_id', tenantId)
         .eq('kind', 'expense')
-        .eq('goal_id', goal.id)
+        .eq('category_id', goal.special_category_id) // Usar categoria especial da meta
         .eq('status', 'settled'); // Apenas despesas pagas
 
       if (specificError) {
