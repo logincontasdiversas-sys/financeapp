@@ -455,7 +455,13 @@ const Metas = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {categories
-                      .filter(cat => !cat.is_system)
+                      .filter(cat => 
+                        !cat.is_system && 
+                        !cat.name.startsWith('Dívida -') && 
+                        !cat.name.startsWith('Meta -') &&
+                        !cat.name.includes('Dívida -') &&
+                        !cat.name.includes('Meta -')
+                      )
                       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
                       .map((category) => (
                         <SelectItem key={category.id} value={category.id}>
