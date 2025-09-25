@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, CreditCard, CheckCircle, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,7 @@ const Dividas = () => {
   const { tenantId, loading: tenantLoading } = useTenant();
   const { toast } = useToast();
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
@@ -51,11 +53,13 @@ const Dividas = () => {
     image_url: "",
     observations: "",
     is_concluded: false,
+    category_id: "",
   });
 
   useEffect(() => {
     if (user && tenantId) {
       loadDebts();
+      loadCategories();
     }
   }, [user, tenantId]);
 
@@ -99,6 +103,22 @@ const Dividas = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('archived', false)
+        .eq('tenant_id', tenantId)
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
     }
   };
 

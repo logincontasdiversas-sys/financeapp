@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Target, CheckCircle, Copy } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ const Metas = () => {
   const { tenantId, loading: tenantLoading } = useTenant();
   const { toast } = useToast();
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -46,11 +48,13 @@ const Metas = () => {
     current_amount: "",
     target_date: "",
     image_url: "",
+    category_id: "",
   });
 
   useEffect(() => {
     if (user && tenantId) {
       loadGoals();
+      loadCategories();
     }
   }, [user, tenantId]);
 
@@ -97,39 +101,34 @@ const Metas = () => {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('archived', false)
+        .eq('tenant_id', tenantId)
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !tenantId) return;
 
     try {
-      let categoryId = null;
-
-      if (!editingGoal) {
-        // Criar categoria especial para a meta
-        const categoryName = `${formData.title} - Meta`;
-        const { data: categoryData, error: categoryError } = await supabase
-          .from('categories')
-          .insert({
-            tenant_id: tenantId,
-            name: categoryName,
-            emoji: '🎯',
-            archived: false,
-            is_system: true  // Marcar como categoria automática
-          })
-          .select()
-          .single();
-
-        if (categoryError) throw categoryError;
-        categoryId = categoryData.id;
-      }
-
       const goalData = {
         title: formData.title,
         target_amount: parseFloat(formData.target_amount),
         current_amount: parseFloat(formData.current_amount) || 0,
         target_date: formData.target_date || null,
-        category_id: editingGoal ? editingGoal.category_id : categoryId,
+        category_id: formData.category_id || null,
         image_url: formData.image_url || null,
         user_id: user.id,
         tenant_id: tenantId,
@@ -303,6 +302,7 @@ const Metas = () => {
       current_amount: "",
       target_date: "",
       image_url: "",
+      category_id: "",
     });
   };
 
@@ -408,6 +408,30 @@ const Metas = () => {
                 />
                 <p className="text-xs text-muted-foreground">
                   💡 Valor que você já possui para esta meta (ex: carro atual, dinheiro guardado, etc.)
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category_id">Categoria</Label>
+                <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories
+                      .filter(cat => !cat.is_system)
+                      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          <span className="flex items-center gap-2">
+                            <span>{category.emoji}</span>
+                            <span>{category.name}</span>
+                          </span>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  💡 Categoria onde os gastos desta meta serão contabilizados
                 </p>
               </div>
               <div className="space-y-2">
