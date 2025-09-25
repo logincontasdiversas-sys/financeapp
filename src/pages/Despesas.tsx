@@ -337,6 +337,25 @@ const Despesas = () => {
     }
   };
 
+  // Organizar categorias em grupos para melhor UX
+  const getOrganizedCategories = () => {
+    const regularCategories = categories.filter(cat => 
+      !cat.name.includes(' - Meta') && 
+      !cat.name.includes(' - Dívida') &&
+      cat.name !== 'Metas' && 
+      cat.name !== 'Dívidas'
+    );
+    
+    const goalCategories = categories.filter(cat => cat.name.includes(' - Meta'));
+    const debtCategories = categories.filter(cat => cat.name.includes(' - Dívida'));
+    
+    return {
+      regular: regularCategories,
+      goals: goalCategories,
+      debts: debtCategories
+    };
+  };
+
   const loadBanks = async () => {
     try {
       const { data, error } = await supabase
