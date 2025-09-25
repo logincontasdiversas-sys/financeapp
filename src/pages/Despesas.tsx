@@ -388,7 +388,7 @@ const Despesas = () => {
     try {
       const { data, error } = await supabase
         .from('goals')
-        .select('id, title, current_amount, category_id')
+        .select('id, title, current_amount, category_id, special_category_id')
         .eq('completed', false)
         .order('title');
 
@@ -403,7 +403,7 @@ const Despesas = () => {
     try {
       const { data, error } = await supabase
         .from('debts')
-        .select('id, title, paid_amount, category_id')
+        .select('id, title, paid_amount, category_id, special_category_id')
         .eq('settled', false)
         .order('title');
 
@@ -424,11 +424,14 @@ const Despesas = () => {
       const processedFormData = { ...formData };
       
       if (formData.category_id.startsWith('goal-')) {
-        // É uma meta - usar categoria da meta automaticamente
+        // É uma meta - usar categoria padrão da meta para contabilização
         const goalId = formData.category_id.replace('goal-', '');
         const selectedGoal = goals.find(g => g.id === goalId);
         
         if (selectedGoal) {
+          // Usar categoria padrão da meta para contabilização
+          processedFormData.category_id = selectedGoal.category_id;
+          
           // Atualizar a meta com o valor da despesa
           const newAmount = selectedGoal.current_amount + parseFloat(formData.amount);
           await supabase
@@ -448,11 +451,14 @@ const Despesas = () => {
           }
         }
       } else if (formData.category_id.startsWith('debt-')) {
-        // É uma dívida - usar categoria da dívida automaticamente
+        // É uma dívida - usar categoria padrão da dívida para contabilização
         const debtId = formData.category_id.replace('debt-', '');
         const selectedDebt = debts.find(d => d.id === debtId);
         
         if (selectedDebt) {
+          // Usar categoria padrão da dívida para contabilização
+          processedFormData.category_id = selectedDebt.category_id;
+          
           // Atualizar a dívida com o valor pago
           const newPaidAmount = selectedDebt.paid_amount + parseFloat(formData.amount);
           await supabase
@@ -1397,7 +1403,7 @@ const Despesas = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>Lista de Despesas</CardTitle>
+              <CardTitle>Lista de Despesas</CardTitle>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="w-full sm:w-48">
                 <Select value={paymentMethodFilter} onValueChange={(value: 'all' | 'normal' | 'credit_card') => setPaymentMethodFilter(value)}>
@@ -1410,14 +1416,14 @@ const Despesas = () => {
                     <SelectItem value="credit_card">Cartão de crédito</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+            </div>
               <div className="w-full sm:w-72">
-                <Input
-                  placeholder="Filtrar por título, categoria, banco, valor..."
-                  value={textFilter}
-                  onChange={(e) => setTextFilter(e.target.value)}
-                  className="h-9"
-                />
+              <Input
+                placeholder="Filtrar por título, categoria, banco, valor..."
+                value={textFilter}
+                onChange={(e) => setTextFilter(e.target.value)}
+                className="h-9"
+              />
               </div>
             </div>
           </div>
