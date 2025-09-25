@@ -140,21 +140,36 @@ const Dividas = () => {
     if (!user || !tenantId) return;
 
     try {
-      // Criar categoria especial para a dívida
+      // Verificar se a categoria especial já existe ou criar uma nova
       const specialCategoryName = `Dívida - ${formData.title}`;
-      const { data: specialCategory, error: categoryError } = await supabase
+      
+      // Primeiro, tentar buscar a categoria existente
+      let { data: existingCategory } = await supabase
         .from('categories')
-        .insert({
-          name: specialCategoryName,
-          emoji: '💳',
-          is_system: true,
-          tenant_id: tenantId,
-          archived: false
-        })
-        .select()
+        .select('id')
+        .eq('name', specialCategoryName)
+        .eq('tenant_id', tenantId)
         .single();
 
-      if (categoryError) throw categoryError;
+      let specialCategory = existingCategory;
+
+      // Se não existir, criar uma nova
+      if (!existingCategory) {
+        const { data: newCategory, error: categoryError } = await supabase
+          .from('categories')
+          .insert({
+            name: specialCategoryName,
+            emoji: '💳',
+            is_system: true,
+            tenant_id: tenantId,
+            archived: false
+          })
+          .select()
+          .single();
+
+        if (categoryError) throw categoryError;
+        specialCategory = newCategory;
+      }
 
       const debtData = {
         title: formData.title,

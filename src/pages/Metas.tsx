@@ -23,7 +23,12 @@ interface Goal {
   completed: boolean;
   image_url: string | null;
   category_id: string | null;
+  special_category_id: string | null;
   categories?: {
+    name: string;
+    emoji: string;
+  } | null;
+  special_categories?: {
     name: string;
     emoji: string;
   } | null;
@@ -123,12 +128,44 @@ const Metas = () => {
     if (!user || !tenantId) return;
 
     try {
+      // Verificar se a categoria especial já existe ou criar uma nova
+      const specialCategoryName = `Meta - ${formData.title}`;
+      
+      // Primeiro, tentar buscar a categoria existente
+      let { data: existingCategory } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('name', specialCategoryName)
+        .eq('tenant_id', tenantId)
+        .single();
+
+      let specialCategory = existingCategory;
+
+      // Se não existir, criar uma nova
+      if (!existingCategory) {
+        const { data: newCategory, error: categoryError } = await supabase
+          .from('categories')
+          .insert({
+            name: specialCategoryName,
+            emoji: '🎯',
+            is_system: true,
+            tenant_id: tenantId,
+            archived: false
+          })
+          .select()
+          .single();
+
+        if (categoryError) throw categoryError;
+        specialCategory = newCategory;
+      }
+
       const goalData = {
         title: formData.title,
         target_amount: parseFloat(formData.target_amount),
         current_amount: parseFloat(formData.current_amount) || 0,
         target_date: formData.target_date || null,
-        category_id: formData.category_id || null,
+        category_id: formData.category_id || null, // Categoria padrão
+        special_category_id: specialCategory.id, // Categoria especial
         image_url: formData.image_url || null,
         user_id: user.id,
         tenant_id: tenantId,

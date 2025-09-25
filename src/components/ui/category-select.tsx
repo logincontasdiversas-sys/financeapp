@@ -116,6 +116,40 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           )}
 
 
+          {/* Categorias Especiais de Metas */}
+          {goals.length > 0 && (
+            <>
+              <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50">
+                Metas (Pagamento)
+              </div>
+              {goals.map((goal) => (
+                <SelectItem key={`goal-${goal.id}`} value={`goal-${goal.id}`}>
+                  <span className="flex items-center gap-2">
+                    <span>🎯</span>
+                    <span>Meta - {goal.title}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </>
+          )}
+
+          {/* Categorias Especiais de Dívidas */}
+          {debts.length > 0 && (
+            <>
+              <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50">
+                Dívidas (Pagamento)
+              </div>
+              {debts.map((debt) => (
+                <SelectItem key={`debt-${debt.id}`} value={`debt-${debt.id}`}>
+                  <span className="flex items-center gap-2">
+                    <span>💳</span>
+                    <span>Dívida - {debt.title}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </>
+          )}
+
           {/* Categorias Cadastradas */}
           {standardCategories.length > 0 && (
             <>
