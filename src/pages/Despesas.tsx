@@ -467,9 +467,16 @@ const Despesas = () => {
           processedFormData.category_id = selectedDebt.category_id;
           
           // Só atualizar o valor pago se o status for "settled" (Pago)
+          console.log('[DEBUG] Status da despesa:', formData.status);
+          console.log('[DEBUG] Valor da despesa:', formData.amount);
+          console.log('[DEBUG] Paid amount atual da dívida:', selectedDebt.paid_amount);
+          
           if (formData.status === 'settled') {
             const newPaidAmount = selectedDebt.paid_amount + parseFloat(formData.amount);
             const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
+            
+            console.log('[DEBUG] Atualizando dívida - novo paid_amount:', newPaidAmount);
+            console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
             
             await supabase
               .from('debts')
@@ -478,6 +485,8 @@ const Despesas = () => {
                 is_concluded: isFullyPaid // Marcar como concluída apenas se totalmente paga
               })
               .eq('id', debtId);
+          } else {
+            console.log('[DEBUG] Status não é "settled" - não atualizando paid_amount');
           }
 
           // Usar a categoria da dívida

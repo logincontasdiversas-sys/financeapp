@@ -86,7 +86,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
   const standardCategories = categories.filter(category => 
     !category.name.includes(' - Fatura') && 
-    !category.is_system // Filtrar categorias automáticas
+    !category.is_system && // Filtrar categorias automáticas
+    !category.name.startsWith('Dívida -') && // Filtrar categorias de dívidas
+    !category.name.startsWith('Meta -') // Filtrar categorias de metas
   );
   const invoiceCategories = categories.filter(category => category.name.includes(' - Fatura'));
 
