@@ -86,13 +86,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
   const standardCategories = categories.filter(category => 
     !category.name.includes(' - Fatura') && 
-    !category.name.includes(' - Meta') && 
-    !category.name.includes(' - Dívida') &&
     !category.is_system // Filtrar categorias automáticas
   );
   const invoiceCategories = categories.filter(category => category.name.includes(' - Fatura'));
-  const goalCategories = categories.filter(category => category.name.includes(' - Meta'));
-  const debtCategories = categories.filter(category => category.name.includes(' - Dívida'));
 
   return (
     <>
@@ -158,49 +154,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             </>
           )}
 
-          {/* Categorias Personalizadas de Metas */}
-          {goalCategories.length > 0 && (
-            <>
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50 mt-1">
-                Pagamentos de Metas
-              </div>
-              {goalCategories
-                .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
-                .map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <span className="flex items-center gap-2">
-                      <span>{category.emoji}</span>
-                      <span>{category.name}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-            </>
-          )}
-
-          {/* Categorias Personalizadas de Dívidas */}
-          {debtCategories.length > 0 && (
-            <>
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50 mt-1">
-                Pagamentos de Dívidas
-              </div>
-              {debtCategories
-                .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
-                .map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <span className="flex items-center gap-2">
-                      <span>{category.emoji}</span>
-                      <span>{category.name}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-            </>
-          )}
-
-          {/* Metas (para criar nova categoria personalizada) */}
+          {/* Metas (para pagamento) */}
           {goals.length > 0 && (
             <>
               <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50 mt-1">
-                Metas (Criar Pagamento)
+                Pagamentos de Metas
               </div>
               {goals
                 .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'))
@@ -212,11 +170,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             </>
           )}
 
-          {/* Dívidas (para criar nova categoria personalizada) */}
+          {/* Dívidas (para pagamento) */}
           {debts.length > 0 && (
             <>
               <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50 mt-1">
-                Dívidas (Criar Pagamento)
+                Pagamentos de Dívidas
               </div>
               {debts
                 .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'))

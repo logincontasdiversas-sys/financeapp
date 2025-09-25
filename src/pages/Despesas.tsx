@@ -167,6 +167,8 @@ const Despesas = () => {
     note: "",
     invoice_month_year: "", // Campo MM-AA
   });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedGoalDebt, setSelectedGoalDebt] = useState<{type: 'goal' | 'debt', id: string, title: string} | null>(null);
 
   // Realtime sync para transações
   useRealtimeSync({
@@ -414,6 +416,67 @@ const Despesas = () => {
     }
   };
 
+  const handleCategorySelection = async (selectedCategoryId: string) => {
+    if (!selectedGoalDebt || !user || !tenantId) return;
+
+    try {
+      const processedFormData = { ...formData };
+      
+      if (selectedGoalDebt.type === 'goal') {
+        // Atualizar a meta com o valor da despesa
+        const newAmount = goals.find(g => g.id === selectedGoalDebt.id)!.current_amount + parseFloat(formData.amount);
+        await supabase
+          .from('goals')
+          .update({ current_amount: newAmount })
+          .eq('id', selectedGoalDebt.id);
+      } else {
+        // Atualizar a dívida com o valor pago
+        const newPaidAmount = debts.find(d => d.id === selectedGoalDebt.id)!.paid_amount + parseFloat(formData.amount);
+        await supabase
+          .from('debts')
+          .update({ paid_amount: newPaidAmount })
+          .eq('id', selectedGoalDebt.id);
+      }
+      
+      // Usar a categoria selecionada
+      processedFormData.category_id = selectedCategoryId;
+      
+      // Processar a transação
+      if (editingDespesa) {
+        await updateExpense(editingDespesa.id, processedFormData);
+      } else {
+        await createExpense(processedFormData);
+      }
+      
+      // Fechar modal e limpar
+      setShowCategoryModal(false);
+      setSelectedGoalDebt(null);
+      setFormData({
+        title: "",
+        amount: "",
+        date: new Date().toISOString().split('T')[0],
+        category_id: "",
+        bank_id: "",
+        card_id: "",
+        status: "settled",
+        payment_method: "",
+        note: "",
+        invoice_month_year: "",
+      });
+      setIsDialogOpen(false);
+      setEditingDespesa(null);
+      
+      toast({ title: "Despesa criada com sucesso!" });
+    } catch (error: any) {
+      console.error('Error creating expense:', error);
+      toast({
+        title: "Erro ao criar despesa",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !tenantId) return;
@@ -423,98 +486,24 @@ const Despesas = () => {
       const processedFormData = { ...formData };
       
       if (formData.category_id.startsWith('goal-')) {
-        // É uma meta - extrair o ID e processar diferentemente
+        // É uma meta - mostrar modal para escolher categoria
         const goalId = formData.category_id.replace('goal-', '');
         const selectedGoal = goals.find(g => g.id === goalId);
         
         if (selectedGoal) {
-          // Atualizar a meta com o valor da despesa
-          const newAmount = selectedGoal.current_amount + parseFloat(formData.amount);
-          await supabase
-            .from('goals')
-            .update({ current_amount: newAmount })
-            .eq('id', goalId);
-
-          // Garantir que a categoria personalizada exista e esteja vinculada à meta
-          let goalCategoryId: string | undefined = selectedGoal.category_id || undefined;
-          if (goalCategoryId) {
-            const { data: existingCat } = await supabase
-              .from('categories')
-              .select('id')
-              .eq('id', goalCategoryId)
-              .maybeSingle();
-            if (!existingCat) {
-              goalCategoryId = undefined;
-            }
-          }
-          if (!goalCategoryId) {
-            const { data: newCategory, error: catErr } = await supabase
-              .from('categories')
-              .insert({
-                name: `${selectedGoal.title} - Meta`,
-                emoji: '🎯',
-                tenant_id: tenantId!,
-                archived: false,
-              })
-              .select('id')
-              .single();
-            if (catErr) throw catErr;
-            goalCategoryId = newCategory.id;
-            await supabase
-              .from('goals')
-              .update({ category_id: goalCategoryId })
-              .eq('id', goalId);
-          }
-          
-          // Associar a categoria válida à transação
-          processedFormData.category_id = goalCategoryId;
+          setSelectedGoalDebt({ type: 'goal', id: goalId, title: selectedGoal.title });
+          setShowCategoryModal(true);
+          return; // Não processar ainda, aguardar escolha da categoria
         }
       } else if (formData.category_id.startsWith('debt-')) {
-        // É uma dívida - extrair o ID e processar diferentemente
+        // É uma dívida - mostrar modal para escolher categoria
         const debtId = formData.category_id.replace('debt-', '');
         const selectedDebt = debts.find(d => d.id === debtId);
         
         if (selectedDebt) {
-          // Atualizar a dívida com o valor pago
-          const newPaidAmount = selectedDebt.paid_amount + parseFloat(formData.amount);
-          await supabase
-            .from('debts')
-            .update({ paid_amount: newPaidAmount })
-            .eq('id', debtId);
-
-          // Garantir que a categoria personalizada exista e esteja vinculada à dívida
-          let debtCategoryId: string | undefined = selectedDebt.category_id || undefined;
-          if (debtCategoryId) {
-            const { data: existingCat } = await supabase
-              .from('categories')
-              .select('id')
-              .eq('id', debtCategoryId)
-              .maybeSingle();
-            if (!existingCat) {
-              debtCategoryId = undefined;
-            }
-          }
-          if (!debtCategoryId) {
-            const { data: newCategory, error: catErr } = await supabase
-              .from('categories')
-              .insert({
-                name: `${selectedDebt.title} - Dívida`,
-                emoji: '💳',
-                tenant_id: tenantId!,
-                archived: false,
-              })
-              .select('id')
-              .single();
-            if (catErr) throw catErr;
-            debtCategoryId = newCategory.id;
-            await supabase
-              .from('debts')
-              .update({ category_id: debtCategoryId })
-              .eq('id', debtId);
-          }
-          
-          // Associar a categoria válida à transação
-          processedFormData.category_id = debtCategoryId;
+          setSelectedGoalDebt({ type: 'debt', id: debtId, title: selectedDebt.title });
+          setShowCategoryModal(true);
+          return; // Não processar ainda, aguardar escolha da categoria
         }
       }
 
@@ -1906,6 +1895,18 @@ const Despesas = () => {
       <Suspense fallback={<div className="animate-pulse bg-muted h-48 rounded" />}>
         <DespesasCalendar />
       </Suspense>
+
+      {/* Modal para escolher categoria ao pagar meta/dívida */}
+      <CategorySelectionModal
+        isOpen={showCategoryModal}
+        onClose={() => {
+          setShowCategoryModal(false);
+          setSelectedGoalDebt(null);
+        }}
+        selectedGoalDebt={selectedGoalDebt}
+        categories={categories}
+        onCategorySelect={handleCategorySelection}
+      />
     </div>
   );
 };
@@ -1971,6 +1972,86 @@ const InlineCategorySelect = ({
     >
       {getDisplayValue(value)}
     </div>
+  );
+};
+
+// Modal para escolher categoria ao pagar meta/dívida
+const CategorySelectionModal = ({ 
+  isOpen, 
+  onClose, 
+  selectedGoalDebt, 
+  categories, 
+  onCategorySelect 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedGoalDebt: {type: 'goal' | 'debt', id: string, title: string} | null;
+  categories: any[];
+  onCategorySelect: (categoryId: string) => void;
+}) => {
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const handleConfirm = () => {
+    if (selectedCategory) {
+      onCategorySelect(selectedCategory);
+    }
+  };
+
+  const regularCategories = categories.filter(cat => 
+    !cat.name.includes(' - Fatura') && 
+    !cat.is_system
+  );
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>
+            Escolher Categoria para {selectedGoalDebt?.type === 'goal' ? 'Meta' : 'Dívida'}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              {selectedGoalDebt?.type === 'goal' ? 'Meta' : 'Dívida'}: <strong>{selectedGoalDebt?.title}</strong>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Selecione a categoria onde este pagamento será contabilizado
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Categoria</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {regularCategories
+                  .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+                  .map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <span className="flex items-center gap-2">
+                        <span>{category.emoji}</span>
+                        <span>{category.name}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirm} disabled={!selectedCategory}>
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
