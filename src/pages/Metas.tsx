@@ -230,17 +230,31 @@ const Metas = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta meta?")) return;
+    if (!confirm("Tem certeza que deseja excluir esta meta? Isso também excluirá todas as transações vinculadas a ela.")) return;
 
     try {
-      // Buscar a meta para obter o category_id antes de excluir
+      // 1. PRIMEIRO: Excluir todas as transações vinculadas a esta meta
+      console.log('[DEBUG] Excluindo transações vinculadas à meta:', id);
+      const { error: transactionsError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('goal_id', id);
+
+      if (transactionsError) {
+        console.error('[DEBUG] Erro ao excluir transações vinculadas:', transactionsError);
+        // Continuar mesmo com erro, pois pode não haver transações vinculadas
+      } else {
+        console.log('[DEBUG] Transações vinculadas excluídas com sucesso');
+      }
+
+      // 2. Buscar a meta para obter o category_id antes de excluir
       const { data: goalData } = await supabase
         .from('goals')
         .select('category_id')
         .eq('id', id)
         .single();
 
-      // Excluir a meta
+      // 3. Excluir a meta
       const { error } = await supabase
         .from('goals')
         .delete()

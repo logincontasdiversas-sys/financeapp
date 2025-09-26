@@ -267,17 +267,31 @@ const Dividas = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta dívida?")) return;
+    if (!confirm("Tem certeza que deseja excluir esta dívida? Isso também excluirá todas as transações vinculadas a ela.")) return;
 
     try {
-      // Buscar a dívida para obter o category_id antes de excluir
+      // 1. PRIMEIRO: Excluir todas as transações vinculadas a esta dívida
+      console.log('[DEBUG] Excluindo transações vinculadas à dívida:', id);
+      const { error: transactionsError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('debt_id', id);
+
+      if (transactionsError) {
+        console.error('[DEBUG] Erro ao excluir transações vinculadas:', transactionsError);
+        // Continuar mesmo com erro, pois pode não haver transações vinculadas
+      } else {
+        console.log('[DEBUG] Transações vinculadas excluídas com sucesso');
+      }
+
+      // 2. Buscar a dívida para obter o category_id antes de excluir
       const { data: debtData } = await supabase
         .from('debts')
         .select('category_id')
         .eq('id', id)
         .single();
 
-      // Excluir a dívida
+      // 3. Excluir a dívida
       const { error } = await supabase
         .from('debts')
         .delete()
