@@ -595,7 +595,7 @@ const Despesas = () => {
               is_concluded: isFullyPaid
             })
             .eq('id', debtId);
-            
+
           if (updateError) {
             console.error('[DEBUG] Erro ao atualizar dívida:', updateError);
           } else {
@@ -753,15 +753,19 @@ const Despesas = () => {
             const debtId = formData.category_id.replace('debt-', '');
             const selectedDebt = debts.find(d => d.id === debtId);
             
-            if (selectedDebt && selectedDebt.special_category_id) {
+            if (selectedDebt) {
           // Buscar apenas transações settled desta dívida específica usando debt_id
+          console.log('[DEBUG] Buscando transações para dívida ID:', debtId);
           const { data: settledTransactions, error: transactionsError } = await supabase
             .from('transactions')
-            .select('amount')
+            .select('amount, title, debt_id')
             .eq('tenant_id', tenantId)
             .eq('kind', 'expense')
             .eq('debt_id', debtId)
             .eq('status', 'settled');
+            
+          console.log('[DEBUG] Transações encontradas para esta dívida:', settledTransactions?.length || 0);
+          console.log('[DEBUG] Detalhes das transações:', settledTransactions);
 
               if (transactionsError) {
                 console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
@@ -1121,23 +1125,27 @@ const Despesas = () => {
         console.log('[DEBUG] Transação ID:', id);
         console.log('[DEBUG] Novo status:', value);
         
-        // Buscar a transação para obter a categoria
+        // Buscar a transação para obter o debt_id
         const transaction = despesas.find(d => d.id === id);
-        if (transaction && transaction.category_id) {
-          // Verificar se é uma categoria especial de dívida
-          const debtWithSpecialCategory = debts.find(d => d.special_category_id === transaction.category_id);
+        if (transaction && transaction.debt_id) {
+          // Verificar se é um pagamento de dívida
+          const debt = debts.find(d => d.id === transaction.debt_id);
           
-          if (debtWithSpecialCategory) {
-            console.log('[DEBUG] Dívida encontrada para recálculo:', debtWithSpecialCategory.title);
+          if (debt) {
+            console.log('[DEBUG] Dívida encontrada para recálculo:', debt.title);
             
             // Buscar todas as transações settled desta dívida usando debt_id
+            console.log('[DEBUG] Buscando transações para dívida ID (edição rápida):', transaction.debt_id);
             const { data: settledTransactions, error: transactionsError } = await supabase
               .from('transactions')
-              .select('amount')
+              .select('amount, title, debt_id')
               .eq('tenant_id', tenantId)
               .eq('kind', 'expense')
-              .eq('debt_id', debtWithSpecialCategory.id)
+              .eq('debt_id', transaction.debt_id)
               .eq('status', 'settled');
+              
+            console.log('[DEBUG] Transações encontradas para esta dívida (edição rápida):', settledTransactions?.length || 0);
+            console.log('[DEBUG] Detalhes das transações (edição rápida):', settledTransactions);
 
             if (transactionsError) {
               console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
@@ -1147,16 +1155,16 @@ const Despesas = () => {
                 return sum + Number(transaction.amount || 0);
               }, 0) || 0;
               
-              const isFullyPaid = debtWithSpecialCategory.total_amount ? newPaidAmount >= debtWithSpecialCategory.total_amount : false;
+              const isFullyPaid = debt.total_amount ? newPaidAmount >= debt.total_amount : false;
               
               console.log('[DEBUG] === VERIFICAÇÃO DE CONCLUSÃO DA DÍVIDA (EDIÇÃO RÁPIDA) ===');
               console.log('[DEBUG] Valor pago:', newPaidAmount);
-              console.log('[DEBUG] Valor total da dívida:', debtWithSpecialCategory.total_amount);
-              console.log('[DEBUG] Diferença:', debtWithSpecialCategory.total_amount - newPaidAmount);
+              console.log('[DEBUG] Valor total da dívida:', debt.total_amount);
+              console.log('[DEBUG] Diferença:', debt.total_amount - newPaidAmount);
               console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
               console.log('[DEBUG] === ATUALIZANDO DÍVIDA NO BANCO (EDIÇÃO RÁPIDA) ===');
-              console.log('[DEBUG] debtId:', debtWithSpecialCategory.id);
+              console.log('[DEBUG] debtId:', debt.id);
               console.log('[DEBUG] newPaidAmount:', newPaidAmount);
               console.log('[DEBUG] isFullyPaid:', isFullyPaid);
               
@@ -1166,7 +1174,7 @@ const Despesas = () => {
                   paid_amount: newPaidAmount,
                   is_concluded: isFullyPaid
                 })
-                .eq('id', debtWithSpecialCategory.id);
+                .eq('id', debt.id);
                 
               if (updateError) {
                 console.error('[DEBUG] Erro ao atualizar dívida:', updateError);
@@ -1176,10 +1184,10 @@ const Despesas = () => {
               
               // Atualizar estado local da dívida
               setDebts(prevDebts => 
-                prevDebts.map(debt => 
-                  debt.id === debtWithSpecialCategory.id 
-                    ? { ...debt, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
-                    : debt
+                prevDebts.map(d => 
+                  d.id === debt.id 
+                    ? { ...d, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
+                    : d
                 )
               );
               
