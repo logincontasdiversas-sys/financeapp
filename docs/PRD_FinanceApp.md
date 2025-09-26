@@ -163,6 +163,9 @@
 - [x] **Flexibilidade**: Usuário pode editar categoria a qualquer momento
 - [x] **Interface Organizada**: Seleção de categorias em grupos lógicos
 - [x] **Compatibilidade**: Sistema funciona com dados existentes
+- [x] **Progresso Inteligente**: Recálculo automático após mudanças de status
+- [x] **Filtros Avançados**: Separação clara entre categorias padrão e especiais
+- [x] **Performance Otimizada**: Logs reduzidos e queries eficientes
 
 ## 🐛 Problemas Resolvidos
 
@@ -350,6 +353,31 @@ npm run lint         # ESLint check
   - Fontes otimizadas para melhor densidade
   - Visual mais limpo e organizado
 
+### ✅ Correções de Sistema de Dívidas e Metas (Janeiro 2025)
+- **Progresso de Dívidas**: Recálculo correto após pagamentos ✅
+  - Recálculo executado APÓS salvar transação (evita race conditions)
+  - Funciona para qualquer status (settled/pending)
+  - Validação segura para evitar dívida quitada incorretamente
+  - Logs detalhados para debug do processo
+
+- **Contabilização de Categorias**: Sistema híbrido implementado ✅
+  - Transações usam categoria especial para identificação
+  - Gráficos mostram categoria padrão para contabilização
+  - Campos debt_special_category_id e goal_special_category_id preparados
+  - Migração criada para novos campos na tabela transactions
+
+- **Interface de Categorias**: Filtros otimizados ✅
+  - Categorias especiais separadas das padrões
+  - Filtros robustos para evitar duplicação
+  - Performance melhorada com logs reduzidos
+  - Ordem lógica: Categorias → Faturas → Metas → Dívidas
+
+- **Correções de Erros**: Estabilidade melhorada ✅
+  - Erros 400 do Supabase corrigidos
+  - Service Worker com tratamento de erros robusto
+  - Manifest.json com sintaxe correta
+  - Interfaces TypeScript atualizadas
+
 ### ✅ Problemas Resolvidos (Janeiro 2025)
 
 ### ✅ Cartões de Crédito - Problema de Exibição: ✅ RESOLVIDO
@@ -430,10 +458,10 @@ Total: 80+ arquivos
 
 ---
 
-**Última atualização**: Setembro 2025  
-**Versão**: 1.1.0 (100% completo)
-**Status**: Lançamento V1.1 - Interface mobile otimizada e sistema de categorias completo
-**Próximo milestone**: V1.2 - Relatórios avançados e gamificação
+**Última atualização**: Janeiro 2025  
+**Versão**: 1.2.0 (100% completo)
+**Status**: Lançamento V1.2 - Sistema de dívidas e metas otimizado com progresso inteligente
+**Próximo milestone**: V1.3 - Relatórios avançados e gamificação
 
 ## 🆕 NOVAS FUNCIONALIDADES IMPLEMENTADAS (Janeiro 2025)
 
@@ -463,6 +491,36 @@ Total: 80+ arquivos
 - [x] Labels externos em gráficos de pizza
 - [x] Edição inline com popup organizado
 - [x] 200+ emojis expandidos em categorias
+
+## 🆕 FUNCIONALIDADES IMPLEMENTADAS (Janeiro 2025)
+
+### ✅ Sistema de Progresso Inteligente para Dívidas e Metas
+- [x] **Recálculo Automático**: Progresso atualizado após qualquer mudança de status
+- [x] **Timing Correto**: Recálculo executado APÓS salvar transação (evita race conditions)
+- [x] **Validação Segura**: Previne dívidas quitadas incorretamente com total_amount undefined
+- [x] **Logs Detalhados**: Sistema de debug completo para rastreamento de problemas
+- [x] **Status Flexível**: Funciona para transações settled e pending
+
+### ✅ Sistema Híbrido de Categorias
+- [x] **Identificação Especial**: Transações usam categoria especial para identificação
+- [x] **Contabilização Padrão**: Gráficos mostram categoria padrão para análise
+- [x] **Campos Preparados**: debt_special_category_id e goal_special_category_id
+- [x] **Migração Criada**: Novos campos na tabela transactions
+- [x] **Compatibilidade**: Sistema funciona com dados existentes
+
+### ✅ Otimizações de Performance e Estabilidade
+- [x] **Erros 400 Corrigidos**: Queries Supabase otimizadas
+- [x] **Service Worker Robusto**: Tratamento de erros melhorado
+- [x] **Manifest.json Corrigido**: Sintaxe e compatibilidade PWA
+- [x] **Interfaces Atualizadas**: TypeScript com campos necessários
+- [x] **Logs Reduzidos**: Performance melhorada com menos console.log
+
+### ✅ Interface de Categorias Otimizada
+- [x] **Filtros Robustos**: Separação clara entre categorias padrão e especiais
+- [x] **Ordem Lógica**: Categorias → Faturas → Metas → Dívidas
+- [x] **Performance**: Queries eficientes e logs reduzidos
+- [x] **Duplicação Eliminada**: Categorias especiais não aparecem duplicadas
+- [x] **Compatibilidade**: Funciona com dados históricos
 
 ## 🆕 FUNCIONALIDADES IMPLEMENTADAS (Setembro 2025)
 
