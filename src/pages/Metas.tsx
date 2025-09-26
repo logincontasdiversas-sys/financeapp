@@ -460,13 +460,25 @@ const Metas = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {categories
-                      .filter(cat => 
-                        !cat.is_system && 
-                        !cat.name.startsWith('Dívida -') && 
-                        !cat.name.startsWith('Meta -') &&
-                        !cat.name.includes('Dívida -') &&
-                        !cat.name.includes('Meta -')
-                      )
+                      .filter(cat => {
+                        // Filtrar apenas categorias padrões (não especiais)
+                        const name = cat.name.toLowerCase();
+                        return (
+                          !cat.is_system && 
+                          !name.startsWith('dívida -') && 
+                          !name.startsWith('meta -') &&
+                          !name.includes('dívida -') &&
+                          !name.includes('meta -') &&
+                          !name.includes(' - dívida') &&
+                          !name.includes(' - meta') &&
+                          !name.includes('aluguel reveillon') &&
+                          !name.includes('camisetas nilda') &&
+                          !name.includes('conserto vw') &&
+                          !name.includes('empréstimo') &&
+                          !name.includes('beto carrero') &&
+                          !name.includes('vw tiguan')
+                        );
+                      })
                       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
                       .map((category) => (
                         <SelectItem key={category.id} value={category.id}>
