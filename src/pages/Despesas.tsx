@@ -525,6 +525,50 @@ const Despesas = () => {
 
       if (editingDespesa) {
         await updateExpense(editingDespesa.id, processedFormData);
+        
+        // Recálculo da dívida APÓS editar a transação (para qualquer status)
+        if (formData.category_id.startsWith('debt-')) {
+          console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA APÓS EDITAR ===');
+          
+          const debtId = formData.category_id.replace('debt-', '');
+          const selectedDebt = debts.find(d => d.id === debtId);
+          
+          if (selectedDebt && selectedDebt.special_category_id) {
+            // Buscar todas as transações settled desta dívida usando category_id
+            const { data: settledTransactions, error: transactionsError } = await supabase
+              .from('transactions')
+              .select('amount')
+              .eq('tenant_id', tenantId)
+              .eq('kind', 'expense')
+              .eq('category_id', selectedDebt.special_category_id)
+              .eq('status', 'settled');
+
+            if (transactionsError) {
+              console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
+            } else {
+              // Calcular novo paid_amount baseado apenas em transações settled
+              const newPaidAmount = settledTransactions?.reduce((sum, transaction) => {
+                return sum + Number(transaction.amount || 0);
+              }, 0) || 0;
+              
+              const isFullyPaid = selectedDebt.total_amount ? newPaidAmount >= selectedDebt.total_amount : false;
+              
+              console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
+              console.log('[DEBUG] Valor atual pago (antigo):', selectedDebt.paid_amount);
+              console.log('[DEBUG] Novo valor pago (recalculado):', newPaidAmount);
+              console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
+              console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
+              
+              await supabase
+                .from('debts')
+                .update({ 
+                  paid_amount: newPaidAmount,
+                  is_concluded: isFullyPaid
+                })
+                .eq('id', debtId);
+            }
+          }
+        }
       } else {
         // Se for transferência, criar duas transações
         if (isTransfer && transferToBankId && transferCategoryId) {
