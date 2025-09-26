@@ -594,34 +594,35 @@ const Dividas = () => {
                 <div className="h-32 w-full mb-3 bg-cover bg-center rounded-md" 
                      style={{ backgroundImage: `url(${debt.image_url})` }} />
               )}
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-red-600" />
-                  <CardTitle className="text-lg">{debt.title}</CardTitle>
-                </div>
-                 <div className="flex gap-1">
-                   <Button
-                     variant="ghost"
-                     size="sm"
-                     onClick={() => handleEdit(debt)}
-                   >
-                     <Pencil className="h-4 w-4" />
-                   </Button>
-                   <Button
-                     variant="ghost"
-                     size="sm"
-                     onClick={() => handleDuplicate(debt)}
-                   >
-                     <Copy className="h-4 w-4" />
-                   </Button>
-                   <Button
-                     variant="ghost"
-                     size="sm"
-                     onClick={() => handleDelete(debt.id)}
-                   >
-                     <Trash2 className="h-4 w-4" />
-                   </Button>
-                 </div>
+              {/* Ações em linha separada */}
+              <div className="flex justify-end gap-1 mb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEdit(debt)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDuplicate(debt)}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(debt.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Título em linha inteira */}
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-red-600" />
+                <CardTitle className="text-lg">{debt.title}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
