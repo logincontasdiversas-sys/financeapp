@@ -452,7 +452,7 @@ const Despesas = () => {
           
           // Só atualizar o valor da meta se o status for "settled" (Pago)
           if (formData.status === 'settled') {
-            const newAmount = selectedGoal.current_amount + parseFloat(formData.amount);
+          const newAmount = selectedGoal.current_amount + parseFloat(formData.amount);
             const isGoalAchieved = newAmount >= selectedGoal.target_amount;
             
             await supabase
@@ -463,7 +463,7 @@ const Despesas = () => {
               })
               .eq('id', goalId);
           }
-
+          
           // Adicionar goal_id para identificar que esta despesa é específica da meta
           (processedFormData as any).goal_id = goalId;
 
@@ -528,6 +528,8 @@ const Despesas = () => {
         console.log('[DEBUG] Transação sendo editada:', editingDespesa.id);
         console.log('[DEBUG] Categoria da transação editada:', formData.category_id);
         console.log('[DEBUG] É uma dívida?', formData.category_id.startsWith('debt-'));
+        console.log('[DEBUG] processedFormData.category_id:', processedFormData.category_id);
+        console.log('[DEBUG] Lista de dívidas disponíveis:', debts.map(d => ({ id: d.id, title: d.title, special_category_id: d.special_category_id })));
         
         await updateExpense(editingDespesa.id, processedFormData);
         
@@ -564,22 +566,25 @@ const Despesas = () => {
               console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
               console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
-              await supabase
-                .from('debts')
+          await supabase
+            .from('debts')
                 .update({ 
                   paid_amount: newPaidAmount,
                   is_concluded: isFullyPaid
                 })
-                .eq('id', debtId);
+            .eq('id', debtId);
             }
           }
         } else {
           // Verificação alternativa: se a transação editada é de uma dívida baseada na categoria especial
           console.log('[DEBUG] === VERIFICAÇÃO ALTERNATIVA PARA DÍVIDA ===');
           console.log('[DEBUG] Categoria da transação editada:', formData.category_id);
+          console.log('[DEBUG] processedFormData.category_id:', processedFormData.category_id);
           
           // Buscar se esta categoria é uma categoria especial de dívida
           const debtWithSpecialCategory = debts.find(d => d.special_category_id === formData.category_id);
+          console.log('[DEBUG] Dívida encontrada pela categoria especial:', debtWithSpecialCategory);
+          
           if (debtWithSpecialCategory) {
             console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA (CATEGORIA ESPECIAL) ===');
             
@@ -608,8 +613,8 @@ const Despesas = () => {
               console.log('[DEBUG] Valor total da dívida:', debtWithSpecialCategory.total_amount);
               console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
-              await supabase
-                .from('debts')
+            await supabase
+              .from('debts')
                 .update({ 
                   paid_amount: newPaidAmount,
                   is_concluded: isFullyPaid
@@ -674,7 +679,7 @@ const Despesas = () => {
             title: "Transferência realizada!",
             description: `R$ ${amount.toFixed(2)} transferido de ${fromBank.name} para ${toBank.name}.`,
           });
-        } else {
+      } else {
           const created = await createExpense(processedFormData);
           
           // Recálculo da dívida APÓS salvar a transação (para qualquer status)
