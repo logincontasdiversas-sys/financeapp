@@ -1108,6 +1108,81 @@ const Despesas = () => {
         return next as typeof d;
       }));
 
+      // Recálculo da dívida se o status foi alterado
+      if (field === 'status') {
+        console.log('[DEBUG] === EDIÇÃO RÁPIDA - RECALCULANDO DÍVIDA ===');
+        console.log('[DEBUG] Transação ID:', id);
+        console.log('[DEBUG] Novo status:', value);
+        
+        // Buscar a transação para obter a categoria
+        const transaction = despesas.find(d => d.id === id);
+        if (transaction && transaction.category_id) {
+          // Verificar se é uma categoria especial de dívida
+          const debtWithSpecialCategory = debts.find(d => d.special_category_id === transaction.category_id);
+          
+          if (debtWithSpecialCategory) {
+            console.log('[DEBUG] Dívida encontrada para recálculo:', debtWithSpecialCategory.title);
+            
+            // Buscar todas as transações settled desta dívida
+            const { data: settledTransactions, error: transactionsError } = await supabase
+              .from('transactions')
+              .select('amount')
+              .eq('tenant_id', tenantId)
+              .eq('kind', 'expense')
+              .eq('category_id', debtWithSpecialCategory.special_category_id)
+              .eq('status', 'settled');
+
+            if (transactionsError) {
+              console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
+            } else {
+              // Calcular novo paid_amount baseado apenas em transações settled
+              const newPaidAmount = settledTransactions?.reduce((sum, transaction) => {
+                return sum + Number(transaction.amount || 0);
+              }, 0) || 0;
+              
+              const isFullyPaid = debtWithSpecialCategory.total_amount ? newPaidAmount >= debtWithSpecialCategory.total_amount : false;
+              
+              console.log('[DEBUG] === VERIFICAÇÃO DE CONCLUSÃO DA DÍVIDA (EDIÇÃO RÁPIDA) ===');
+              console.log('[DEBUG] Valor pago:', newPaidAmount);
+              console.log('[DEBUG] Valor total da dívida:', debtWithSpecialCategory.total_amount);
+              console.log('[DEBUG] Diferença:', debtWithSpecialCategory.total_amount - newPaidAmount);
+              console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
+              
+              console.log('[DEBUG] === ATUALIZANDO DÍVIDA NO BANCO (EDIÇÃO RÁPIDA) ===');
+              console.log('[DEBUG] debtId:', debtWithSpecialCategory.id);
+              console.log('[DEBUG] newPaidAmount:', newPaidAmount);
+              console.log('[DEBUG] isFullyPaid:', isFullyPaid);
+              
+              const { error: updateError } = await supabase
+                .from('debts')
+                .update({ 
+                  paid_amount: newPaidAmount,
+                  is_concluded: isFullyPaid
+                })
+                .eq('id', debtWithSpecialCategory.id);
+                
+              if (updateError) {
+                console.error('[DEBUG] Erro ao atualizar dívida:', updateError);
+              } else {
+                console.log('[DEBUG] Dívida atualizada com sucesso no banco (edição rápida)');
+              }
+              
+              // Atualizar estado local da dívida
+              setDebts(prevDebts => 
+                prevDebts.map(debt => 
+                  debt.id === debtWithSpecialCategory.id 
+                    ? { ...debt, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
+                    : debt
+                )
+              );
+              
+              // Forçar reload das dívidas para garantir sincronização
+              await loadDebts();
+            }
+          }
+        }
+      }
+
       // Garantia extra: recarregar
         loadDespesas();
       setSummaryRefreshKey(k => k + 1);
