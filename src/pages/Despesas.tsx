@@ -72,14 +72,18 @@ interface Goal {
   id: string;
   title: string;
   current_amount: number;
+  target_amount: number;
   category_id: string;
+  special_category_id?: string;
 }
 
 interface Debt {
   id: string;
   title: string;
   paid_amount: number;
+  total_amount: number;
   category_id: string;
+  special_category_id?: string;
 }
 
 const Despesas = () => {
@@ -442,10 +446,9 @@ const Despesas = () => {
         const selectedGoal = goals.find(g => g.id === goalId);
         
         if (selectedGoal) {
-          // Para contabilização no gráfico, usar categoria PADRÃO da meta
-          // Para identificação da transação, usar categoria PERSONALIZADA
-          processedFormData.category_id = selectedGoal.category_id; // Categoria padrão para gráfico
-          processedFormData.goal_special_category_id = selectedGoal.special_category_id; // Categoria especial para identificação
+          // TEMPORÁRIO: Usar categoria especial para identificação
+          // TODO: Implementar campos goal_special_category_id após migração
+          processedFormData.category_id = selectedGoal.special_category_id; // Categoria especial para identificação
           
           // Só atualizar o valor da meta se o status for "settled" (Pago)
           if (formData.status === 'settled') {
@@ -462,14 +465,14 @@ const Despesas = () => {
           }
 
           // Adicionar goal_id para identificar que esta despesa é específica da meta
-          processedFormData.goal_id = goalId;
+          (processedFormData as any).goal_id = goalId;
 
           // Usar a categoria da meta
           if (selectedGoal.category_id) {
             processedFormData.category_id = selectedGoal.category_id;
           } else {
             // Se a meta não tem categoria, usar primeira categoria disponível
-            const firstCategory = categories.find(c => !c.is_system);
+            const firstCategory = categories.find(c => !(c as any).is_system);
             if (firstCategory) {
               processedFormData.category_id = firstCategory.id;
             }
@@ -488,10 +491,9 @@ const Despesas = () => {
           console.log('[DEBUG] Categoria personalizada da dívida:', selectedDebt.special_category_id);
           console.log('[DEBUG] Categoria que será usada para contabilização:', selectedDebt.special_category_id);
           
-          // Para contabilização no gráfico, usar categoria PADRÃO da dívida
-          // Para identificação da transação, usar categoria PERSONALIZADA
-          processedFormData.category_id = selectedDebt.category_id; // Categoria padrão para gráfico
-          processedFormData.debt_special_category_id = selectedDebt.special_category_id; // Categoria especial para identificação
+          // TEMPORÁRIO: Usar categoria especial para identificação
+          // TODO: Implementar campos debt_special_category_id após migração
+          processedFormData.category_id = selectedDebt.special_category_id; // Categoria especial para identificação
           
           // Só atualizar o valor pago se o status for "settled" (Pago)
           console.log('[DEBUG] Status da despesa:', formData.status);
@@ -502,13 +504,13 @@ const Despesas = () => {
           console.log('[DEBUG] === DÍVIDA IDENTIFICADA - RECÁLCULO SERÁ FEITO APÓS SALVAR ===');
 
           // Adicionar debt_id para identificar que esta despesa é específica da dívida
-          processedFormData.debt_id = debtId;
+          (processedFormData as any).debt_id = debtId;
 
           // Usar a categoria personalizada da dívida (já definida acima)
           if (!selectedDebt.special_category_id) {
             console.error('[DEBUG] Dívida não possui categoria personalizada!');
             // Se a dívida não tem categoria personalizada, usar primeira categoria disponível
-            const firstCategory = categories.find(c => !c.is_system);
+            const firstCategory = categories.find(c => !(c as any).is_system);
             if (firstCategory) {
               processedFormData.category_id = firstCategory.id;
             }
@@ -590,13 +592,13 @@ const Despesas = () => {
             const selectedDebt = debts.find(d => d.id === debtId);
             
             if (selectedDebt && selectedDebt.special_category_id) {
-              // Buscar todas as transações settled desta dívida usando debt_special_category_id
+              // Buscar todas as transações settled desta dívida usando category_id
               const { data: settledTransactions, error: transactionsError } = await supabase
                 .from('transactions')
                 .select('amount')
                 .eq('tenant_id', tenantId)
                 .eq('kind', 'expense')
-                .eq('debt_special_category_id', selectedDebt.special_category_id)
+                .eq('category_id', selectedDebt.special_category_id)
                 .eq('status', 'settled');
 
               if (transactionsError) {
@@ -607,7 +609,7 @@ const Despesas = () => {
                   return sum + Number(transaction.amount || 0);
                 }, 0) || 0;
                 
-                const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
+                const isFullyPaid = selectedDebt.total_amount ? newPaidAmount >= selectedDebt.total_amount : false;
                 
                 console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
                 console.log('[DEBUG] Valor atual pago (antigo):', selectedDebt.paid_amount);
