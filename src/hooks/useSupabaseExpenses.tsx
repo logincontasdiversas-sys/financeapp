@@ -28,6 +28,8 @@ interface ExpenseFormData {
   payment_method: string;
   note: string;
   invoice_month_year?: string; // Campo MM-AA para faturas
+  debt_special_category_id?: string; // Campo para vincular transação à dívida específica
+  goal_special_category_id?: string; // Campo para vincular transação à meta específica
 }
 
 interface Category {
@@ -157,6 +159,8 @@ export const useSupabaseExpenses = () => {
         kind: 'expense',
         user_id: user.id,
         tenant_id: tenantId,
+        debt_special_category_id: normalizeOptionalUUID(formData.debt_special_category_id),
+        goal_special_category_id: normalizeOptionalUUID(formData.goal_special_category_id),
       };
 
       const { data: newTransaction, error } = await supabase
@@ -264,6 +268,8 @@ export const useSupabaseExpenses = () => {
         status: formData.status,
         payment_method: formData.payment_method || null,
         note: formData.note || null,
+        debt_special_category_id: normalizeOptionalUUID(formData.debt_special_category_id),
+        goal_special_category_id: normalizeOptionalUUID(formData.goal_special_category_id),
       };
 
       const { data: updatedTransaction, error } = await supabase
