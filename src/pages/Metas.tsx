@@ -471,6 +471,7 @@ const Metas = () => {
                           !name.includes('meta -') &&
                           !name.includes(' - dívida') &&
                           !name.includes(' - meta') &&
+                          !name.includes(' - fatura') &&
                           !name.includes('aluguel reveillon') &&
                           !name.includes('camisetas nilda') &&
                           !name.includes('conserto vw') &&
