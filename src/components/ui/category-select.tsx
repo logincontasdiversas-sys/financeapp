@@ -223,37 +223,6 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
             </>
           )}
 
-          {/* Metas (para pagamento) */}
-          {goals.length > 0 && (
-            <>
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50 mt-1">
-                Pagamentos de Metas
-              </div>
-              {goals
-                .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'))
-                .map((goal) => (
-                  <SelectItem key={`goal-${goal.id}`} value={`goal-${goal.id}`}>
-                    🎯 {goal.title}
-                  </SelectItem>
-                ))}
-            </>
-          )}
-
-          {/* Dívidas (para pagamento) */}
-          {debts.length > 0 && (
-            <>
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50 mt-1">
-                Pagamentos de Dívidas
-              </div>
-              {debts
-                .sort((a, b) => a.title.localeCompare(b.title, 'pt-BR'))
-                .map((debt) => (
-                  <SelectItem key={`debt-${debt.id}`} value={`debt-${debt.id}`}>
-                    💳 {debt.title}
-                  </SelectItem>
-                ))}
-            </>
-          )}
         </SelectContent>
       </Select>
 
