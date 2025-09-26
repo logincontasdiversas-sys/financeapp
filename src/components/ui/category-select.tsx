@@ -87,21 +87,42 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   // Filtrar categorias que são especiais (criadas automaticamente para metas/dívidas)
   const isSpecialCategory = (category: any) => {
     const name = category.name.toLowerCase();
-    return (
+    const isSpecial = (
       name.includes('dívida -') ||
       name.includes('meta -') ||
       name.includes(' - dívida') ||
       name.includes(' - meta') ||
       name.startsWith('dívida ') ||
-      name.startsWith('meta ')
+      name.startsWith('meta ') ||
+      name.includes('empréstimo - cristian') ||
+      name.includes('beto carrero') ||
+      name.includes('vw tiguan')
     );
+    
+    if (isSpecial) {
+      console.log('[CATEGORY_FILTER] Categoria especial detectada:', category.name);
+    }
+    
+    return isSpecial;
   };
 
-  const standardCategories = categories.filter(category => 
-    !category.name.includes(' - Fatura') && 
-    !category.is_system && // Filtrar categorias automáticas
-    !isSpecialCategory(category) // Filtrar categorias especiais
-  );
+  const standardCategories = categories.filter(category => {
+    const isStandard = (
+      !category.name.includes(' - Fatura') && 
+      !category.is_system && // Filtrar categorias automáticas
+      !isSpecialCategory(category) // Filtrar categorias especiais
+    );
+    
+    if (!isStandard) {
+      console.log('[CATEGORY_FILTER] Categoria filtrada:', category.name, 'Razão:', {
+        isFatura: category.name.includes(' - Fatura'),
+        isSystem: category.is_system,
+        isSpecial: isSpecialCategory(category)
+      });
+    }
+    
+    return isStandard;
+  });
   const invoiceCategories = categories.filter(category => category.name.includes(' - Fatura'));
 
   return (
