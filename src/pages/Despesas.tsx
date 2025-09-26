@@ -575,6 +575,15 @@ const Despesas = () => {
                   is_concluded: isFullyPaid
                 })
             .eq('id', debtId);
+            
+            // Atualizar estado local da dívida
+            setDebts(prevDebts => 
+              prevDebts.map(debt => 
+                debt.id === debtId 
+                  ? { ...debt, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
+                  : debt
+              )
+            );
             }
           }
         } else {
@@ -615,13 +624,22 @@ const Despesas = () => {
               console.log('[DEBUG] Valor total da dívida:', debtWithSpecialCategory.total_amount);
               console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
-            await supabase
-              .from('debts')
+              await supabase
+                .from('debts')
                 .update({ 
                   paid_amount: newPaidAmount,
                   is_concluded: isFullyPaid
                 })
                 .eq('id', debtWithSpecialCategory.id);
+              
+              // Atualizar estado local da dívida
+              setDebts(prevDebts => 
+                prevDebts.map(debt => 
+                  debt.id === debtWithSpecialCategory.id 
+                    ? { ...debt, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
+                    : debt
+                )
+              );
             }
           }
         }
