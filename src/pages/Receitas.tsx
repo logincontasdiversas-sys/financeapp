@@ -159,7 +159,7 @@ const Receitas = () => {
           banks (
             name
           ),
-          categories (
+          categories:category_id (
             name
           )
         `)

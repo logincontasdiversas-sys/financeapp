@@ -279,13 +279,29 @@ const Despesas = () => {
     if (!tenantId) return;
     
     try {
+      console.log('[DEBUG] Iniciando carregamento de despesas...');
       logger.info('DESPESAS_LOAD', 'Iniciando carregamento de despesas', { tenantId });
       
+      // Query corrigida: especificar relacionamento exato para categories
       const { data, error } = await supabase
         .from('transactions')
         .select(`
-          *,
-          categories (
+          id,
+          title,
+          amount,
+          date,
+          category_id,
+          bank_id,
+          card_id,
+          status,
+          payment_method,
+          note,
+          kind,
+          user_id,
+          tenant_id,
+          debt_special_category_id,
+          goal_special_category_id,
+          categories:category_id (
             name,
             emoji
           ),
@@ -300,8 +316,12 @@ const Despesas = () => {
         .eq('tenant_id', tenantId)
         .order('date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[DEBUG] Erro na query de despesas:', error);
+        throw error;
+      }
       
+      console.log('[DEBUG] Despesas carregadas com sucesso:', data?.length || 0, 'itens');
       logger.info('DESPESAS_LOAD', 'Despesas carregadas com sucesso', { 
         count: data?.length || 0,
         firstItems: data?.slice(0, 3).map(d => ({ 
@@ -313,6 +333,7 @@ const Despesas = () => {
       
       setDespesas(data || []);
     } catch (error) {
+      console.error('[DEBUG] Erro completo ao carregar despesas:', error);
       logger.error('DESPESAS_LOAD', 'Erro ao carregar despesas', { error });
       console.error('[DESPESAS] Error loading:', error);
       toast({
