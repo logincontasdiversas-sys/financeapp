@@ -159,9 +159,8 @@ export const useSupabaseExpenses = () => {
         kind: 'expense',
         user_id: user.id,
         tenant_id: tenantId,
-        // TEMPORÁRIO: Campos removidos até migração ser aplicada
-        // debt_special_category_id: normalizeOptionalUUID(formData.debt_special_category_id),
-        // goal_special_category_id: normalizeOptionalUUID(formData.goal_special_category_id),
+        debt_special_category_id: normalizeOptionalUUID(formData.debt_special_category_id),
+        goal_special_category_id: normalizeOptionalUUID(formData.goal_special_category_id),
       };
 
       const { data: newTransaction, error } = await supabase
@@ -269,9 +268,8 @@ export const useSupabaseExpenses = () => {
         status: formData.status,
         payment_method: formData.payment_method || null,
         note: formData.note || null,
-        // TEMPORÁRIO: Campos removidos até migração ser aplicada
-        // debt_special_category_id: normalizeOptionalUUID(formData.debt_special_category_id),
-        // goal_special_category_id: normalizeOptionalUUID(formData.goal_special_category_id),
+        debt_special_category_id: normalizeOptionalUUID(formData.debt_special_category_id),
+        goal_special_category_id: normalizeOptionalUUID(formData.goal_special_category_id),
       };
 
       const { data: updatedTransaction, error } = await supabase
