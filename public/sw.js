@@ -31,7 +31,10 @@ self.addEventListener('fetch', (event) => {
         try {
           const networkResponse = await fetch(request);
           const cache = await caches.open(CACHE_NAME);
-          cache.put(request, networkResponse.clone());
+          // Verificar se a URL é válida para cache antes de tentar armazenar
+          if (request.url.startsWith('http') && !request.url.startsWith('chrome-extension://')) {
+            cache.put(request, networkResponse.clone());
+          }
           return networkResponse;
         } catch (_) {
           const cached = await caches.match(request);

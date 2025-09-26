@@ -1,0 +1,22 @@
+{
+  "name": "FinanceApp - Gestão Financeira",
+  "short_name": "FinanceApp",
+  "description": "Aplicação completa de gestão financeira pessoal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}
