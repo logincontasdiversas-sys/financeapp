@@ -432,6 +432,8 @@ const Despesas = () => {
     if (!user || !tenantId) return;
 
     console.log('[DEBUG] === INÍCIO DO SUBMIT ===');
+    console.log('[DEBUG] editingDespesa existe?', !!editingDespesa);
+    console.log('[DEBUG] editingDespesa ID:', editingDespesa?.id);
     console.log('[DEBUG] Categoria selecionada:', formData.category_id);
     console.log('[DEBUG] Valor:', formData.amount);
     console.log('[DEBUG] Status:', formData.status);
