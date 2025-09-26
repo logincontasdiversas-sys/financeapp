@@ -774,6 +774,10 @@ const Despesas = () => {
             console.log('[DEBUG] Tentando fallback para categoria...');
             
             // FALLBACK: Se debt_id não existir, usar categoria da dívida
+            // ⚠️ ATENÇÃO: Este fallback contabiliza TODAS as despesas da categoria!
+            console.log('[DEBUG] ⚠️ USANDO FALLBACK - VAI CONTABILIZAR TODAS AS DESPESAS DA CATEGORIA!');
+            console.log('[DEBUG] Categoria da dívida:', selectedDebt.category_id);
+            
             const { data: fallbackTransactions, error: fallbackError } = await supabase
               .from('transactions')
               .select('amount, title, category_id')
@@ -786,10 +790,31 @@ const Despesas = () => {
             console.log('[DEBUG] Fallback - detalhes:', fallbackTransactions);
             
             if (!fallbackError) {
-              // Usar dados do fallback
-              const newPaidAmount = fallbackTransactions?.reduce((sum, transaction) => {
+              // FILTRO INTELIGENTE: Filtrar apenas transações que parecem ser desta dívida específica
+              console.log('[DEBUG] Aplicando filtro inteligente para isolar transações desta dívida...');
+              
+              const filteredTransactions = fallbackTransactions?.filter(transaction => {
+                // Verificar se o título da transação contém palavras-chave da dívida
+                const debtTitle = selectedDebt.title.toLowerCase();
+                const transactionTitle = transaction.title.toLowerCase();
+                
+                // Palavras-chave para identificar transações desta dívida
+                const debtKeywords = debtTitle.split(' ').filter(word => word.length > 2);
+                const hasKeyword = debtKeywords.some(keyword => 
+                  transactionTitle.includes(keyword)
+                );
+                
+                console.log('[DEBUG] Transação:', transaction.title, '| Contém palavra-chave?', hasKeyword);
+                return hasKeyword;
+              }) || [];
+              
+              console.log('[DEBUG] Transações filtradas (apenas desta dívida):', filteredTransactions.length);
+              console.log('[DEBUG] Detalhes das transações filtradas:', filteredTransactions);
+              
+              // Usar dados filtrados
+              const newPaidAmount = filteredTransactions.reduce((sum, transaction) => {
                 return sum + Number(transaction.amount || 0);
-              }, 0) || 0;
+              }, 0);
               
               const isFullyPaid = selectedDebt.total_amount ? newPaidAmount >= selectedDebt.total_amount : false;
               
