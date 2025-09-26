@@ -480,12 +480,13 @@ const Despesas = () => {
         const selectedDebt = debts.find(d => d.id === debtId);
         
         if (selectedDebt) {
-          // Usar categoria padrão da dívida para contabilização
+          // Usar categoria PERSONALIZADA da dívida para contabilização
           console.log('[DEBUG] Dívida selecionada:', selectedDebt.title);
           console.log('[DEBUG] Categoria padrão da dívida:', selectedDebt.category_id);
-          console.log('[DEBUG] Categoria que será usada para contabilização:', selectedDebt.category_id);
+          console.log('[DEBUG] Categoria personalizada da dívida:', selectedDebt.special_category_id);
+          console.log('[DEBUG] Categoria que será usada para contabilização:', selectedDebt.special_category_id);
           
-          processedFormData.category_id = selectedDebt.category_id;
+          processedFormData.category_id = selectedDebt.special_category_id;
           
           // Só atualizar o valor pago se o status for "settled" (Pago)
           console.log('[DEBUG] Status da despesa:', formData.status);
@@ -496,8 +497,15 @@ const Despesas = () => {
             const newPaidAmount = selectedDebt.paid_amount + parseFloat(formData.amount);
             const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
             
-            console.log('[DEBUG] Atualizando dívida - novo paid_amount:', newPaidAmount);
+            console.log('[DEBUG] === CÁLCULO DE QUITAÇÃO ===');
+            console.log('[DEBUG] Valor atual pago:', selectedDebt.paid_amount);
+            console.log('[DEBUG] Valor do pagamento:', parseFloat(formData.amount));
+            console.log('[DEBUG] Novo valor pago:', newPaidAmount);
+            console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
+            console.log('[DEBUG] Diferença restante:', selectedDebt.total_amount - newPaidAmount);
             console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
+            console.log('[DEBUG] Condição: newPaidAmount >= total_amount');
+            console.log('[DEBUG] Condição: ' + newPaidAmount + ' >= ' + selectedDebt.total_amount + ' = ' + isFullyPaid);
             
             await supabase
               .from('debts')
@@ -513,11 +521,10 @@ const Despesas = () => {
           // Adicionar debt_id para identificar que esta despesa é específica da dívida
           processedFormData.debt_id = debtId;
 
-          // Usar a categoria da dívida
-          if (selectedDebt.category_id) {
-            processedFormData.category_id = selectedDebt.category_id;
-          } else {
-            // Se a dívida não tem categoria, usar primeira categoria disponível
+          // Usar a categoria personalizada da dívida (já definida acima)
+          if (!selectedDebt.special_category_id) {
+            console.error('[DEBUG] Dívida não possui categoria personalizada!');
+            // Se a dívida não tem categoria personalizada, usar primeira categoria disponível
             const firstCategory = categories.find(c => !c.is_system);
             if (firstCategory) {
               processedFormData.category_id = firstCategory.id;
