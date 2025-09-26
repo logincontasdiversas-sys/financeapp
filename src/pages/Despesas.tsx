@@ -524,6 +524,11 @@ const Despesas = () => {
       }
 
       if (editingDespesa) {
+        console.log('[DEBUG] === EDITANDO TRANSAÇÃO ===');
+        console.log('[DEBUG] Transação sendo editada:', editingDespesa.id);
+        console.log('[DEBUG] Categoria da transação editada:', formData.category_id);
+        console.log('[DEBUG] É uma dívida?', formData.category_id.startsWith('debt-'));
+        
         await updateExpense(editingDespesa.id, processedFormData);
         
         // Recálculo da dívida APÓS editar a transação (para qualquer status)
@@ -566,6 +571,50 @@ const Despesas = () => {
                   is_concluded: isFullyPaid
                 })
                 .eq('id', debtId);
+            }
+          }
+        } else {
+          // Verificação alternativa: se a transação editada é de uma dívida baseada na categoria especial
+          console.log('[DEBUG] === VERIFICAÇÃO ALTERNATIVA PARA DÍVIDA ===');
+          console.log('[DEBUG] Categoria da transação editada:', formData.category_id);
+          
+          // Buscar se esta categoria é uma categoria especial de dívida
+          const debtWithSpecialCategory = debts.find(d => d.special_category_id === formData.category_id);
+          if (debtWithSpecialCategory) {
+            console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA (CATEGORIA ESPECIAL) ===');
+            
+            // Buscar todas as transações settled desta dívida usando category_id
+            const { data: settledTransactions, error: transactionsError } = await supabase
+              .from('transactions')
+              .select('amount')
+              .eq('tenant_id', tenantId)
+              .eq('kind', 'expense')
+              .eq('category_id', debtWithSpecialCategory.special_category_id)
+              .eq('status', 'settled');
+
+            if (transactionsError) {
+              console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
+            } else {
+              // Calcular novo paid_amount baseado apenas em transações settled
+              const newPaidAmount = settledTransactions?.reduce((sum, transaction) => {
+                return sum + Number(transaction.amount || 0);
+              }, 0) || 0;
+              
+              const isFullyPaid = debtWithSpecialCategory.total_amount ? newPaidAmount >= debtWithSpecialCategory.total_amount : false;
+              
+              console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
+              console.log('[DEBUG] Valor atual pago (antigo):', debtWithSpecialCategory.paid_amount);
+              console.log('[DEBUG] Novo valor pago (recalculado):', newPaidAmount);
+              console.log('[DEBUG] Valor total da dívida:', debtWithSpecialCategory.total_amount);
+              console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
+              
+              await supabase
+                .from('debts')
+                .update({ 
+                  paid_amount: newPaidAmount,
+                  is_concluded: isFullyPaid
+                })
+                .eq('id', debtWithSpecialCategory.id);
             }
           }
         }
