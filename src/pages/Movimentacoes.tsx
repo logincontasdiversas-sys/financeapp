@@ -474,11 +474,11 @@ const Movimentacoes = () => {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
+      <div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Movimentações</h2>
-          <p className="text-muted-foreground">
-            Centralize todas as suas transações financeiras
-          </p>
+        <p className="text-muted-foreground">
+          Centralize todas as suas transações financeiras
+        </p>
         </div>
         <PDFReportButton />
       </div>
@@ -606,74 +606,74 @@ const Movimentacoes = () => {
             })()}
           </div>
           <div className="hidden sm:block overflow-x-auto">
-            {loading ? (
-              <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
-                ))}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <SortableHeader 
-                        label="Data"
-                        sortKey="date"
-                        currentSort={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                      />
-                    </TableHead>
-                    <TableHead>
-                      <SortableHeader 
-                        label="Descrição"
-                        sortKey="title"
-                        currentSort={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                      />
-                    </TableHead>
-                    <TableHead>
-                      <SortableHeader 
-                        label="Tipo"
-                        sortKey="kind"
-                        currentSort={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                      />
-                    </TableHead>
-                    <TableHead>
-                      <SortableHeader 
+          {loading ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-12 bg-muted animate-pulse rounded"></div>
+              ))}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <SortableHeader 
+                      label="Data"
+                      sortKey="date"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader 
+                      label="Descrição"
+                      sortKey="title"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader 
+                      label="Tipo"
+                      sortKey="kind"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader 
                         label="Valor"
                         sortKey="amount"
-                        currentSort={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                      />
-                    </TableHead>
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
                     <TableHead>
-                      <SortableHeader 
+                    <SortableHeader 
                         label="Status"
                         sortKey="status"
-                        currentSort={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                      />
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                   {getFilteredAndSortedTransactions().length === 0 ? (
-                    <TableRow>
+                  <TableRow>
                       <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         Nenhuma movimentação encontrada para o período selecionado.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
+                    </TableCell>
+                  </TableRow>
+                ) : (
                     getFilteredAndSortedTransactions().map((transaction) => (
-                      <TableRow key={transaction.id}>
-                        <TableCell className="font-medium">
+                    <TableRow key={transaction.id}>
+                      <TableCell className="font-medium">
                           {formatDate(transaction.date)}
                         </TableCell>
                         <TableCell>{transaction.title}</TableCell>
@@ -684,16 +684,16 @@ const Movimentacoes = () => {
                           transaction.kind === 'income' ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {transaction.kind === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2).replace('.', ',')}
-                        </TableCell>
+                      </TableCell>
                         <TableCell>
                           {getStatusBadge(transaction.status)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          )}
           </div>
         </CardContent>
       </Card>

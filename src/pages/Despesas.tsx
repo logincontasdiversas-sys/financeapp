@@ -282,25 +282,11 @@ const Despesas = () => {
       console.log('[DEBUG] Iniciando carregamento de despesas...');
       logger.info('DESPESAS_LOAD', 'Iniciando carregamento de despesas', { tenantId });
       
-      // Query corrigida: especificar relacionamento exato para categories
+      // Query simplificada: apenas campos necessários
       const { data, error } = await supabase
         .from('transactions')
         .select(`
-          id,
-          title,
-          amount,
-          date,
-          category_id,
-          bank_id,
-          card_id,
-          status,
-          payment_method,
-          note,
-          kind,
-          user_id,
-          tenant_id,
-          debt_special_category_id,
-          goal_special_category_id,
+          *,
           categories:category_id (
             name,
             emoji
@@ -469,9 +455,9 @@ const Despesas = () => {
         const selectedGoal = goals.find(g => g.id === goalId);
         
         if (selectedGoal) {
-          // Usar categoria especial para identificação e vincular à meta específica
-          processedFormData.category_id = selectedGoal.special_category_id; // Categoria especial para identificação
-          (processedFormData as any).goal_special_category_id = selectedGoal.special_category_id; // Vincular à meta específica
+          // Usar categoria padrão da meta e vincular à meta específica
+          processedFormData.category_id = selectedGoal.category_id; // Categoria padrão da meta
+          (processedFormData as any).goal_id = goalId; // Vincular à meta específica
           
           // Só atualizar o valor da meta se o status for "settled" (Pago)
           if (formData.status === 'settled') {
@@ -514,9 +500,9 @@ const Despesas = () => {
           console.log('[DEBUG] Categoria personalizada da dívida:', selectedDebt.special_category_id);
           console.log('[DEBUG] Categoria que será usada para contabilização:', selectedDebt.special_category_id);
           
-          // Usar categoria especial para identificação e vincular à dívida específica
-          processedFormData.category_id = selectedDebt.special_category_id; // Categoria especial para identificação
-          (processedFormData as any).debt_special_category_id = selectedDebt.special_category_id; // Vincular à dívida específica
+          // Usar categoria padrão da dívida e vincular à dívida específica
+          processedFormData.category_id = selectedDebt.category_id; // Categoria padrão da dívida
+          (processedFormData as any).debt_id = debtId; // Vincular à dívida específica
           
           // Só atualizar o valor pago se o status for "settled" (Pago)
           console.log('[DEBUG] Status da despesa:', formData.status);
@@ -768,13 +754,13 @@ const Despesas = () => {
             const selectedDebt = debts.find(d => d.id === debtId);
             
             if (selectedDebt && selectedDebt.special_category_id) {
-          // Buscar apenas transações settled desta dívida específica usando debt_special_category_id
+          // Buscar apenas transações settled desta dívida específica usando debt_id
           const { data: settledTransactions, error: transactionsError } = await supabase
             .from('transactions')
             .select('amount')
             .eq('tenant_id', tenantId)
             .eq('kind', 'expense')
-            .eq('debt_special_category_id', selectedDebt.special_category_id)
+            .eq('debt_id', debtId)
             .eq('status', 'settled');
 
               if (transactionsError) {
@@ -1144,13 +1130,13 @@ const Despesas = () => {
           if (debtWithSpecialCategory) {
             console.log('[DEBUG] Dívida encontrada para recálculo:', debtWithSpecialCategory.title);
             
-            // Buscar todas as transações settled desta dívida usando debt_special_category_id
+            // Buscar todas as transações settled desta dívida usando debt_id
             const { data: settledTransactions, error: transactionsError } = await supabase
               .from('transactions')
               .select('amount')
               .eq('tenant_id', tenantId)
               .eq('kind', 'expense')
-              .eq('debt_special_category_id', debtWithSpecialCategory.special_category_id)
+              .eq('debt_id', debtWithSpecialCategory.id)
               .eq('status', 'settled');
 
             if (transactionsError) {
