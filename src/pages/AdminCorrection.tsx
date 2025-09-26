@@ -6,6 +6,7 @@ import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { runAllCorrections, correctDebtValues, correctGoalValues } from '@/utils/debtCorrection';
 import { cleanupUnusedPersonalCategories, cleanupUnusedDebtCategories, cleanupUnusedGoalCategories } from '@/utils/categoryCleanup';
+import { cleanupDuplicateCategories } from '@/utils/duplicateCategoryCleanup';
 import { AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 
 export default function AdminCorrection() {
@@ -127,6 +128,53 @@ export default function AdminCorrection() {
       console.log = originalLog;
       setIsRunning(false);
       addResult('Limpeza concluída!');
+    }
+  };
+
+  const runDuplicateCleanup = async () => {
+    if (!tenantId) {
+      toast({
+        title: "Erro",
+        description: "Tenant ID não encontrado",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRunning(true);
+    setResults([]);
+    
+    addResult('Iniciando limpeza de categorias duplicadas...');
+
+    try {
+      // Interceptar console.log para capturar os logs
+      const originalLog = console.log;
+      console.log = (...args) => {
+        originalLog(...args);
+        if (args[0] && typeof args[0] === 'string' && args[0].includes('[')) {
+          addResult(args.join(' '));
+        }
+      };
+
+      await cleanupDuplicateCategories(tenantId);
+
+      toast({
+        title: "Sucesso",
+        description: "Limpeza de categorias duplicadas concluída!",
+      });
+
+    } catch (error) {
+      console.error('Erro na limpeza de duplicatas:', error);
+      addResult(`Erro: ${error}`);
+      toast({
+        title: "Erro",
+        description: "Erro durante a limpeza de categorias duplicadas",
+        variant: "destructive",
+      });
+    } finally {
+      console.log = originalLog;
+      setIsRunning(false);
+      addResult('Limpeza de duplicatas concluída!');
     }
   };
 
@@ -292,6 +340,24 @@ export default function AdminCorrection() {
               <>
                 <AlertTriangle className="mr-2 h-4 w-4" />
                 Executar Limpeza
+              </>
+            )}
+          </Button>
+
+          <Button 
+            onClick={runDuplicateCleanup} 
+            disabled={isRunning}
+            className="w-full bg-orange-600 hover:bg-orange-700 mt-2"
+          >
+            {isRunning ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Executando...
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Limpar Categorias Duplicadas
               </>
             )}
           </Button>
