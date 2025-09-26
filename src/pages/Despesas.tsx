@@ -759,12 +759,13 @@ const Despesas = () => {
           console.log('[DEBUG] Verificando se campo debt_id existe...');
           
           // Buscar transações vinculadas especificamente a esta dívida
+          // Usar a subcategoria específica da dívida (não a categoria pai)
           const { data: settledTransactions, error: transactionsError } = await supabase
             .from('transactions')
-            .select('amount, title, debt_id, category_id')
+            .select('amount, title, category_id')
             .eq('tenant_id', tenantId)
             .eq('kind', 'expense')
-            .eq('debt_id', debtId)
+            .eq('category_id', selectedDebt.special_category_id) // Usar subcategoria específica
             .eq('status', 'settled');
             
           console.log('[DEBUG] Transações encontradas para esta dívida:', settledTransactions?.length || 0);
@@ -1136,14 +1137,15 @@ const Despesas = () => {
           if (debt) {
             console.log('[DEBUG] Dívida encontrada para recálculo:', debt.title);
             
-            // Buscar todas as transações settled desta dívida usando debt_id
-            console.log('[DEBUG] Buscando transações para dívida ID (edição rápida):', transaction.debt_id);
+            // Buscar todas as transações settled desta dívida usando subcategoria específica
+            console.log('[DEBUG] Buscando transações para dívida ID (edição rápida):', debt.id);
+            console.log('[DEBUG] Usando subcategoria específica:', debt.special_category_id);
             const { data: settledTransactions, error: transactionsError } = await supabase
               .from('transactions')
-              .select('amount, title, debt_id')
+              .select('amount, title, category_id')
               .eq('tenant_id', tenantId)
               .eq('kind', 'expense')
-              .eq('debt_id', transaction.debt_id)
+              .eq('category_id', debt.special_category_id) // Usar subcategoria específica
               .eq('status', 'settled');
               
             console.log('[DEBUG] Transações encontradas para esta dívida (edição rápida):', settledTransactions?.length || 0);

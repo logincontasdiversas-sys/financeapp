@@ -233,18 +233,41 @@ const Metas = () => {
     if (!confirm("Tem certeza que deseja excluir esta meta? Isso também excluirá todas as transações vinculadas a ela.")) return;
 
     try {
-      // 1. PRIMEIRO: Excluir todas as transações vinculadas a esta meta
-      console.log('[DEBUG] Excluindo transações vinculadas à meta:', id);
-      const { error: transactionsError } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('goal_id', id);
+      // 1. PRIMEIRO: Verificar se existem transações vinculadas
+      console.log('[DEBUG] Verificando transações vinculadas à meta:', id);
+      
+      // Buscar dados da meta para obter subcategoria específica
+      const { data: goalData } = await supabase
+        .from('goals')
+        .select('special_category_id, title')
+        .eq('id', id)
+        .single();
 
-      if (transactionsError) {
-        console.error('[DEBUG] Erro ao excluir transações vinculadas:', transactionsError);
-        // Continuar mesmo com erro, pois pode não haver transações vinculadas
+      if (goalData?.special_category_id) {
+        console.log('[DEBUG] Buscando transações por subcategoria específica:', goalData.special_category_id);
+        const { data: transactionsBySubcategory, error: subcategoryError } = await supabase
+          .from('transactions')
+          .select('id, title, category_id')
+          .eq('category_id', goalData.special_category_id);
+
+        console.log('[DEBUG] Transações encontradas por subcategoria:', transactionsBySubcategory?.length || 0);
+        console.log('[DEBUG] Detalhes:', transactionsBySubcategory);
+        
+        if (transactionsBySubcategory && transactionsBySubcategory.length > 0) {
+          const { error: deleteError } = await supabase
+            .from('transactions')
+            .delete()
+            .eq('category_id', goalData.special_category_id);
+
+          if (deleteError) {
+            console.error('[DEBUG] Erro ao excluir transações por subcategoria:', deleteError);
+            throw deleteError;
+          } else {
+            console.log('[DEBUG] Transações excluídas com sucesso (por subcategoria)');
+          }
+        }
       } else {
-        console.log('[DEBUG] Transações vinculadas excluídas com sucesso');
+        console.log('[DEBUG] Meta não possui subcategoria específica ou não encontrada');
       }
 
       // 2. Buscar a meta para obter o category_id antes de excluir
