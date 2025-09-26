@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
+import { useAutoCleanup } from "@/hooks/useAutoCleanup";
 
 interface Debt {
   id: string;
@@ -42,6 +43,7 @@ const Dividas = () => {
   const { user } = useAuth();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { toast } = useToast();
+  const { cleanupAfterDelete } = useAutoCleanup();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -284,6 +286,9 @@ const Dividas = () => {
           .eq('id', debtData.category_id)
           .eq('is_system', true); // Só remover se for categoria automática
       }
+
+      // Executar limpeza automática de categorias não utilizadas
+      await cleanupAfterDelete();
 
       toast({ title: "Dívida excluída com sucesso!" });
       clearQueryCache();

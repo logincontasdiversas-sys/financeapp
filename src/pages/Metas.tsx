@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
+import { useAutoCleanup } from "@/hooks/useAutoCleanup";
 
 interface Goal {
   id: string;
@@ -39,6 +40,7 @@ const Metas = () => {
   const { user } = useAuth();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { toast } = useToast();
+  const { cleanupAfterDelete } = useAutoCleanup();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,6 +256,9 @@ const Metas = () => {
           .eq('id', goalData.category_id)
           .eq('is_system', true); // Só remover se for categoria automática
       }
+
+      // Executar limpeza automática de categorias não utilizadas
+      await cleanupAfterDelete();
 
       toast({ title: "Meta excluída com sucesso!" });
       clearQueryCache();
