@@ -90,7 +90,9 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     !category.name.startsWith('Dívida -') && // Filtrar categorias de dívidas
     !category.name.startsWith('Meta -') && // Filtrar categorias de metas
     !category.name.includes('Dívida -') && // Filtrar qualquer categoria que contenha "Dívida -"
-    !category.name.includes('Meta -') // Filtrar qualquer categoria que contenha "Meta -"
+    !category.name.includes('Meta -') && // Filtrar qualquer categoria que contenha "Meta -"
+    !category.name.includes(' - Dívida') && // Filtrar categorias que terminam com " - Dívida"
+    !category.name.includes(' - Meta') // Filtrar categorias que terminam com " - Meta"
   );
   const invoiceCategories = categories.filter(category => category.name.includes(' - Fatura'));
 
