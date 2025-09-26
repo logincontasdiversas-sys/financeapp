@@ -442,8 +442,10 @@ const Despesas = () => {
         const selectedGoal = goals.find(g => g.id === goalId);
         
         if (selectedGoal) {
-          // Usar categoria padrão da meta para contabilização
-          processedFormData.category_id = selectedGoal.category_id;
+          // Para contabilização no gráfico, usar categoria PADRÃO da meta
+          // Para identificação da transação, usar categoria PERSONALIZADA
+          processedFormData.category_id = selectedGoal.category_id; // Categoria padrão para gráfico
+          processedFormData.goal_special_category_id = selectedGoal.special_category_id; // Categoria especial para identificação
           
           // Só atualizar o valor da meta se o status for "settled" (Pago)
           if (formData.status === 'settled') {
@@ -486,7 +488,10 @@ const Despesas = () => {
           console.log('[DEBUG] Categoria personalizada da dívida:', selectedDebt.special_category_id);
           console.log('[DEBUG] Categoria que será usada para contabilização:', selectedDebt.special_category_id);
           
-          processedFormData.category_id = selectedDebt.special_category_id;
+          // Para contabilização no gráfico, usar categoria PADRÃO da dívida
+          // Para identificação da transação, usar categoria PERSONALIZADA
+          processedFormData.category_id = selectedDebt.category_id; // Categoria padrão para gráfico
+          processedFormData.debt_special_category_id = selectedDebt.special_category_id; // Categoria especial para identificação
           
           // Só atualizar o valor pago se o status for "settled" (Pago)
           console.log('[DEBUG] Status da despesa:', formData.status);
@@ -577,21 +582,21 @@ const Despesas = () => {
         } else {
           const created = await createExpense(processedFormData);
           
-          // Recálculo da dívida APÓS salvar a transação
-          if (formData.category_id.startsWith('debt-') && formData.status === 'settled') {
+          // Recálculo da dívida APÓS salvar a transação (para qualquer status)
+          if (formData.category_id.startsWith('debt-')) {
             console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA APÓS SALVAR ===');
             
             const debtId = formData.category_id.replace('debt-', '');
             const selectedDebt = debts.find(d => d.id === debtId);
             
             if (selectedDebt && selectedDebt.special_category_id) {
-              // Buscar todas as transações settled desta dívida
+              // Buscar todas as transações settled desta dívida usando debt_special_category_id
               const { data: settledTransactions, error: transactionsError } = await supabase
                 .from('transactions')
                 .select('amount')
                 .eq('tenant_id', tenantId)
                 .eq('kind', 'expense')
-                .eq('category_id', selectedDebt.special_category_id)
+                .eq('debt_special_category_id', selectedDebt.special_category_id)
                 .eq('status', 'settled');
 
               if (transactionsError) {
