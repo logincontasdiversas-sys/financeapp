@@ -575,7 +575,7 @@ const Despesas = () => {
                   is_concluded: isFullyPaid
                 })
             .eq('id', debtId);
-            
+
             // Atualizar estado local da dívida
             console.log('[DEBUG] === ATUALIZANDO ESTADO LOCAL DA DÍVIDA ===');
             console.log('[DEBUG] debtId:', debtId);
@@ -633,8 +633,8 @@ const Despesas = () => {
               console.log('[DEBUG] Valor total da dívida:', debtWithSpecialCategory.total_amount);
               console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
-              await supabase
-                .from('debts')
+            await supabase
+              .from('debts')
                 .update({ 
                   paid_amount: newPaidAmount,
                   is_concluded: isFullyPaid
