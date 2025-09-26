@@ -236,12 +236,14 @@ const Metas = () => {
       // 1. PRIMEIRO: Verificar se existem transações vinculadas
       console.log('[DEBUG] Verificando transações vinculadas à meta:', id);
       
-      // Buscar dados da meta para obter subcategoria específica
+      // Buscar dados da meta para obter subcategoria específica e category_id
       const { data: goalData } = await supabase
         .from('goals')
-        .select('special_category_id, title')
+        .select('special_category_id, category_id, title')
         .eq('id', id)
         .single();
+
+      console.log('[DEBUG] Dados da meta:', goalData);
 
       if (goalData?.special_category_id) {
         console.log('[DEBUG] Buscando transações por subcategoria específica:', goalData.special_category_id);
@@ -269,13 +271,6 @@ const Metas = () => {
       } else {
         console.log('[DEBUG] Meta não possui subcategoria específica ou não encontrada');
       }
-
-      // 2. Buscar a meta para obter o category_id antes de excluir
-      const { data: goalData } = await supabase
-        .from('goals')
-        .select('category_id')
-        .eq('id', id)
-        .single();
 
       // 3. Excluir a meta
       const { error } = await supabase

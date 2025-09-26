@@ -273,12 +273,14 @@ const Dividas = () => {
       // 1. PRIMEIRO: Verificar se existem transações vinculadas
       console.log('[DEBUG] Verificando transações vinculadas à dívida:', id);
       
-      // Buscar dados da dívida para obter subcategoria específica
+      // Buscar dados da dívida para obter subcategoria específica e category_id
       const { data: debtData } = await supabase
         .from('debts')
-        .select('special_category_id, title')
+        .select('special_category_id, category_id, title')
         .eq('id', id)
         .single();
+
+      console.log('[DEBUG] Dados da dívida:', debtData);
 
       if (debtData?.special_category_id) {
         console.log('[DEBUG] Buscando transações por subcategoria específica:', debtData.special_category_id);
@@ -306,13 +308,6 @@ const Dividas = () => {
       } else {
         console.log('[DEBUG] Dívida não possui subcategoria específica ou não encontrada');
       }
-
-      // 2. Buscar a dívida para obter o category_id antes de excluir
-      const { data: debtData } = await supabase
-        .from('debts')
-        .select('category_id')
-        .eq('id', id)
-        .single();
 
       // 3. Excluir a dívida
       const { error } = await supabase
