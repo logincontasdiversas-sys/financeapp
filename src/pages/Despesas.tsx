@@ -577,6 +577,11 @@ const Despesas = () => {
             .eq('id', debtId);
             
             // Atualizar estado local da dívida
+            console.log('[DEBUG] === ATUALIZANDO ESTADO LOCAL DA DÍVIDA ===');
+            console.log('[DEBUG] debtId:', debtId);
+            console.log('[DEBUG] newPaidAmount:', newPaidAmount);
+            console.log('[DEBUG] isFullyPaid:', isFullyPaid);
+            
             setDebts(prevDebts => 
               prevDebts.map(debt => 
                 debt.id === debtId 
@@ -584,6 +589,10 @@ const Despesas = () => {
                   : debt
               )
             );
+            
+            // Forçar reload das dívidas para garantir sincronização
+            console.log('[DEBUG] === FORÇANDO RELOAD DAS DÍVIDAS ===');
+            await loadDebts();
             }
           }
         } else {
@@ -633,6 +642,11 @@ const Despesas = () => {
                 .eq('id', debtWithSpecialCategory.id);
               
               // Atualizar estado local da dívida
+              console.log('[DEBUG] === ATUALIZANDO ESTADO LOCAL DA DÍVIDA (ALTERNATIVA) ===');
+              console.log('[DEBUG] debtWithSpecialCategory.id:', debtWithSpecialCategory.id);
+              console.log('[DEBUG] newPaidAmount:', newPaidAmount);
+              console.log('[DEBUG] isFullyPaid:', isFullyPaid);
+              
               setDebts(prevDebts => 
                 prevDebts.map(debt => 
                   debt.id === debtWithSpecialCategory.id 
@@ -640,6 +654,10 @@ const Despesas = () => {
                     : debt
                 )
               );
+              
+              // Forçar reload das dívidas para garantir sincronização
+              console.log('[DEBUG] === FORÇANDO RELOAD DAS DÍVIDAS (ALTERNATIVA) ===');
+              await loadDebts();
             }
           }
         }
