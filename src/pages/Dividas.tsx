@@ -267,46 +267,99 @@ const Dividas = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta dívida? Isso também excluirá todas as transações vinculadas a ela.")) return;
+    console.log('[DEBUG] ===== FUNÇÃO handleDelete CHAMADA =====');
+    console.log('[DEBUG] ID recebido:', id);
+    
+    if (!confirm("Tem certeza que deseja excluir esta dívida? Isso também excluirá todas as transações vinculadas a ela.")) {
+      console.log('[DEBUG] Usuário cancelou a exclusão');
+      return;
+    }
+    
+    console.log('[DEBUG] Usuário confirmou a exclusão, prosseguindo...');
 
     try {
-      // 1. PRIMEIRO: Verificar se existem transações vinculadas
-      console.log('[DEBUG] Verificando transações vinculadas à dívida:', id);
+      console.log('[DEBUG] ===== INICIANDO EXCLUSÃO DE DÍVIDA =====');
+      console.log('[DEBUG] ID da dívida:', id);
       
-      // Buscar dados da dívida para obter subcategoria específica e category_id
-      const { data: debtData } = await supabase
+      // 1. PRIMEIRO: Buscar dados da dívida
+      const { data: debtData, error: debtError } = await supabase
         .from('debts')
         .select('special_category_id, category_id, title')
         .eq('id', id)
         .single();
 
-      console.log('[DEBUG] Dados da dívida:', debtData);
+      if (debtError) {
+        console.error('[DEBUG] Erro ao buscar dados da dívida:', debtError);
+        throw debtError;
+      }
 
+      console.log('[DEBUG] Dados da dívida encontrados:', debtData);
+
+      // 2. EXCLUIR TRANSAÇÕES POR SUBCATEGORIA (se existir)
       if (debtData?.special_category_id) {
-        console.log('[DEBUG] Buscando transações por subcategoria específica:', debtData.special_category_id);
-        const { data: transactionsBySubcategory, error: subcategoryError } = await supabase
+        console.log('[DEBUG] Excluindo transações por subcategoria:', debtData.special_category_id);
+        
+        const { error: subcategoryDeleteError } = await supabase
           .from('transactions')
-          .select('id, title, category_id')
+          .delete()
           .eq('category_id', debtData.special_category_id);
 
-        console.log('[DEBUG] Transações encontradas por subcategoria:', transactionsBySubcategory?.length || 0);
-        console.log('[DEBUG] Detalhes:', transactionsBySubcategory);
-        
-        if (transactionsBySubcategory && transactionsBySubcategory.length > 0) {
-          const { error: deleteError } = await supabase
-            .from('transactions')
-            .delete()
-            .eq('category_id', debtData.special_category_id);
+        if (subcategoryDeleteError) {
+          console.error('[DEBUG] Erro ao excluir transações por subcategoria:', subcategoryDeleteError);
+        } else {
+          console.log('[DEBUG] Transações excluídas com sucesso (por subcategoria)');
+        }
+      }
 
-          if (deleteError) {
-            console.error('[DEBUG] Erro ao excluir transações por subcategoria:', deleteError);
-            throw deleteError;
-          } else {
-            console.log('[DEBUG] Transações excluídas com sucesso (por subcategoria)');
+      // 3. EXCLUIR TRANSAÇÕES POR DEBT_ID (fallback)
+      console.log('[DEBUG] Tentando excluir transações por debt_id como fallback...');
+      const { error: debtIdDeleteError } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('debt_id', id);
+
+      if (debtIdDeleteError) {
+        console.log('[DEBUG] Campo debt_id não existe ou não há transações:', debtIdDeleteError.message);
+      } else {
+        console.log('[DEBUG] Transações excluídas com sucesso (por debt_id)');
+      }
+
+      // 4. EXCLUIR TRANSAÇÕES POR CATEGORIA PAI (fallback adicional)
+      if (debtData?.category_id) {
+        console.log('[DEBUG] Tentando excluir transações por categoria pai como fallback adicional...');
+        
+        // Buscar transações da categoria pai que podem estar relacionadas
+        const { data: categoryTransactions } = await supabase
+          .from('transactions')
+          .select('id, title, category_id')
+          .eq('category_id', debtData.category_id);
+
+        if (categoryTransactions && categoryTransactions.length > 0) {
+          console.log('[DEBUG] Transações encontradas na categoria pai:', categoryTransactions.length);
+          
+          // Filtrar apenas transações que parecem ser desta dívida
+          const filteredTransactions = categoryTransactions.filter(transaction => {
+            const debtTitle = debtData.title.toLowerCase();
+            const transactionTitle = transaction.title.toLowerCase();
+            const debtKeywords = debtTitle.split(' ').filter(word => word.length > 2);
+            return debtKeywords.some(keyword => transactionTitle.includes(keyword));
+          });
+
+          console.log('[DEBUG] Transações filtradas para esta dívida:', filteredTransactions.length);
+          
+          if (filteredTransactions.length > 0) {
+            const { error: filteredDeleteError } = await supabase
+              .from('transactions')
+              .delete()
+              .in('id', filteredTransactions.map(t => t.id));
+
+            if (filteredDeleteError) {
+              console.error('[DEBUG] Erro ao excluir transações filtradas:', filteredDeleteError);
+            } else {
+              console.log('[DEBUG] Transações filtradas excluídas com sucesso');
+            }
           }
         }
-      } else {
-        console.log('[DEBUG] Dívida não possui subcategoria específica ou não encontrada');
       }
 
       // 3. Excluir a dívida
