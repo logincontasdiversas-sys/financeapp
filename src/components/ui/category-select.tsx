@@ -84,15 +84,23 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     }
   }, [tenantId, newCategoryName, newCategoryEmoji, categories, onCategoriesChange, onValueChange, toast]);
 
+  // Filtrar categorias que são especiais (criadas automaticamente para metas/dívidas)
+  const isSpecialCategory = (category: any) => {
+    const name = category.name.toLowerCase();
+    return (
+      name.includes('dívida -') ||
+      name.includes('meta -') ||
+      name.includes(' - dívida') ||
+      name.includes(' - meta') ||
+      name.startsWith('dívida ') ||
+      name.startsWith('meta ')
+    );
+  };
+
   const standardCategories = categories.filter(category => 
     !category.name.includes(' - Fatura') && 
     !category.is_system && // Filtrar categorias automáticas
-    !category.name.startsWith('Dívida -') && // Filtrar categorias de dívidas
-    !category.name.startsWith('Meta -') && // Filtrar categorias de metas
-    !category.name.includes('Dívida -') && // Filtrar qualquer categoria que contenha "Dívida -"
-    !category.name.includes('Meta -') && // Filtrar qualquer categoria que contenha "Meta -"
-    !category.name.includes(' - Dívida') && // Filtrar categorias que terminam com " - Dívida"
-    !category.name.includes(' - Meta') // Filtrar categorias que terminam com " - Meta"
+    !isSpecialCategory(category) // Filtrar categorias especiais
   );
   const invoiceCategories = categories.filter(category => category.name.includes(' - Fatura'));
 
