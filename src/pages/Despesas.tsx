@@ -493,42 +493,8 @@ const Despesas = () => {
           console.log('[DEBUG] Valor da despesa:', formData.amount);
           console.log('[DEBUG] Paid amount atual da dívida:', selectedDebt.paid_amount);
           
-          // Recalcular paid_amount baseado apenas em transações settled
-          console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA ===');
-          
-          // Buscar todas as transações settled desta dívida
-          const { data: settledTransactions, error: transactionsError } = await supabase
-            .from('transactions')
-            .select('amount')
-            .eq('tenant_id', tenantId)
-            .eq('kind', 'expense')
-            .eq('category_id', selectedDebt.special_category_id)
-            .eq('status', 'settled');
-
-          if (transactionsError) {
-            console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
-          } else {
-            // Calcular novo paid_amount baseado apenas em transações settled
-            const newPaidAmount = settledTransactions?.reduce((sum, transaction) => {
-              return sum + Number(transaction.amount || 0);
-            }, 0) || 0;
-            
-            const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
-            
-            console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
-            console.log('[DEBUG] Valor atual pago (antigo):', selectedDebt.paid_amount);
-            console.log('[DEBUG] Novo valor pago (recalculado):', newPaidAmount);
-            console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
-            console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
-            
-            await supabase
-              .from('debts')
-              .update({ 
-                paid_amount: newPaidAmount,
-                is_concluded: isFullyPaid
-              })
-              .eq('id', debtId);
-          }
+          // Marcar para recálculo após salvar a transação
+          console.log('[DEBUG] === DÍVIDA IDENTIFICADA - RECÁLCULO SERÁ FEITO APÓS SALVAR ===');
 
           // Adicionar debt_id para identificar que esta despesa é específica da dívida
           processedFormData.debt_id = debtId;
@@ -610,6 +576,51 @@ const Despesas = () => {
           });
         } else {
           const created = await createExpense(processedFormData);
+          
+          // Recálculo da dívida APÓS salvar a transação
+          if (formData.category_id.startsWith('debt-') && formData.status === 'settled') {
+            console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA APÓS SALVAR ===');
+            
+            const debtId = formData.category_id.replace('debt-', '');
+            const selectedDebt = debts.find(d => d.id === debtId);
+            
+            if (selectedDebt && selectedDebt.special_category_id) {
+              // Buscar todas as transações settled desta dívida
+              const { data: settledTransactions, error: transactionsError } = await supabase
+                .from('transactions')
+                .select('amount')
+                .eq('tenant_id', tenantId)
+                .eq('kind', 'expense')
+                .eq('category_id', selectedDebt.special_category_id)
+                .eq('status', 'settled');
+
+              if (transactionsError) {
+                console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
+              } else {
+                // Calcular novo paid_amount baseado apenas em transações settled
+                const newPaidAmount = settledTransactions?.reduce((sum, transaction) => {
+                  return sum + Number(transaction.amount || 0);
+                }, 0) || 0;
+                
+                const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
+                
+                console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
+                console.log('[DEBUG] Valor atual pago (antigo):', selectedDebt.paid_amount);
+                console.log('[DEBUG] Novo valor pago (recalculado):', newPaidAmount);
+                console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
+                console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
+                
+                await supabase
+                  .from('debts')
+                  .update({ 
+                    paid_amount: newPaidAmount,
+                    is_concluded: isFullyPaid
+                  })
+                  .eq('id', debtId);
+              }
+            }
+          }
+          
         if (created) {
           setDespesas(prev => [
             {
