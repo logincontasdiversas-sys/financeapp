@@ -538,6 +538,8 @@ const Despesas = () => {
         // Recálculo da dívida APÓS editar a transação (para qualquer status)
         if (formData.category_id.startsWith('debt-')) {
           console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA APÓS EDITAR ===');
+          console.log('[DEBUG] Status da transação editada:', formData.status);
+          console.log('[DEBUG] Status processedFormData:', processedFormData.status);
           
           const debtId = formData.category_id.replace('debt-', '');
           const selectedDebt = debts.find(d => d.id === debtId);
@@ -574,13 +576,24 @@ const Despesas = () => {
               console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
               console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
-          await supabase
+          console.log('[DEBUG] === ATUALIZANDO DÍVIDA NO BANCO ===');
+          console.log('[DEBUG] debtId:', debtId);
+          console.log('[DEBUG] newPaidAmount:', newPaidAmount);
+          console.log('[DEBUG] isFullyPaid:', isFullyPaid);
+          
+          const { error: updateError } = await supabase
             .from('debts')
-                .update({ 
-                  paid_amount: newPaidAmount,
-                  is_concluded: isFullyPaid
-                })
+            .update({ 
+              paid_amount: newPaidAmount,
+              is_concluded: isFullyPaid
+            })
             .eq('id', debtId);
+            
+          if (updateError) {
+            console.error('[DEBUG] Erro ao atualizar dívida:', updateError);
+          } else {
+            console.log('[DEBUG] Dívida atualizada com sucesso no banco');
+          }
 
             // Atualizar estado local da dívida
             console.log('[DEBUG] === ATUALIZANDO ESTADO LOCAL DA DÍVIDA ===');
@@ -765,13 +778,24 @@ const Despesas = () => {
                 console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
                 console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
                 
-                await supabase
-                  .from('debts')
-                  .update({ 
-                    paid_amount: newPaidAmount,
-                    is_concluded: isFullyPaid
-                  })
-                  .eq('id', debtId);
+          console.log('[DEBUG] === ATUALIZANDO DÍVIDA NO BANCO ===');
+          console.log('[DEBUG] debtId:', debtId);
+          console.log('[DEBUG] newPaidAmount:', newPaidAmount);
+          console.log('[DEBUG] isFullyPaid:', isFullyPaid);
+          
+          const { error: updateError } = await supabase
+            .from('debts')
+            .update({ 
+              paid_amount: newPaidAmount,
+              is_concluded: isFullyPaid
+            })
+            .eq('id', debtId);
+            
+          if (updateError) {
+            console.error('[DEBUG] Erro ao atualizar dívida:', updateError);
+          } else {
+            console.log('[DEBUG] Dívida atualizada com sucesso no banco');
+          }
               }
             }
           }
