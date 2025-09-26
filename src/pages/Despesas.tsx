@@ -543,13 +543,13 @@ const Despesas = () => {
           const selectedDebt = debts.find(d => d.id === debtId);
           
           if (selectedDebt && selectedDebt.special_category_id) {
-            // Buscar todas as transações settled desta dívida usando category_id
+            // Buscar apenas transações settled desta dívida específica usando debt_id
             const { data: settledTransactions, error: transactionsError } = await supabase
               .from('transactions')
               .select('amount')
               .eq('tenant_id', tenantId)
               .eq('kind', 'expense')
-              .eq('category_id', selectedDebt.special_category_id)
+              .eq('debt_id', debtId)
               .eq('status', 'settled');
 
             if (transactionsError) {
@@ -561,6 +561,12 @@ const Despesas = () => {
               }, 0) || 0;
               
               const isFullyPaid = selectedDebt.total_amount ? newPaidAmount >= selectedDebt.total_amount : false;
+            
+            console.log('[DEBUG] === VERIFICAÇÃO DE CONCLUSÃO DA DÍVIDA ===');
+            console.log('[DEBUG] Valor pago:', newPaidAmount);
+            console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
+            console.log('[DEBUG] Diferença:', selectedDebt.total_amount - newPaidAmount);
+            console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
               
               console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
               console.log('[DEBUG] Valor atual pago (antigo):', selectedDebt.paid_amount);
@@ -608,13 +614,13 @@ const Despesas = () => {
           if (debtWithSpecialCategory) {
             console.log('[DEBUG] === RECALCULANDO PROGRESSO DA DÍVIDA (CATEGORIA ESPECIAL) ===');
             
-            // Buscar todas as transações settled desta dívida usando category_id
+            // Buscar apenas transações settled desta dívida específica usando debt_id
             const { data: settledTransactions, error: transactionsError } = await supabase
               .from('transactions')
               .select('amount')
               .eq('tenant_id', tenantId)
               .eq('kind', 'expense')
-              .eq('category_id', debtWithSpecialCategory.special_category_id)
+              .eq('debt_id', debtWithSpecialCategory.id)
               .eq('status', 'settled');
 
             if (transactionsError) {
@@ -728,14 +734,14 @@ const Despesas = () => {
             const selectedDebt = debts.find(d => d.id === debtId);
             
             if (selectedDebt && selectedDebt.special_category_id) {
-              // Buscar todas as transações settled desta dívida usando category_id
-              const { data: settledTransactions, error: transactionsError } = await supabase
-                .from('transactions')
-                .select('amount')
-                .eq('tenant_id', tenantId)
-                .eq('kind', 'expense')
-                .eq('category_id', selectedDebt.special_category_id)
-                .eq('status', 'settled');
+          // Buscar apenas transações settled desta dívida específica usando debt_id
+          const { data: settledTransactions, error: transactionsError } = await supabase
+            .from('transactions')
+            .select('amount')
+            .eq('tenant_id', tenantId)
+            .eq('kind', 'expense')
+            .eq('debt_id', debtId)
+            .eq('status', 'settled');
 
               if (transactionsError) {
                 console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
@@ -746,6 +752,12 @@ const Despesas = () => {
                 }, 0) || 0;
                 
                 const isFullyPaid = selectedDebt.total_amount ? newPaidAmount >= selectedDebt.total_amount : false;
+            
+            console.log('[DEBUG] === VERIFICAÇÃO DE CONCLUSÃO DA DÍVIDA ===');
+            console.log('[DEBUG] Valor pago:', newPaidAmount);
+            console.log('[DEBUG] Valor total da dívida:', selectedDebt.total_amount);
+            console.log('[DEBUG] Diferença:', selectedDebt.total_amount - newPaidAmount);
+            console.log('[DEBUG] Dívida totalmente paga?', isFullyPaid);
                 
                 console.log('[DEBUG] Transações settled encontradas:', settledTransactions?.length || 0);
                 console.log('[DEBUG] Valor atual pago (antigo):', selectedDebt.paid_amount);
