@@ -756,9 +756,11 @@ const Despesas = () => {
             if (selectedDebt) {
           // Buscar apenas transações settled desta dívida específica usando debt_id
           console.log('[DEBUG] Buscando transações para dívida ID:', debtId);
+          console.log('[DEBUG] Verificando se campo debt_id existe...');
+          
           const { data: settledTransactions, error: transactionsError } = await supabase
             .from('transactions')
-            .select('amount, title, debt_id')
+            .select('amount, title, debt_id, category_id')
             .eq('tenant_id', tenantId)
             .eq('kind', 'expense')
             .eq('debt_id', debtId)
@@ -766,6 +768,61 @@ const Despesas = () => {
             
           console.log('[DEBUG] Transações encontradas para esta dívida:', settledTransactions?.length || 0);
           console.log('[DEBUG] Detalhes das transações:', settledTransactions);
+          
+          if (transactionsError) {
+            console.error('[DEBUG] ERRO na query - possivelmente campo debt_id não existe:', transactionsError);
+            console.log('[DEBUG] Tentando fallback para categoria...');
+            
+            // FALLBACK: Se debt_id não existir, usar categoria da dívida
+            const { data: fallbackTransactions, error: fallbackError } = await supabase
+              .from('transactions')
+              .select('amount, title, category_id')
+              .eq('tenant_id', tenantId)
+              .eq('kind', 'expense')
+              .eq('category_id', selectedDebt.category_id)
+              .eq('status', 'settled');
+              
+            console.log('[DEBUG] Fallback - transações por categoria:', fallbackTransactions?.length || 0);
+            console.log('[DEBUG] Fallback - detalhes:', fallbackTransactions);
+            
+            if (!fallbackError) {
+              // Usar dados do fallback
+              const newPaidAmount = fallbackTransactions?.reduce((sum, transaction) => {
+                return sum + Number(transaction.amount || 0);
+              }, 0) || 0;
+              
+              const isFullyPaid = selectedDebt.total_amount ? newPaidAmount >= selectedDebt.total_amount : false;
+              
+              console.log('[DEBUG] FALLBACK - Valor pago:', newPaidAmount);
+              console.log('[DEBUG] FALLBACK - Dívida totalmente paga?', isFullyPaid);
+              
+              const { error: updateError } = await supabase
+                .from('debts')
+                .update({ 
+                  paid_amount: newPaidAmount,
+                  is_concluded: isFullyPaid
+                })
+                .eq('id', debtId);
+                
+              if (updateError) {
+                console.error('[DEBUG] Erro ao atualizar dívida (fallback):', updateError);
+              } else {
+                console.log('[DEBUG] Dívida atualizada com sucesso (fallback)');
+              }
+              
+              // Atualizar estado local
+              setDebts(prevDebts => 
+                prevDebts.map(d => 
+                  d.id === debtId 
+                    ? { ...d, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
+                    : d
+                )
+              );
+              
+              await loadDebts();
+              return; // Sair da função
+            }
+          }
 
               if (transactionsError) {
                 console.error('[DEBUG] Erro ao buscar transações settled:', transactionsError);
