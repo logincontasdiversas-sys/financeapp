@@ -14,6 +14,7 @@ import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
 import { useAutoCleanup } from "@/hooks/useAutoCleanup";
+import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 
 interface Debt {
   id: string;
@@ -44,6 +45,12 @@ const Dividas = () => {
   const { tenantId, loading: tenantLoading } = useTenant();
   const { toast } = useToast();
   const { cleanupAfterDelete } = useAutoCleanup();
+  
+  // Sincronização em tempo real para dívidas
+  useRealtimeSync('debts', tenantId, () => {
+    console.log('[DIVIDAS] Sincronização em tempo real - recarregando dívidas');
+    loadDebts();
+  });
   const [debts, setDebts] = useState<Debt[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
