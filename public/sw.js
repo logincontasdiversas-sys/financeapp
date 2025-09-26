@@ -32,11 +32,19 @@ self.addEventListener('fetch', (event) => {
           const networkResponse = await fetch(request);
           const cache = await caches.open(CACHE_NAME);
           // Verificar se a URL é válida para cache antes de tentar armazenar
-          if (request.url.startsWith('http') && !request.url.startsWith('chrome-extension://')) {
-            cache.put(request, networkResponse.clone());
+          if (request.url.startsWith('http') && 
+              !request.url.startsWith('chrome-extension://') &&
+              !request.url.startsWith('moz-extension://') &&
+              !request.url.startsWith('safari-extension://')) {
+            try {
+              cache.put(request, networkResponse.clone());
+            } catch (cacheError) {
+              console.warn('Cache put failed:', cacheError);
+            }
           }
           return networkResponse;
-        } catch (_) {
+        } catch (error) {
+          console.warn('Network request failed:', error);
           const cached = await caches.match(request);
           if (cached) return cached;
           // fallback básico à raiz

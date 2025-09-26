@@ -99,9 +99,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       name.includes('vw tiguan')
     );
     
-    if (isSpecial) {
-      console.log('[CATEGORY_FILTER] Categoria especial detectada:', category.name);
-    }
+    // Log removido para melhorar performance
     
     return isSpecial;
   };
@@ -113,13 +111,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       !isSpecialCategory(category) // Filtrar categorias especiais
     );
     
-    if (!isStandard) {
-      console.log('[CATEGORY_FILTER] Categoria filtrada:', category.name, 'Razão:', {
-        isFatura: category.name.includes(' - Fatura'),
-        isSystem: category.is_system,
-        isSpecial: isSpecialCategory(category)
-      });
-    }
+    // Log removido para melhorar performance
     
     return isStandard;
   });
