@@ -502,19 +502,11 @@ const Dividas = () => {
                         const name = cat.name.toLowerCase();
                         return (
                           !cat.is_system && 
-                          !name.startsWith('dívida -') && 
-                          !name.startsWith('meta -') &&
-                          !name.includes('dívida -') &&
-                          !name.includes('meta -') &&
-                          !name.includes(' - dívida') &&
-                          !name.includes(' - meta') &&
-                          !name.includes(' - fatura') &&
-                          !name.includes('aluguel reveillon') &&
-                          !name.includes('camisetas nilda') &&
-                          !name.includes('conserto vw') &&
-                          !name.includes('empréstimo') &&
-                          !name.includes('beto carrero') &&
-                          !name.includes('vw tiguan')
+                          !name.includes(' - fatura') && // Excluir faturas de cartão
+                          !name.includes(' - dívida') && // Excluir categorias de dívidas antigas
+                          !name.includes(' - meta') && // Excluir categorias de metas antigas
+                          !name.startsWith('dívida -') && // Excluir categorias que começam com "Dívida -"
+                          !name.startsWith('meta -') // Excluir categorias que começam com "Meta -"
                         );
                       })
                       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
