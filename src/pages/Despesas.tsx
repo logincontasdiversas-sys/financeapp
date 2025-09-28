@@ -1300,20 +1300,40 @@ const Despesas = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="category">Categoria</Label>
-                  <CategorySelect
-                    value={formData.category_id}
-                    onValueChange={(value) => {
-                      console.log('[DESPESAS] Categoria selecionada:', value);
-                      setFormData({ ...formData, category_id: value });
-                    }}
-                    categories={categories}
-                    onCategoriesChange={setCategories}
-                    goals={goals}
-                    debts={debts}
-                    isDebtPayment={formData.category_id.startsWith('debt-')}
-                    showSubcategories={formData.category_id.startsWith('debt-')}
-                    parentCategoryId={formData.category_id.startsWith('debt-') ? formData.category_id.replace('debt-', '') : undefined}
-                  />
+                  {(() => {
+                    const isDebtPayment = formData.category_id.startsWith('debt-') || (editingDespesa && (editingDespesa as any).debt_id);
+                    const showSubcategories = formData.category_id.startsWith('debt-') || (editingDespesa && (editingDespesa as any).debt_id);
+                    const parentCategoryId = formData.category_id.startsWith('debt-') ? formData.category_id.replace('debt-', '') : (editingDespesa && (editingDespesa as any).debt_id) ? (editingDespesa as any).debt_id : undefined;
+                    
+                    console.log('[DESPESAS] CategorySelect props:', {
+                      formDataCategoryId: formData.category_id,
+                      editingDespesa: editingDespesa ? {
+                        id: editingDespesa.id,
+                        debt_id: (editingDespesa as any).debt_id,
+                        category_id: editingDespesa.category_id
+                      } : null,
+                      isDebtPayment,
+                      showSubcategories,
+                      parentCategoryId
+                    });
+                    
+                    return (
+                      <CategorySelect
+                        value={formData.category_id}
+                        onValueChange={(value) => {
+                          console.log('[DESPESAS] Categoria selecionada:', value);
+                          setFormData({ ...formData, category_id: value });
+                        }}
+                        categories={categories}
+                        onCategoriesChange={setCategories}
+                        goals={goals}
+                        debts={debts}
+                        isDebtPayment={isDebtPayment}
+                        showSubcategories={showSubcategories}
+                        parentCategoryId={parentCategoryId}
+                      />
+                    );
+                  })()}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
