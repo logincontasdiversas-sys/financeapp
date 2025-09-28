@@ -103,58 +103,78 @@ export const CategoryPieChart = () => {
       }
       setTotalIncome(monthlyIncome);
 
-      // Get expenses by category (excluir transferências)
-      const { data: expenseData } = await supabase
-        .from('transactions')
-        .select(`
-          amount,
-          categories (
-            id,
-            name,
-            emoji
-          )
-        `)
-        .eq('kind', 'expense')
-        .eq('status', 'settled')
-        .eq('tenant_id', tenantId)
-        .not('categories.name', 'eq', 'Transferência entre Bancos') // Excluir transferências
-        .gte('date', startDate)
-        .lte('date', endDate);
+      // Buscar despesas, dívidas e categorias para mapear subcategoria (special_category_id) -> categoria-pai
+      const [expenseResp, debtsResp, categoriesResp] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select(`
+            amount,
+            categories (
+              id,
+              name,
+              emoji
+            )
+          `)
+          .eq('kind', 'expense')
+          .eq('status', 'settled')
+          .eq('tenant_id', tenantId)
+          .not('categories.name', 'eq', 'Transferência entre Bancos')
+          .gte('date', startDate)
+          .lte('date', endDate),
+        supabase
+          .from('debts')
+          .select('id, category_id, special_category_id')
+          .eq('tenant_id', tenantId),
+        supabase
+          .from('categories')
+          .select('id, name, emoji')
+          .eq('tenant_id', tenantId)
+      ]);
+
+      const expenseData = expenseResp.data || [];
+      const debts = debtsResp.data || [];
+      const categoriesList = categoriesResp.data || [];
+
+      // Mapa de subcategoria (special) -> categoria-pai
+      const specialToParent = new Map<string, string>();
+      debts.forEach((d: any) => {
+        if (d.special_category_id && d.category_id) {
+          specialToParent.set(d.special_category_id, d.category_id);
+        }
+      });
+
+      // Mapa de categorias para obter nome/emoji da categoria-pai
+      const categoriesById = new Map<string, { id: string; name: string; emoji: string }>();
+      categoriesList.forEach((c: any) => {
+        categoriesById.set(c.id, { id: c.id, name: c.name, emoji: c.emoji });
+      });
 
       console.log('[PIE_CHART] Dados de despesas carregados:', expenseData?.length, 'transações');
 
       // Group by category
       const categoryMap = new Map<string, { name: string; emoji: string; amount: number }>();
 
-      expenseData?.forEach((transaction) => {
-        if (transaction.categories) {
-          const category = transaction.categories;
-          
-          // Debug: temporariamente desabilitar filtro para ver se há dados
-          console.log('[PIE_CHART] Categoria encontrada:', category.name);
-          
-          // Filtrar categorias de cartão de crédito/fatura - temporariamente mais permissivo
-          const categoryName = category.name?.toLowerCase() || '';
-          const isCreditCardCategory = categoryName.includes('- fatura');
-          
-          console.log('[PIE_CHART] Verificando categoria:', category.name, 'É fatura?', isCreditCardCategory);
-          
-          if (isCreditCardCategory) {
-            console.log('[PIE_CHART] Categoria filtrada:', category.name);
-            return; // Pular esta categoria
-          }
-          
-          const existing = categoryMap.get(category.id);
-          
-          if (existing) {
-            existing.amount += Number(transaction.amount);
-          } else {
-            categoryMap.set(category.id, {
-              name: category.name,
-              emoji: category.emoji || '📁',
-              amount: Number(transaction.amount)
-            });
-          }
+      expenseData?.forEach((transaction: any) => {
+        const cat = transaction.categories;
+        if (!cat) return;
+
+        // Filtrar categorias de fatura de cartão
+        const isCreditCardCategory = (cat.name?.toLowerCase() || '').includes('- fatura');
+        if (isCreditCardCategory) return;
+
+        // Se for uma subcategoria de dívida (special), consolidar na categoria-pai
+        const effectiveCategoryId = specialToParent.get(cat.id) || cat.id;
+        const effectiveCategory = categoriesById.get(effectiveCategoryId) || { id: effectiveCategoryId, name: cat.name, emoji: cat.emoji || '📁' };
+
+        const existing = categoryMap.get(effectiveCategoryId);
+        if (existing) {
+          existing.amount += Number(transaction.amount);
+        } else {
+          categoryMap.set(effectiveCategoryId, {
+            name: effectiveCategory.name,
+            emoji: effectiveCategory.emoji || '📁',
+            amount: Number(transaction.amount)
+          });
         }
       });
 

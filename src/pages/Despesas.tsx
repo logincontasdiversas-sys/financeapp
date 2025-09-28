@@ -42,6 +42,9 @@ interface Transaction {
   status: string;
   note: string | null;
   payment_method: string | null;
+  // Campos relacionais para metas e dívidas (necessários para exibição/edição correta)
+  debt_id?: string | null;
+  goal_id?: string | null;
   categories?: {
     name: string;
     emoji: string;
@@ -268,6 +271,8 @@ const Despesas = () => {
           amount,
           date,
           category_id,
+          debt_id,
+          goal_id,
           bank_id,
           card_id,
           status,
@@ -374,8 +379,7 @@ const Despesas = () => {
     try {
       const { data, error } = await supabase
         .from('debts')
-        .select('id, title, paid_amount, total_amount, category_id, special_category_id')
-        .eq('settled', false)
+        .select('id, title, paid_amount, total_amount, category_id, special_category_id, is_concluded')
         .order('title');
 
       if (error) throw error;
@@ -750,6 +754,18 @@ const Despesas = () => {
     // Se a despesa tem debt_id, usar o formato debt-{id}
     if ((despesa as any).debt_id) {
       displayCategoryId = `debt-${(despesa as any).debt_id}`;
+    }
+    // Caso não tenha debt_id, mas a categoria seja a especial da dívida, mapear para debt-{id}
+    else if (despesa.category_id) {
+      const matchingDebt = debts.find(d => d.special_category_id === despesa.category_id);
+      if (matchingDebt) {
+        displayCategoryId = `debt-${matchingDebt.id}`;
+        console.log('[DESPESAS] Mapeado special_category_id para dívida:', {
+          transactionCategoryId: despesa.category_id,
+          mappedDebtId: matchingDebt.id,
+          displayCategoryId
+        });
+      }
     }
     // Se a despesa tem goal_id, usar o formato goal-{id}
     else if ((despesa as any).goal_id) {

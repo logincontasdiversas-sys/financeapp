@@ -1,0 +1,21 @@
+name: Deploy to Vercel via Hook
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel Deploy Hook
+        run: |
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL not set in repo secrets" >&2
+            exit 1
+          fi
+          curl -s -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" -o /tmp/resp.json -w "HTTP_STATUS:%{http_code}\n"
+          echo "Response:" && cat /tmp/resp.json || true
+        shell: bash
+

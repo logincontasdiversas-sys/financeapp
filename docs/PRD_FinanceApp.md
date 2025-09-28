@@ -155,7 +155,7 @@
 - [x] **Consistência Visual**: Mesmo padrão em Despesas, Receitas e Movimentações
 - [x] **Agrupamento Inteligente**: Receitas primeiro, depois despesas no mesmo dia
 
-### ✅ Sistema de Categorias para Metas e Dívidas (100% Completo)
+### ⏳ Sistema de Categorias para Metas e Dívidas (Parcial)
 - [x] **Categorização na Criação**: Campo de categoria no formulário de metas/dívidas
 - [x] **Pagamento Automático**: Usa categoria definida automaticamente
 - [x] **Contabilização Correta**: Gastos ficam na categoria escolhida + progresso individual
@@ -532,7 +532,7 @@ Total: 80+ arquivos
 - [x] **Ações Compactas**: Botões otimizados para mobile
 - [x] **Consistência Visual**: Padrão unificado entre todas as páginas
 
-### ✅ Sistema de Categorias para Metas e Dívidas
+### ⏳ Sistema de Categorias para Metas e Dívidas (Parcial)
 - [x] **Categorização na Criação**: Campo de categoria no formulário
 - [x] **Pagamento Automático**: Usa categoria definida automaticamente
 - [x] **Contabilização Correta**: Gastos na categoria + progresso individual

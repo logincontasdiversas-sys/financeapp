@@ -12,7 +12,8 @@
     "setup": "node setup-env.js",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "deploy:hook": "node scripts/deploy-hook.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
