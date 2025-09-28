@@ -1,7 +1,8 @@
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStableAuth } from './useStableAuth';
 import { logger } from '@/utils/logger';
+import { debounce } from 'lodash';
 
 interface RealtimeSyncOptions {
   table: string;
@@ -21,6 +22,9 @@ export const useRealtimeSync = ({
   const { user, isOffline } = useStableAuth();
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<any>(null);
+  const setupAttemptsRef = useRef(0);
+  const maxSetupAttempts = 3;
+  
   // Gerar um identificador único por instância para evitar colisão de nomes de canal
   const channelIdRef = useRef<string>(`rt_${table}_${Math.random().toString(36).slice(2, 10)}`);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -42,92 +46,139 @@ export const useRealtimeSync = ({
     [debounceMs]
   );
 
-  // Configurar realtime subscription
-  useEffect(() => {
-    if (!user || isOffline) {
-      logger.info('REALTIME_SYNC', 'Realtime sync disabled', { 
-        user: !!user, 
-        isOffline 
-      });
-      return;
-    }
+  // Debounce no setup pra evitar loops
+  const debouncedSetup = useCallback(
+    debounce(() => {
+      // Verificar se já está conectado para evitar loops
+      if (isConnected) {
+        logger.info('REALTIME_SYNC', 'Already connected, skipping setup', { table });
+        return;
+      }
 
-    logger.info('REALTIME_SYNC', 'Setting up realtime sync', { 
-      table,
-      userId: user.id 
-    });
-
-    // Criar canal com ID único para evitar interferência entre componentes
-    const channel = supabase
-      .channel(channelIdRef.current)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: table,
-        },
-        (payload) => {
-          logger.debug('REALTIME_SYNC', 'INSERT event received', { 
-            table,
-            recordId: payload.new?.id 
-          });
-          if (onInsert) debouncedCallback(onInsert, payload);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: table,
-        },
-        (payload) => {
-          logger.debug('REALTIME_SYNC', 'UPDATE event received', { 
-            table,
-            recordId: payload.new?.id 
-          });
-          if (onUpdate) debouncedCallback(onUpdate, payload);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: table,
-        },
-        (payload) => {
-          logger.debug('REALTIME_SYNC', 'DELETE event received', { 
-            table,
-            recordId: payload.old?.id 
-          });
-          if (onDelete) debouncedCallback(onDelete, payload);
-        }
-      )
-      .subscribe((status) => {
-        logger.info('REALTIME_SYNC', 'Subscription status changed', { 
-          table,
-          status 
+      if (!user || isOffline) {
+        logger.info('REALTIME_SYNC', 'Realtime sync disabled or already connected', { 
+          user: !!user, 
+          isOffline,
+          isConnected 
         });
-        setIsConnected(status === 'SUBSCRIBED');
+        return;
+      }
+
+      // Verificar tentativas de setup para evitar loops infinitos
+      setupAttemptsRef.current++;
+      if (setupAttemptsRef.current > maxSetupAttempts) {
+        logger.error('REALTIME_SYNC', 'Max setup attempts reached - possible loop detected', { 
+          table,
+          attempts: setupAttemptsRef.current 
+        });
+        
+        // Surpresa: Notificação de erro via console
+        console.error('🚨 REALTIME LOOP DETECTED!', {
+          table,
+          attempts: setupAttemptsRef.current,
+          user: user.id,
+          isOffline
+        });
+        
+        // Reset contador após um tempo
+        setTimeout(() => {
+          setupAttemptsRef.current = 0;
+        }, 5000);
+        
+        return;
+      }
+
+      logger.info('REALTIME_SYNC', 'Setting up realtime sync', { 
+        table,
+        userId: user.id,
+        attempt: setupAttemptsRef.current
       });
 
-    channelRef.current = channel;
+      // Criar canal com ID único
+      const channel = supabase
+        .channel(channelIdRef.current)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: table,
+          },
+          (payload) => {
+            logger.debug('REALTIME_SYNC', 'INSERT event received', { 
+              table,
+              recordId: payload.new?.id 
+            });
+            if (onInsert) debouncedCallback(onInsert, payload);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: table,
+          },
+          (payload) => {
+            logger.debug('REALTIME_SYNC', 'UPDATE event received', { 
+              table,
+              recordId: payload.new?.id 
+            });
+            if (onUpdate) debouncedCallback(onUpdate, payload);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: table,
+          },
+          (payload) => {
+            logger.debug('REALTIME_SYNC', 'DELETE event received', { 
+              table,
+              recordId: payload.old?.id 
+            });
+            if (onDelete) debouncedCallback(onDelete, payload);
+          }
+        )
+        .subscribe((status) => {
+          logger.info('REALTIME_SYNC', 'Subscription status changed', { 
+            table,
+            status 
+          });
+          setIsConnected(status === 'SUBSCRIBED');
+          
+          // Reset contador em caso de sucesso
+          if (status === 'SUBSCRIBED') {
+            setupAttemptsRef.current = 0;
+          }
+        });
 
-    // Cleanup
-    return () => {
-      if (channelRef.current) {
-        logger.info('REALTIME_SYNC', 'Cleaning up realtime subscription', { table });
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      channelRef.current = channel;
 
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
-    };
+      // Cleanup
+      return () => {
+        if (channelRef.current) {
+          logger.info('REALTIME_SYNC', 'Cleaning up realtime subscription', { table });
+          supabase.removeChannel(channelRef.current);
+          channelRef.current = null;
+          setIsConnected(false);
+        }
+
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = null;
+        }
+      };
+    }, 300), // Debounce de 300ms no setup
+    [user, isOffline, table, onInsert, onUpdate, onDelete, debouncedCallback, isConnected]
+  );
+
+  // useEffect com dependências corretas para evitar loops
+  useEffect(() => {
+    debouncedSetup();
+    return debouncedSetup.cancel; // Cleanup debounce
   }, [user, isOffline, table, debouncedCallback]);
 
   // Monitorar mudanças de conectividade
@@ -144,11 +195,18 @@ export const useRealtimeSync = ({
   };
 };
 
-// Hook para múltiplas tabelas
+// Hook para múltiplas tabelas (corrigido para evitar loops)
 export const useMultiTableSync = (configs: RealtimeSyncOptions[]) => {
   const { user, isOffline } = useStableAuth();
   const [connections, setConnections] = useState<Record<string, boolean>>({});
+  const configsRef = useRef(configs);
 
+  // Atualizar ref quando configs mudam
+  useEffect(() => {
+    configsRef.current = configs;
+  }, [configs]);
+
+  // Inicializar conexões
   useEffect(() => {
     const initialConnections: Record<string, boolean> = {};
     configs.forEach(config => {
@@ -157,24 +215,28 @@ export const useMultiTableSync = (configs: RealtimeSyncOptions[]) => {
     setConnections(initialConnections);
   }, [configs]);
 
-  // Configurar cada tabela
-  configs.forEach(config => {
-    useRealtimeSync({
-      ...config,
-      onInsert: config.onInsert ? (payload) => {
-        config.onInsert!(payload);
-        setConnections(prev => ({ ...prev, [config.table]: true }));
-      } : undefined,
-      onUpdate: config.onUpdate ? (payload) => {
-        config.onUpdate!(payload);
-        setConnections(prev => ({ ...prev, [config.table]: true }));
-      } : undefined,
-      onDelete: config.onDelete ? (payload) => {
-        config.onDelete!(payload);
-        setConnections(prev => ({ ...prev, [config.table]: true }));
-      } : undefined,
+  // Usar useMemo para evitar recriação desnecessária dos hooks
+  const syncHooks = useMemo(() => {
+    return configs.map(config => {
+      const { onInsert, onUpdate, onDelete, ...restConfig } = config;
+      
+      return useRealtimeSync({
+        ...restConfig,
+        onInsert: onInsert ? (payload) => {
+          onInsert(payload);
+          setConnections(prev => ({ ...prev, [config.table]: true }));
+        } : undefined,
+        onUpdate: onUpdate ? (payload) => {
+          onUpdate(payload);
+          setConnections(prev => ({ ...prev, [config.table]: true }));
+        } : undefined,
+        onDelete: onDelete ? (payload) => {
+          onDelete(payload);
+          setConnections(prev => ({ ...prev, [config.table]: true }));
+        } : undefined,
+      });
     });
-  });
+  }, [configs]);
 
   const allConnected = Object.values(connections).every(connected => connected);
   const anyConnected = Object.values(connections).some(connected => connected);
@@ -183,7 +245,8 @@ export const useMultiTableSync = (configs: RealtimeSyncOptions[]) => {
     connections,
     allConnected,
     anyConnected,
-    isOffline
+    isOffline,
+    tablesCount: configs.length
   });
 
   return {
