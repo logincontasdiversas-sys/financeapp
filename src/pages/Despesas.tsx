@@ -1305,28 +1305,20 @@ const Despesas = () => {
                     const showSubcategories = formData.category_id.startsWith('debt-') || (editingDespesa && (editingDespesa as any).debt_id);
                     const parentCategoryId = formData.category_id.startsWith('debt-') ? formData.category_id.replace('debt-', '') : (editingDespesa && (editingDespesa as any).debt_id) ? (editingDespesa as any).debt_id : undefined;
                     
-                    console.log('[DESPESAS] CategorySelect props:', {
-                      formDataCategoryId: formData.category_id,
-                      editingDespesa: editingDespesa ? {
-                        id: editingDespesa.id,
-                        debt_id: (editingDespesa as any).debt_id,
-                        category_id: editingDespesa.category_id
-                      } : null,
-                      isDebtPayment,
-                      showSubcategories,
-                      parentCategoryId
-                    });
-                    
-                    // Log detalhado para debug
-                    console.log('[DESPESAS] Debug detalhado:', {
-                      'formData.category_id': formData.category_id,
-                      'formData.category_id.startsWith("debt-")': formData.category_id.startsWith('debt-'),
-                      'editingDespesa existe': !!editingDespesa,
-                      'editingDespesa.debt_id': editingDespesa ? (editingDespesa as any).debt_id : 'N/A',
-                      'isDebtPayment final': isDebtPayment,
-                      'showSubcategories final': showSubcategories,
-                      'parentCategoryId final': parentCategoryId
-                    });
+                    // Log detalhado para debug - expandido para evitar truncamento
+                    console.log('[DESPESAS] ===== DEBUG DETALHADO =====');
+                    console.log('[DESPESAS] formData.category_id:', formData.category_id);
+                    console.log('[DESPESAS] formData.category_id.startsWith("debt-"):', formData.category_id.startsWith('debt-'));
+                    console.log('[DESPESAS] editingDespesa existe:', !!editingDespesa);
+                    if (editingDespesa) {
+                      console.log('[DESPESAS] editingDespesa.id:', editingDespesa.id);
+                      console.log('[DESPESAS] editingDespesa.debt_id:', (editingDespesa as any).debt_id);
+                      console.log('[DESPESAS] editingDespesa.category_id:', editingDespesa.category_id);
+                    }
+                    console.log('[DESPESAS] isDebtPayment final:', isDebtPayment);
+                    console.log('[DESPESAS] showSubcategories final:', showSubcategories);
+                    console.log('[DESPESAS] parentCategoryId final:', parentCategoryId);
+                    console.log('[DESPESAS] ===== FIM DEBUG =====');
                     
                     return (
                       <CategorySelect
