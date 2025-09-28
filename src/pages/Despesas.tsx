@@ -916,6 +916,7 @@ const Despesas = () => {
           }
         }
       }
+      }
 
       setIsDialogOpen(false);
       setEditingDespesa(null);
