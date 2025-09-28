@@ -164,11 +164,16 @@ const Receitas = () => {
           )
         `)
         .eq('kind', 'income')
-        .not('categories.name', 'eq', 'Transferência entre Bancos') // Excluir transferências
+        .eq('tenant_id', tenantId)
         .order('date', { ascending: false });
 
       if (error) throw error;
-      setReceitas(data || []);
+      // Excluir transferências entre bancos, mas manter receitas sem categoria
+      const filtered = (data || []).filter((row: any) => {
+        const catName = row?.categories?.name;
+        return !catName || catName !== 'Transferência entre Bancos';
+      });
+      setReceitas(filtered as any);
     } catch (error) {
       console.error('[RECEITAS] Error loading:', error);
       toast({
