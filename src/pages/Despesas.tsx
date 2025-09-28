@@ -712,15 +712,526 @@ const Despesas = () => {
     setIsDialogOpen(true);
   };
 
-  // Resto do componente...
+  // Funções auxiliares para edição inline
+  const handleInlineUpdate = async (id: string, field: string, value: any) => {
+    if (!user || !tenantId) return;
+
+    try {
+      const updateData: any = {};
+      updateData[field] = value;
+      
+      const { error } = await supabase
+        .from('transactions')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Atualizar estado local
+      setDespesas(prev => 
+        prev.map(d => d.id === id ? { ...d, [field]: value } : d)
+      );
+
+      // Recálculo de dívida se necessário
+      if (field === 'status') {
+        const transaction = despesas.find(d => d.id === id);
+        if (transaction && (transaction as any).debt_id) {
+          await recalculateDebt((transaction as any).debt_id);
+        }
+      }
+
+      clearQueryCache();
+      loadDespesas();
+      setSummaryRefreshKey(k => k + 1);
+    } catch (error: any) {
+      console.error('[DESPESAS] Error updating inline:', error);
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta despesa?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setDespesas(prev => prev.filter(d => d.id !== id));
+      clearQueryCache();
+      setSummaryRefreshKey((k) => k + 1);
+    } catch (error: any) {
+      console.error('[DESPESAS] Error deleting:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDuplicate = (despesa: Transaction) => {
+    setFormData({
+      title: `${despesa.title} (cópia)`,
+      amount: despesa.amount.toString(),
+      date: despesa.date,
+      category_id: despesa.category_id || "",
+      bank_id: despesa.bank_id || "",
+      card_id: despesa.card_id || "",
+      status: "pending",
+      payment_method: despesa.payment_method || "",
+      note: despesa.note || "",
+      invoice_month_year: "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  // Funções de seleção múltipla
+  const handleSelectAll = () => {
+    if (lastSelectAll) {
+      setSelectedItems([]);
+      setLastSelectAll(false);
+    } else {
+      setSelectedItems(despesas.map(d => d.id));
+      setLastSelectAll(true);
+    }
+  };
+
+  const handleSelectItem = (id: string) => {
+    setSelectedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Tem certeza que deseja excluir ${selectedItems.length} despesa(s)?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .in('id', selectedItems);
+
+      if (error) throw error;
+
+      setDespesas(prev => prev.filter(d => !selectedItems.includes(d.id)));
+      setSelectedItems([]);
+      setSelectionMode(false);
+      clearQueryCache();
+      setSummaryRefreshKey((k) => k + 1);
+    } catch (error: any) {
+      console.error('[DESPESAS] Error bulk deleting:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Funções de ordenação
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Funções de filtro
+  const filteredDespesas = despesas.filter(despesa => {
+    const matchesText = textFilter === "" || 
+      despesa.title.toLowerCase().includes(textFilter.toLowerCase()) ||
+      despesa.categories?.name.toLowerCase().includes(textFilter.toLowerCase());
+
+    const matchesPaymentMethod = paymentMethodFilter === 'all' ||
+      (paymentMethodFilter === 'normal' && !despesa.card_id) ||
+      (paymentMethodFilter === 'credit_card' && despesa.card_id);
+
+    const matchesDate = !sharedDateFilter || 
+      (!sharedDateFilter.from || despesa.date >= sharedDateFilter.from.toISOString().split('T')[0]) &&
+      (!sharedDateFilter.to || despesa.date <= sharedDateFilter.to.toISOString().split('T')[0]);
+
+    return matchesText && matchesPaymentMethod && matchesDate;
+  });
+
+  // Ordenação
+  const sortedDespesas = [...filteredDespesas].sort((a, b) => {
+    if (!sortField) return 0;
+    
+    const aValue = a[sortField as keyof Transaction];
+    const bValue = b[sortField as keyof Transaction];
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Carregando despesas...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Resumo */}
+      <DespesasSummaryWithDateSync 
+        key={summaryRefreshKey}
+      />
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MonthlyChart />
+        <SingleLineChart dataType="expense" />
+      </div>
+
+      {/* Calendário */}
+      <Suspense fallback={<div>Carregando calendário...</div>}>
+        <DespesasCalendar />
+      </Suspense>
+
+      {/* Lista de Despesas */}
       <Card>
         <CardHeader>
-          <CardTitle>Despesas</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Despesas</CardTitle>
+            <div className="flex gap-2">
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Despesa
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingDespesa ? 'Editar Despesa' : 'Nova Despesa'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Título</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">Valor</Label>
+                      <Input
+                        id="amount"
+                        type="number"
+                        step="0.01"
+                        value={formData.amount}
+                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="date">Data</Label>
+                      <Input
+                        id="date"
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Categoria</Label>
+                      <CategorySelect
+                        value={formData.category_id}
+                        onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                        categories={categories}
+                        onCategoriesChange={setCategories}
+                        goals={goals}
+                        debts={debts}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) => setFormData({ ...formData, status: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="settled">Pago</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="payment_method">Método de Pagamento</Label>
+                      <Select
+                        value={formData.payment_method}
+                        onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Dinheiro</SelectItem>
+                          <SelectItem value="debit">Débito</SelectItem>
+                          <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                          <SelectItem value="pix">PIX</SelectItem>
+                          <SelectItem value="transfer_pix">Transferência PIX</SelectItem>
+                          <SelectItem value="transfer_doc">Transferência DOC/TED</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {showCardField && (
+                      <div className="space-y-2">
+                        <Label htmlFor="card">Cartão</Label>
+                        <Select
+                          value={formData.card_id}
+                          onValueChange={(value) => setFormData({ ...formData, card_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {creditCards.map(card => (
+                              <SelectItem key={card.id} value={card.id}>
+                                {card.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {!showCardField && (
+                      <div className="space-y-2">
+                        <Label htmlFor="bank">Banco</Label>
+                        <Select
+                          value={formData.bank_id}
+                          onValueChange={(value) => setFormData({ ...formData, bank_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {banks.map(bank => (
+                              <SelectItem key={bank.id} value={bank.id}>
+                                {bank.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="note">Observação</Label>
+                      <Input
+                        id="note"
+                        value={formData.note}
+                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit">
+                        {editingDespesa ? 'Atualizar' : 'Salvar'}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <p>Componente refatorado com estrutura limpa!</p>
+          {/* Filtros */}
+          <div className="mb-4 space-y-4">
+            <div className="flex gap-4">
+              <Input
+                placeholder="Buscar despesas..."
+                value={textFilter}
+                onChange={(e) => setTextFilter(e.target.value)}
+                className="max-w-sm"
+              />
+              <Select
+                value={paymentMethodFilter}
+                onValueChange={(value: any) => setPaymentMethodFilter(value)}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os métodos</SelectItem>
+                  <SelectItem value="normal">Dinheiro/Débito</SelectItem>
+                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Tabela */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedItems.length === despesas.length && despesas.length > 0}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <button onClick={() => handleSort('title')} className="flex items-center gap-1">
+                      Título
+                      {sortField === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </TableHead>
+                  <TableHead>
+                    <button onClick={() => handleSort('amount')} className="flex items-center gap-1">
+                      Valor
+                      {sortField === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </TableHead>
+                  <TableHead>
+                    <button onClick={() => handleSort('date')} className="flex items-center gap-1">
+                      Data
+                      {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>
+                    <button onClick={() => handleSort('status')} className="flex items-center gap-1">
+                      Status
+                      {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                    </button>
+                  </TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedDespesas.map((despesa) => (
+                  <TableRow key={despesa.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedItems.includes(despesa.id)}
+                        onCheckedChange={() => handleSelectItem(despesa.id)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditText
+                        value={despesa.title}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'title', value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditNumber
+                        value={despesa.amount}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditDate
+                        value={despesa.date}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <span className="flex items-center gap-2">
+                        <span>{despesa.categories?.emoji}</span>
+                        <span>{despesa.categories?.name}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditSelect
+                        value={despesa.status}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
+                        options={[
+                          { value: 'pending', label: 'Pendente' },
+                          { value: 'settled', label: 'Pago' }
+                        ]}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(despesa)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDuplicate(despesa)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(despesa.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Ações em lote */}
+          {selectedItems.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {selectedItems.length} item(s) selecionado(s)
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Selecionados
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedItems([]);
+                      setSelectionMode(false);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
