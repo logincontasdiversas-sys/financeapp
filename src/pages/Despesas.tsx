@@ -793,6 +793,51 @@ const Despesas = () => {
     setIsDialogOpen(true);
   };
 
+  const handleEditSelected = () => {
+    if (selectedItems.length === 1) {
+      const selectedDespesa = despesas.find(d => d.id === selectedItems[0]);
+      if (selectedDespesa) {
+        handleEdit(selectedDespesa);
+      }
+    } else {
+      toast({
+        title: "Selecione apenas uma despesa para editar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDuplicateSelected = () => {
+    if (selectedItems.length === 1) {
+      const selectedDespesa = despesas.find(d => d.id === selectedItems[0]);
+      if (selectedDespesa) {
+        handleDuplicate(selectedDespesa);
+      }
+    } else {
+      toast({
+        title: "Selecione apenas uma despesa para duplicar",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const getMonthsOptions = (baseDateStr: string) => {
+    if (!baseDateStr) return [];
+    
+    const baseDate = new Date(baseDateStr + 'T00:00:00');
+    const currentMonth = baseDate.getMonth();
+    const currentYear = baseDate.getFullYear();
+    
+    const options = [];
+    for (let i = 1; i <= 12; i++) {
+      const targetDate = new Date(currentYear, currentMonth + i, 1);
+      const value = targetDate.toISOString().slice(0, 7); // YYYY-MM
+      const label = targetDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      options.push({ value, label });
+    }
+    return options;
+  };
+
   // Funções de seleção múltipla
   const handleSelectAll = () => {
     if (lastSelectAll) {
@@ -889,243 +934,418 @@ const Despesas = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Resumo */}
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Despesas</h2>
+          <p className="text-muted-foreground">
+            Gerencie seus gastos e despesas
+          </p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => { resetForm(); setEditingDespesa(null); }}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Despesa
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="w-[95vw] sm:w-full sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingDespesa ? "Editar Despesa" : "Nova Despesa"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Título</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Valor</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Data</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Categoria</Label>
+                  <CategorySelect
+                    value={formData.category_id}
+                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    categories={categories}
+                    onCategoriesChange={setCategories}
+                    goals={goals}
+                    debts={debts}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="settled">Pago</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="payment_method">Método de Pagamento</Label>
+                  <Select
+                    value={formData.payment_method}
+                    onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Dinheiro</SelectItem>
+                      <SelectItem value="debit">Débito</SelectItem>
+                      <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                      <SelectItem value="pix">PIX</SelectItem>
+                      <SelectItem value="transfer_pix">Transferência PIX</SelectItem>
+                      <SelectItem value="transfer_doc">Transferência DOC/TED</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {showCardField && (
+                  <div className="space-y-2">
+                    <Label htmlFor="card">Cartão</Label>
+                    <Select
+                      value={formData.card_id}
+                      onValueChange={(value) => setFormData({ ...formData, card_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {creditCards.map(card => (
+                          <SelectItem key={card.id} value={card.id}>
+                            {card.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {!showCardField && (
+                  <div className="space-y-2">
+                    <Label htmlFor="bank">Banco</Label>
+                    <Select
+                      value={formData.bank_id}
+                      onValueChange={(value) => setFormData({ ...formData, bank_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {banks.map(bank => (
+                          <SelectItem key={bank.id} value={bank.id}>
+                            {bank.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="note">Observações</Label>
+                  <Input
+                    id="note"
+                    value={formData.note}
+                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                  />
+                </div>
+
+                {/* Recorrência */}
+                <div className="space-y-3 border rounded-md p-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="repeat"
+                      checked={repeatEnabled}
+                      onCheckedChange={(c) => {
+                        const enabled = Boolean(c);
+                        setRepeatEnabled(enabled);
+                        if (enabled) setMonthsDialogOpen(true);
+                      }}
+                    />
+                    <Label htmlFor="repeat">Esta despesa se repete em outros meses?</Label>
+                    {repeatEnabled && (
+                      <Button type="button" variant="secondary" onClick={() => setMonthsDialogOpen(true)}>
+                        Selecionar meses
+                      </Button>
+                    )}
+                  </div>
+                  {repeatEnabled && repeatMonths.length > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      Meses selecionados: {repeatMonths.join(', ')}
+                    </div>
+                  )}
+                </div>
+
+                {/* Popup de seleção de meses */}
+                {monthsDialogOpen && (
+                  <div className="border rounded-md p-3 space-y-2">
+                    <div className="font-semibold">Selecione os meses:</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {getMonthsOptions(formData.date).map(opt => (
+                        <Button
+                          key={opt.value}
+                          type="button"
+                          variant={repeatMonths.includes(opt.value) ? 'default' : 'outline'}
+                          onClick={() => {
+                            setRepeatMonths(prev =>
+                              prev.includes(opt.value)
+                                ? prev.filter(v => v !== opt.value)
+                                : [...prev, opt.value]
+                            );
+                          }}
+                        >
+                          {opt.label}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" variant="ghost" onClick={() => setMonthsDialogOpen(false)}>Fechar</Button>
+                      <Button type="button" onClick={() => setMonthsDialogOpen(false)}>Confirmar</Button>
+                    </div>
+                  </div>
+                )}
+                <Button type="submit" className="w-full">
+                  {editingDespesa ? "Atualizar" : "Criar"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Seção de Resumo das Despesas */}
       <DespesasSummaryWithDateSync 
         key={summaryRefreshKey}
       />
 
-      {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MonthlyChart />
-        <SingleLineChart dataType="expense" />
-      </div>
+      {/* Gráfico Mensal de Despesas */}
+      <SingleLineChart 
+        title="Evolução das Despesas ao Longo do Ano"
+        dataType="expense"
+        lineColor="hsl(var(--destructive))"
+        lineName="Despesas"
+      />
 
-      {/* Calendário */}
-      <Suspense fallback={<div>Carregando calendário...</div>}>
-        <DespesasCalendar />
-      </Suspense>
-
-      {/* Lista de Despesas */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Despesas</CardTitle>
-            <div className="flex gap-2">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Despesa
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingDespesa ? 'Editar Despesa' : 'Nova Despesa'}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Título</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">Valor</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        value={formData.amount}
-                        onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="date">Data</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Categoria</Label>
-                      <CategorySelect
-                        value={formData.category_id}
-                        onValueChange={(value) => setFormData({ ...formData, category_id: value })}
-                        categories={categories}
-                        onCategoriesChange={setCategories}
-                        goals={goals}
-                        debts={debts}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value) => setFormData({ ...formData, status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pendente</SelectItem>
-                          <SelectItem value="settled">Pago</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="payment_method">Método de Pagamento</Label>
-                      <Select
-                        value={formData.payment_method}
-                        onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cash">Dinheiro</SelectItem>
-                          <SelectItem value="debit">Débito</SelectItem>
-                          <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
-                          <SelectItem value="pix">PIX</SelectItem>
-                          <SelectItem value="transfer_pix">Transferência PIX</SelectItem>
-                          <SelectItem value="transfer_doc">Transferência DOC/TED</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {showCardField && (
-                      <div className="space-y-2">
-                        <Label htmlFor="card">Cartão</Label>
-                        <Select
-                          value={formData.card_id}
-                          onValueChange={(value) => setFormData({ ...formData, card_id: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {creditCards.map(card => (
-                              <SelectItem key={card.id} value={card.id}>
-                                {card.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    {!showCardField && (
-                      <div className="space-y-2">
-                        <Label htmlFor="bank">Banco</Label>
-                        <Select
-                          value={formData.bank_id}
-                          onValueChange={(value) => setFormData({ ...formData, bank_id: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {banks.map(bank => (
-                              <SelectItem key={bank.id} value={bank.id}>
-                                {bank.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <Label htmlFor="note">Observação</Label>
-                      <Input
-                        id="note"
-                        value={formData.note}
-                        onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                        Cancelar
-                      </Button>
-                      <Button type="submit">
-                        {editingDespesa ? 'Atualizar' : 'Salvar'}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <CardTitle>Lista de Despesas</CardTitle>
+            </div>
+            <div className="w-72">
+              <Input
+                placeholder="Filtrar por título, categoria ou observações..."
+                value={textFilter}
+                onChange={(e) => setTextFilter(e.target.value)}
+                className="h-9"
+              />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {/* Filtros */}
-          <div className="mb-4 space-y-4">
-            <div className="flex gap-4">
-              <Input
-                placeholder="Buscar despesas..."
-                value={textFilter}
-                onChange={(e) => setTextFilter(e.target.value)}
-                className="max-w-sm"
-              />
-              <Select
-                value={paymentMethodFilter}
-                onValueChange={(value: any) => setPaymentMethodFilter(value)}
-              >
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os métodos</SelectItem>
-                  <SelectItem value="normal">Dinheiro/Débito</SelectItem>
-                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Barra de ações dentro do campo da lista (mobile e desktop) */}
+          {selectedItems.length > 0 && (
+            <div className="mb-3 px-1 sm:px-0">
+              <div className="hidden sm:flex items-center gap-2 flex-wrap">
+                {lastSelectAll ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8 px-2 text-xs flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Excluir
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
+          )}
+          
+          {/* Layout Mobile - Cards */}
+          <div className="block sm:hidden space-y-3">
+            {/* Barra de seleção - Mobile */}
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (!selectionMode) {
+                    setSelectionMode(true);
+                    setLastSelectAll(false);
+                  } else {
+                    const all = sortedDespesas;
+                    setSelectedItems(all.map(d => d.id));
+                    setLastSelectAll(true);
+                  }
+                }}
+              >
+                {selectionMode ? 'Selecionar Todos' : 'Selecionar'}
+              </Button>
+              <div className="flex items-center gap-1 flex-wrap">
+                {selectionMode && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => { setSelectionMode(false); setSelectedItems([]); setLastSelectAll(false); }}
+                  >
+                    Cancelar
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Cards das despesas */}
+            {sortedDespesas.map((despesa) => (
+              <div key={despesa.id} className="bg-muted/50 rounded-lg p-4 relative">
+                {selectionMode && (
+                  <div className="absolute top-3 right-3">
+                    <Checkbox
+                      checked={selectedItems.includes(despesa.id)}
+                      onCheckedChange={() => handleSelectItem(despesa.id)}
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-12 gap-1 relative auto-rows-[56px] -ml-[14px]">
+                  <div className="col-start-1 col-end-3 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {despesa.categories?.emoji || '💰'}
+                    </div>
+                  </div>
+                  <div className="col-start-3 col-end-12 flex flex-col justify-center pl-2">
+                    <div className="font-medium text-sm">{despesa.title}</div>
+                    <div className="text-xs text-muted-foreground">{despesa.categories?.name}</div>
+                    <div className="text-xs text-muted-foreground">{despesa.date}</div>
+                  </div>
+                  <div className="col-start-12 col-end-13 flex items-center justify-center">
+                    <div className="text-right">
+                      <div className="font-bold text-red-600">R$ {despesa.amount.toFixed(2)}</div>
+                      <div className="text-xs text-muted-foreground">{despesa.status === 'settled' ? 'Pago' : 'Pendente'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Tabela */}
-          <div className="rounded-md border">
+          {/* Layout Desktop - Tabela */}
+          <div className="hidden sm:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={selectedItems.length === despesas.length && despesas.length > 0}
+                      checked={selectedItems.length === sortedDespesas.length && sortedDespesas.length > 0}
                       onCheckedChange={handleSelectAll}
                     />
                   </TableHead>
                   <TableHead>
-                    <button onClick={() => handleSort('title')} className="flex items-center gap-1">
-                      Título
-                      {sortField === 'title' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </button>
+                    <SortableHeader 
+                      label="Descrição"
+                      sortKey="title"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
                   </TableHead>
                   <TableHead>
-                    <button onClick={() => handleSort('amount')} className="flex items-center gap-1">
-                      Valor
-                      {sortField === 'amount' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </button>
+                    <SortableHeader 
+                      label="Categoria"
+                      sortKey="category"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
                   </TableHead>
                   <TableHead>
-                    <button onClick={() => handleSort('date')} className="flex items-center gap-1">
-                      Data
-                      {sortField === 'date' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </button>
+                    <SortableHeader 
+                      label="Valor"
+                      sortKey="amount"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
                   </TableHead>
-                  <TableHead>Categoria</TableHead>
                   <TableHead>
-                    <button onClick={() => handleSort('status')} className="flex items-center gap-1">
-                      Status
-                      {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
-                    </button>
+                    <SortableHeader 
+                      label="Data"
+                      sortKey="date"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
                   </TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>
+                    <SortableHeader 
+                      label="Status"
+                      sortKey="status"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1137,22 +1357,11 @@ const Despesas = () => {
                         onCheckedChange={() => handleSelectItem(despesa.id)}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium">
                       <InlineEditText
                         value={despesa.title}
                         onSave={(value) => handleInlineUpdate(despesa.id, 'title', value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <InlineEditNumber
-                        value={despesa.amount}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <InlineEditDate
-                        value={despesa.date}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
+                        placeholder="Título da despesa"
                       />
                     </TableCell>
                     <TableCell>
@@ -1161,79 +1370,55 @@ const Despesas = () => {
                         <span>{despesa.categories?.name}</span>
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <InlineEditSelect
-                        value={despesa.status}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
-                        options={[
-                          { value: 'pending', label: 'Pendente' },
-                          { value: 'settled', label: 'Pago' }
-                        ]}
+                    <TableCell className="text-red-600 font-semibold">
+                      <InlineEditNumber
+                        value={despesa.amount}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
+                        formatValue={(value) => `R$ ${value.toFixed(2)}`}
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(despesa)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDuplicate(despesa)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(despesa.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <InlineEditDate
+                        value={despesa.date}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
+                        formatValue={(date) => formatDateForDisplay(date)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditSelect
+                        value={despesa.status}
+                        options={[
+                          { value: "settled", label: "Pago" },
+                          { value: "pending", label: "Pendente" }
+                        ]}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
+                        getDisplayValue={(value) => value === 'settled' ? 'Pago' : 'Pendente'}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </div>
-
-          {/* Ações em lote */}
-          {selectedItems.length > 0 && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {selectedItems.length} item(s) selecionado(s)
+          
+          {/* Total da Lista */}
+          {sortedDespesas.length > 0 && (
+            <div className="mt-4 flex justify-end">
+              <div className="bg-muted/50 px-4 py-2 rounded-lg border">
+                <span className="text-sm font-medium text-muted-foreground">SOMA</span>
+                <span className="ml-2 text-lg font-bold text-red-600">
+                  R$ {sortedDespesas.reduce((total, despesa) => total + despesa.amount, 0).toFixed(2)}
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleBulkDelete}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir Selecionados
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedItems([]);
-                      setSelectionMode(false);
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Seção do Calendário */}
+      <Suspense fallback={<div>Carregando calendário...</div>}>
+        <DespesasCalendar />
+      </Suspense>
     </div>
   );
 };
