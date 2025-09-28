@@ -1310,6 +1310,9 @@ const Despesas = () => {
                     onCategoriesChange={setCategories}
                     goals={goals}
                     debts={debts}
+                    isDebtPayment={formData.category_id.startsWith('debt-')}
+                    showSubcategories={formData.category_id.startsWith('debt-')}
+                    parentCategoryId={formData.category_id.startsWith('debt-') ? formData.category_id.replace('debt-', '') : undefined}
                   />
                 </div>
                 <div className="space-y-2">

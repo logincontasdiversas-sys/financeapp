@@ -26,6 +26,9 @@ interface CategorySelectProps {
   showInvoiceCategories?: boolean;
   goals?: Array<{ id: string; title: string; current_amount: number }>;
   debts?: Array<{ id: string; title: string; paid_amount: number }>;
+  showSubcategories?: boolean; // Novo: mostrar subcategorias apenas para dívidas
+  isDebtPayment?: boolean; // Novo: identificar se é pagamento de dívida
+  parentCategoryId?: string; // Novo: ID da categoria pai para filtrar subcategorias
 }
 
 export const CategorySelect: React.FC<CategorySelectProps> = ({
@@ -37,14 +40,29 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   showCreateOption = true,
   showInvoiceCategories = true,
   goals = [],
-  debts = []
+  debts = [],
+  showSubcategories = false,
+  isDebtPayment = false,
+  parentCategoryId
 }) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryEmoji, setNewCategoryEmoji] = useState('📦');
   const [isCreating, setIsCreating] = useState(false);
+  const [showErrorAnimation, setShowErrorAnimation] = useState(false);
   const { tenantId } = useTenant();
   const { toast } = useToast();
+
+  // Logs para debug
+  console.log('[CATEGORY_SELECT] Props recebidas:', {
+    value,
+    showSubcategories,
+    isDebtPayment,
+    parentCategoryId,
+    categoriesCount: categories.length,
+    goalsCount: goals.length,
+    debtsCount: debts.length
+  });
 
   const handleCreateCategory = useCallback(async () => {
     if (!tenantId || !newCategoryName.trim()) return;
@@ -99,28 +117,70 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       name.includes('vw tiguan')
     );
     
-    // Log removido para melhorar performance
-    
     return isSpecial;
   };
 
-  const standardCategories = categories.filter(category => {
-    const isStandard = (
-      !category.name.includes(' - Fatura') && 
-      !category.is_system && // Filtrar categorias automáticas
-      !isSpecialCategory(category) // Filtrar categorias especiais
-    );
-    
-    // Log removido para melhorar performance
-    
-    return isStandard;
-  });
+  // Lógica inteligente de filtro de categorias
+  const getFilteredCategories = () => {
+    console.log('[CATEGORY_SELECT] Filtrando categorias:', {
+      showSubcategories,
+      isDebtPayment,
+      parentCategoryId,
+      totalCategories: categories.length
+    });
+
+    if (showSubcategories && isDebtPayment && parentCategoryId) {
+      // Para pagamentos de dívida: mostrar apenas subcategorias da categoria pai
+      const subcategories = categories.filter(cat => 
+        cat.id !== parentCategoryId && 
+        cat.name.toLowerCase().includes('dívida') &&
+        !cat.is_system
+      );
+      
+      console.log('[CATEGORY_SELECT] Subcategorias encontradas:', subcategories.length);
+      return subcategories;
+    } else if (isDebtPayment) {
+      // Para dívidas: mostrar categorias pai + subcategorias específicas
+      const parentCategories = categories.filter(cat => 
+        !cat.name.toLowerCase().includes('dívida') && 
+        !cat.is_system
+      );
+      
+      console.log('[CATEGORY_SELECT] Categorias pai para dívidas:', parentCategories.length);
+      return parentCategories;
+    } else {
+      // Para despesas normais: mostrar apenas categorias pai
+      const standardCategories = categories.filter(category => {
+        const isStandard = (
+          !category.name.includes(' - Fatura') && 
+          !category.is_system &&
+          !isSpecialCategory(category)
+        );
+        return isStandard;
+      });
+      
+      console.log('[CATEGORY_SELECT] Categorias padrão:', filteredCategories.length);
+      return filteredCategories;
+    }
+  };
+
+  const filteredCategories = getFilteredCategories();
+
+  // Verificar se há categorias disponíveis
+  useEffect(() => {
+    if (filteredCategories.length === 0 && categories.length > 0) {
+      console.warn('[CATEGORY_SELECT] Nenhuma categoria encontrada para o filtro atual');
+      setShowErrorAnimation(true);
+      setTimeout(() => setShowErrorAnimation(false), 3000);
+    }
+  }, [filteredCategories.length, categories.length]);
+
   const invoiceCategories = categories.filter(category => category.name.includes(' - Fatura'));
 
   return (
     <>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger>
+        <SelectTrigger className={showErrorAnimation ? 'animate-pulse border-red-500 bg-red-50' : ''}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-background border z-50 max-h-[300px] overflow-y-auto">
@@ -144,12 +204,12 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
 
 
           {/* Categorias Cadastradas */}
-          {standardCategories.length > 0 && (
+          {filteredCategories.length > 0 && (
             <>
               <div className="px-2 py-1 text-xs font-medium text-muted-foreground bg-muted/50">
-                Categorias
+                {isDebtPayment ? 'Categorias para Dívidas' : 'Categorias'}
               </div>
-              {standardCategories
+              {filteredCategories
                 .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
                 .map((category) => (
                   <SelectItem key={category.id} value={category.id}>
