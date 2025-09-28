@@ -915,7 +915,7 @@ const Despesas = () => {
             ]);
           }
         }
-      }
+        }
       }
 
       setIsDialogOpen(false);
