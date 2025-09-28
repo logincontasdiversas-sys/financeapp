@@ -813,6 +813,7 @@ const Despesas = () => {
           } else {
             console.log('[DEBUG] Dívida atualizada com sucesso no banco');
           }
+          }
           
         if (created) {
           setDespesas(prev => [
