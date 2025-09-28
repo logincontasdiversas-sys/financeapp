@@ -1317,6 +1317,17 @@ const Despesas = () => {
                       parentCategoryId
                     });
                     
+                    // Log detalhado para debug
+                    console.log('[DESPESAS] Debug detalhado:', {
+                      'formData.category_id': formData.category_id,
+                      'formData.category_id.startsWith("debt-")': formData.category_id.startsWith('debt-'),
+                      'editingDespesa existe': !!editingDespesa,
+                      'editingDespesa.debt_id': editingDespesa ? (editingDespesa as any).debt_id : 'N/A',
+                      'isDebtPayment final': isDebtPayment,
+                      'showSubcategories final': showSubcategories,
+                      'parentCategoryId final': parentCategoryId
+                    });
+                    
                     return (
                       <CategorySelect
                         value={formData.category_id}
