@@ -484,6 +484,13 @@ const Despesas = () => {
 
   // Atualizar transação existente
   const updateTransaction = async (id: string, processedFormData: any) => {
+    // IMPORTANTE: Se estamos editando um pagamento de dívida, preservar a categoria especial
+    if (editingDespesa && (editingDespesa as any).debt_id) {
+      console.log('[DESPESAS] Editando pagamento de dívida - preservando categoria especial');
+      processedFormData.category_id = editingDespesa.category_id; // Manter a categoria especial
+      (processedFormData as any).debt_id = (editingDespesa as any).debt_id; // Manter o debt_id
+    }
+    
     await updateExpense(id, processedFormData);
     
     // Recálculo de dívida se necessário
@@ -763,11 +770,11 @@ const Despesas = () => {
       }
     }
     
-    // IMPORTANTE: Se é pagamento de dívida, manter a categoria especial para não quebrar o cálculo
-    if ((despesa as any).debt_id && despesa.category_id) {
-      // Manter a categoria original (special_category_id) para não quebrar o cálculo
-      displayCategoryId = despesa.category_id;
-      console.log('[DESPESAS] Mantendo categoria especial para dívida:', despesa.category_id);
+    // IMPORTANTE: Se é pagamento de dívida, usar a categoria pai para exibição
+    if ((despesa as any).debt_id) {
+      // Para pagamentos de dívida, usar o formato debt-{id} para exibição
+      displayCategoryId = `debt-${(despesa as any).debt_id}`;
+      console.log('[DESPESAS] Usando categoria de dívida para exibição:', displayCategoryId);
     }
     
     console.log('[DESPESAS] Editando despesa:', {
