@@ -755,10 +755,11 @@ const Despesas = () => {
       originalCategoryId: despesa.category_id,
       debtId: (despesa as any).debt_id,
       goalId: (despesa as any).goal_id,
-      displayCategoryId
+      displayCategoryId,
+      categories: despesa.categories
     });
     
-    setFormData({
+    const newFormData = {
       title: despesa.title,
       amount: despesa.amount.toString(),
       date: despesa.date,
@@ -769,13 +770,17 @@ const Despesas = () => {
       payment_method: despesa.payment_method || "",
       note: despesa.note || "",
       invoice_month_year: "",
-    });
+    };
+    
+    console.log('[DESPESAS] FormData definido:', newFormData);
+    setFormData(newFormData);
     setIsDialogOpen(true);
   };
 
   // Funções auxiliares para edição inline
   const handleInlineUpdate = async (id: string, field: string, value: any) => {
     console.log('[DESPESAS] handleInlineUpdate chamado:', { id, field, value });
+    console.log('[DESPESAS] Usuário:', user?.id, 'Tenant:', tenantId);
     
     if (!user || !tenantId) {
       console.log('[DESPESAS] Usuário ou tenant não encontrado');
@@ -1244,7 +1249,10 @@ const Despesas = () => {
                   <Label htmlFor="category">Categoria</Label>
                   <CategorySelect
                     value={formData.category_id}
-                    onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                    onValueChange={(value) => {
+                      console.log('[DESPESAS] Categoria selecionada:', value);
+                      setFormData({ ...formData, category_id: value });
+                    }}
                     categories={categories}
                     onCategoriesChange={setCategories}
                     goals={goals}
