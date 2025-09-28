@@ -461,8 +461,18 @@ const Despesas = () => {
     const selectedDebt = debts.find(d => d.id === debtId);
     
     if (selectedDebt) {
-      processedFormData.category_id = selectedDebt.category_id;
+      // FILTRO CRÍTICO: Usar special_category_id para pagamentos específicos da dívida
+      // Isso garante que apenas transações da subcategoria personalizada sejam contabilizadas
+      processedFormData.category_id = selectedDebt.special_category_id || selectedDebt.category_id;
       (processedFormData as any).debt_id = debtId;
+      
+      console.log('[DESPESAS] Processando dívida:', {
+        debtId,
+        debtTitle: selectedDebt.title,
+        categoryId: selectedDebt.category_id,
+        specialCategoryId: selectedDebt.special_category_id,
+        finalCategoryId: processedFormData.category_id
+      });
     }
     
     return processedFormData;
@@ -565,15 +575,32 @@ const Despesas = () => {
 
   // Recálculo de dívida
   const recalculateDebt = async (debtId: string) => {
+    // Buscar dados da dívida para obter special_category_id
+    const { data: debtData, error: debtError } = await supabase
+      .from('debts')
+      .select('special_category_id')
+      .eq('id', debtId)
+      .single();
+
+    if (debtError || !debtData?.special_category_id) {
+      console.error('[DESPESAS] Erro ao buscar dados da dívida:', debtError);
+      return;
+    }
+
+    // Filtrar apenas transações com category_id igual ao special_category_id da dívida
     const { data: settledTransactions, error } = await supabase
       .from('transactions')
       .select('amount')
       .eq('tenant_id', tenantId)
       .eq('kind', 'expense')
       .eq('debt_id', debtId)
+      .eq('category_id', debtData.special_category_id) // FILTRO CRÍTICO: apenas subcategoria específica
       .eq('status', 'settled');
 
-    if (error) return;
+    if (error) {
+      console.error('[DESPESAS] Erro ao buscar transações da dívida:', error);
+      return;
+    }
 
     const newPaidAmount = settledTransactions?.reduce((sum, transaction) => {
       return sum + Number(transaction.amount || 0);
@@ -581,6 +608,14 @@ const Despesas = () => {
 
     const debt = debts.find(d => d.id === debtId);
     const isFullyPaid = debt?.total_amount ? newPaidAmount >= debt.total_amount : false;
+
+    console.log('[DESPESAS] Recálculo de dívida:', {
+      debtId,
+      specialCategoryId: debtData.special_category_id,
+      transactionsCount: settledTransactions?.length || 0,
+      newPaidAmount,
+      isFullyPaid
+    });
 
     await supabase
       .from('debts')
@@ -736,7 +771,28 @@ const Despesas = () => {
       if (field === 'status') {
         const transaction = despesas.find(d => d.id === id);
         if (transaction && (transaction as any).debt_id) {
-          await recalculateDebt((transaction as any).debt_id);
+          // Verificar se a transação tem a categoria correta para recálculo
+          const debtId = (transaction as any).debt_id;
+          const selectedDebt = debts.find(d => d.id === debtId);
+          
+          if (selectedDebt && selectedDebt.special_category_id) {
+            // Só recalcular se a categoria da transação for a subcategoria específica
+            if (transaction.category_id === selectedDebt.special_category_id) {
+              console.log('[DESPESAS] Recálculo autorizado - categoria correta:', {
+                transactionCategoryId: transaction.category_id,
+                debtSpecialCategoryId: selectedDebt.special_category_id
+              });
+              await recalculateDebt(debtId);
+            } else {
+              console.log('[DESPESAS] Recálculo ignorado - categoria incorreta:', {
+                transactionCategoryId: transaction.category_id,
+                debtSpecialCategoryId: selectedDebt.special_category_id
+              });
+            }
+          } else {
+            // Fallback para dívidas sem special_category_id
+            await recalculateDebt(debtId);
+          }
         }
       }
 
