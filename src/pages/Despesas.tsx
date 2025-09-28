@@ -748,6 +748,27 @@ const Despesas = () => {
     else if ((despesa as any).goal_id) {
       displayCategoryId = `goal-${(despesa as any).goal_id}`;
     }
+    // Se não tem debt_id nem goal_id, usar a categoria original
+    else {
+      displayCategoryId = despesa.category_id || "";
+    }
+    
+    // Se a categoria está vazia, tentar encontrar a categoria pai
+    if (!displayCategoryId && despesa.categories) {
+      // Buscar a categoria pelo nome nas categorias disponíveis
+      const matchingCategory = categories.find(cat => cat.name === despesa.categories?.name);
+      if (matchingCategory) {
+        displayCategoryId = matchingCategory.id;
+        console.log('[DESPESAS] Usando categoria pai encontrada:', matchingCategory);
+      }
+    }
+    
+    // IMPORTANTE: Se é pagamento de dívida, manter a categoria especial para não quebrar o cálculo
+    if ((despesa as any).debt_id && despesa.category_id) {
+      // Manter a categoria original (special_category_id) para não quebrar o cálculo
+      displayCategoryId = despesa.category_id;
+      console.log('[DESPESAS] Mantendo categoria especial para dívida:', despesa.category_id);
+    }
     
     console.log('[DESPESAS] Editando despesa:', {
       id: despesa.id,
@@ -797,6 +818,31 @@ const Despesas = () => {
       // Verificar se é mudança de status em pagamento de dívida
       if (field === 'status') {
         const debtId = (transaction as any).debt_id;
+        console.log('[DESPESAS] Verificando dívida:', { debtId, transactionId: id });
+        
+        if (!debtId) {
+          console.log('[DESPESAS] Transação sem debt_id - atualização normal');
+          // Atualização normal sem recálculo de dívida
+          const updateData: any = {};
+          updateData[field] = value;
+          
+          const { error } = await supabase
+            .from('transactions')
+            .update(updateData)
+            .eq('id', id);
+
+          if (error) throw error;
+
+          setDespesas(prev => 
+            prev.map(d => d.id === id ? { ...d, [field]: value } : d)
+          );
+          
+          clearQueryCache();
+          loadDespesas();
+          setSummaryRefreshKey(k => k + 1);
+          return;
+        }
+        
         const selectedDebt = debts.find(d => d.id === debtId);
         
         if (selectedDebt && selectedDebt.special_category_id) {
