@@ -459,9 +459,9 @@ Total: 80+ arquivos
 ---
 
 **Última atualização**: Janeiro 2025  
-**Versão**: 1.2.0 (100% completo)
-**Status**: Lançamento V1.2 - Sistema de dívidas e metas otimizado com progresso inteligente
-**Próximo milestone**: V1.3 - Relatórios avançados e gamificação
+**Versão**: 1.2.1 (95% completo - 5 problemas em aberto)
+**Status**: Lançamento V1.2.1 - Sistema de dívidas e metas otimizado com progresso inteligente
+**Próximo milestone**: V1.2.2 - Correção de problemas em aberto + V1.3 - Relatórios avançados
 
 ## 🆕 NOVAS FUNCIONALIDADES IMPLEMENTADAS (Janeiro 2025)
 
@@ -546,3 +546,133 @@ Total: 80+ arquivos
 - [x] **Filtros Corretos**: Dashboard vs Movimentações
 - [x] **Exclusão Adequada**: Categorias de fatura e transferências
 - [x] **Visual Consistente**: Mesmo estilo entre páginas
+
+## 🚨 PROBLEMAS EM ABERTO (Janeiro 2025)
+
+### ❌ Problema: Categorias não aparecem para despesas de dívidas
+**Status**: 🔴 **EM ABERTO** - Investigando
+**Descrição**: Quando editando uma despesa de dívida, o campo categoria fica vazio no popup de edição
+**Impacto**: Usuário não consegue ver/alterar categoria de pagamentos de dívidas
+**Logs Identificados**:
+- `[DESPESAS] CategorySelect props: Object` (logs truncados)
+- `[CATEGORY_SELECT] Categorias padrão: 24` (sempre mostra categorias padrão)
+- `isDebtPayment` sempre `false` nos logs
+
+**Tentativas de Correção**:
+1. ✅ **Detecção de Dívidas**: Implementada lógica para detectar `editingDespesa.debt_id`
+2. ✅ **Logs Detalhados**: Adicionados logs para debug da detecção
+3. ❌ **Resultado**: Ainda não funciona - `isDebtPayment` permanece `false`
+
+**Próximos Passos**:
+- [ ] Analisar logs detalhados para identificar por que `isDebtPayment` é `false`
+- [ ] Verificar se `editingDespesa.debt_id` está sendo passado corretamente
+- [ ] Testar lógica de detecção com dados reais de dívidas
+- [ ] Implementar fallback se detecção automática falhar
+
+### ❌ Problema: Edição inline não funciona em despesas
+**Status**: 🔴 **EM ABERTO** - Parcialmente resolvido
+**Descrição**: Clicar diretamente nas células da tabela não ativa o modo de edição
+**Impacto**: Usuário precisa usar botão "Editar" em vez de clicar na célula
+**Logs Identificados**:
+- `[DESPESAS] handleInlineUpdate chamado: Object` (funciona)
+- `[DESPESAS] Transação sem debt_id - atualização normal` (funciona)
+
+**Tentativas de Correção**:
+1. ✅ **Remoção de Condicionais**: Removidas condições `selectionMode` dos `InlineEdit`
+2. ✅ **onClick Handlers**: Adicionados handlers para ativar edição
+3. ❌ **Resultado**: Ainda não funciona - cliques não ativam edição
+
+**Próximos Passos**:
+- [ ] Verificar se `InlineEdit` components têm `onClick` funcionando
+- [ ] Testar se `selectionMode` está interferindo
+- [ ] Implementar debug visual para identificar problema
+- [ ] Considerar alternativa de edição direta
+
+### ❌ Problema: Realtime Sync com loops infinitos
+**Status**: 🟡 **PARCIALMENTE RESOLVIDO** - Melhorado mas ainda ocorre
+**Descrição**: `useRealtimeSync` causa loops de reconexão
+**Impacto**: Performance degradada e logs excessivos
+**Logs Identificados**:
+- "Cleaning up", "Subscription status changed", "Setting up" repetidos
+- `setupAttemptsRef.current` atingindo limite máximo
+
+**Tentativas de Correção**:
+1. ✅ **Dependências Corretas**: Corrigidas dependências do `useEffect`
+2. ✅ **Debounce no Setup**: Implementado debounce de 300ms
+3. ✅ **Detecção de Loops**: Adicionado contador e alerta de loop
+4. ✅ **useMemo**: Implementado para evitar recriação de hooks
+5. 🟡 **Resultado**: Melhorado mas ainda ocorre ocasionalmente
+
+**Próximos Passos**:
+- [ ] Monitorar logs para identificar padrões de loop
+- [ ] Implementar backoff exponencial para reconexões
+- [ ] Considerar desabilitar realtime temporariamente se necessário
+- [ ] Otimizar `useMultiTableSync` para evitar múltiplas instâncias
+
+### ❌ Problema: Erros 400 no Supabase
+**Status**: 🟡 **PARCIALMENTE RESOLVIDO** - Reduzido mas ainda ocorre
+**Descrição**: Queries Supabase retornam erro 400 (Bad Request)
+**Impacto**: Algumas funcionalidades falham ocasionalmente
+**Logs Identificados**:
+- `Failed to load resource: the server responded with a status of 400 ()`
+- `tenant_id=eq.null` em algumas queries
+- `profiles?select=push_subscription` falhando
+
+**Tentativas de Correção**:
+1. ✅ **Validação de tenantId**: Adicionadas verificações de `tenantId` válido
+2. ✅ **Fallbacks**: Implementados fallbacks para queries falhando
+3. 🟡 **Resultado**: Reduzido mas ainda ocorre em algumas situações
+
+**Próximos Passos**:
+- [ ] Investigar queries com `tenant_id=eq.null`
+- [ ] Implementar retry automático para queries falhando
+- [ ] Verificar se `push_subscription` é campo obrigatório
+- [ ] Adicionar validação mais robusta de dados
+
+### ❌ Problema: Cálculo incorreto de progresso de dívidas
+**Status**: 🟡 **PARCIALMENTE RESOLVIDO** - Melhorado mas ainda tem casos
+**Descrição**: Dívidas são quitadas incorretamente com pagamentos parciais
+**Impacto**: Usuário vê dívida como quitada quando ainda tem saldo
+**Logs Identificados**:
+- `[DESPESAS] Recálculo de dívida:` com valores incorretos
+- Dívidas com `is_concluded: true` mas `paid_amount < total_amount`
+
+**Tentativas de Correção**:
+1. ✅ **Filtro por Categoria**: Implementado filtro por `special_category_id`
+2. ✅ **Recálculo Automático**: Adicionado recálculo após mudanças
+3. ✅ **Validação de Valores**: Implementada validação de `total_amount`
+4. 🟡 **Resultado**: Melhorado mas ainda tem casos edge
+
+**Próximos Passos**:
+- [ ] Implementar validação mais rigorosa de `total_amount`
+- [ ] Adicionar logs detalhados para debug de cálculos
+- [ ] Testar casos edge com valores decimais
+- [ ] Considerar arredondamento para evitar problemas de precisão
+
+## 📊 RESUMO DOS PROBLEMAS EM ABERTO
+
+### 🔴 Problemas Críticos (2)
+1. **Categorias não aparecem para despesas de dívidas** - Impacto alto na UX
+2. **Edição inline não funciona** - Impacto médio na produtividade
+
+### 🟡 Problemas de Performance (3)
+3. **Realtime Sync com loops infinitos** - Impacto na performance
+4. **Erros 400 no Supabase** - Impacto na estabilidade
+5. **Cálculo incorreto de progresso de dívidas** - Impacto na precisão
+
+### 📈 Priorização para V1.2.2
+**Alta Prioridade**:
+- [ ] Corrigir detecção de dívidas no CategorySelect
+- [ ] Implementar edição inline funcional
+
+**Média Prioridade**:
+- [ ] Otimizar Realtime Sync para evitar loops
+- [ ] Corrigir queries Supabase com erro 400
+
+**Baixa Prioridade**:
+- [ ] Refinar cálculos de progresso de dívidas
+
+### 🎯 Meta para V1.2.2
+**Objetivo**: Resolver 100% dos problemas em aberto
+**Prazo**: Próxima sprint (1-2 semanas)
+**Critério de Sucesso**: Todos os problemas marcados como ✅ RESOLVIDO
