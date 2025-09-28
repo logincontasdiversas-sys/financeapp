@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Copy, Calendar, Info, ArrowRightLeftIcon } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import Lottie from "lottie-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useStableAuth } from "@/hooks/useStableAuth";
 import { useSupabaseExpenses } from "@/hooks/useSupabaseExpenses";
@@ -127,6 +128,7 @@ const Despesas = () => {
   const [repeatEnabled, setRepeatEnabled] = useState(false);
   const [monthsDialogOpen, setMonthsDialogOpen] = useState(false);
   const [repeatMonths, setRepeatMonths] = useState<string[]>([]); // YYYY-MM
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   // Transferência entre bancos
   const [isTransfer, setIsTransfer] = useState(false);
@@ -896,6 +898,10 @@ const Despesas = () => {
               variant: "default",
             });
 
+            // Animação de sucesso
+            setShowSuccessAnimation(true);
+            setTimeout(() => setShowSuccessAnimation(false), 3000);
+
             // Notificação push para mudanças importantes
             if (isConcluded) {
               try {
@@ -1577,11 +1583,15 @@ const Despesas = () => {
                       />
                     </TableCell>
                     <TableCell className="font-medium">
-                      <InlineEditText
-                        value={despesa.title}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'title', value)}
-                        placeholder="Título da despesa"
-                      />
+                      {selectionMode ? (
+                        <span className="text-gray-500">{despesa.title}</span>
+                      ) : (
+                        <InlineEditText
+                          value={despesa.title}
+                          onSave={(value) => handleInlineUpdate(despesa.id, 'title', value)}
+                          placeholder="Título da despesa"
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-2">
@@ -1590,29 +1600,41 @@ const Despesas = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-red-600 font-semibold">
-                      <InlineEditNumber
-                        value={despesa.amount}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
-                        formatValue={(value) => `R$ ${value.toFixed(2)}`}
-                      />
+                      {selectionMode ? (
+                        <span className="text-gray-500">R$ {despesa.amount.toFixed(2)}</span>
+                      ) : (
+                        <InlineEditNumber
+                          value={despesa.amount}
+                          onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
+                          formatValue={(value) => `R$ ${value.toFixed(2)}`}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
-                      <InlineEditDate
-                        value={despesa.date}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
-                        formatValue={(date) => formatDateForDisplay(date)}
-                      />
+                      {selectionMode ? (
+                        <span className="text-gray-500">{formatDateForDisplay(despesa.date)}</span>
+                      ) : (
+                        <InlineEditDate
+                          value={despesa.date}
+                          onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
+                          formatValue={(date) => formatDateForDisplay(date)}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
-                      <InlineEditSelect
-                        value={despesa.status}
-                        options={[
-                          { value: "settled", label: "Pago" },
-                          { value: "pending", label: "Pendente" }
-                        ]}
-                        onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
-                        getDisplayValue={(value) => value === 'settled' ? 'Pago' : 'Pendente'}
-                      />
+                      {selectionMode ? (
+                        <span className="text-gray-500">{despesa.status === 'settled' ? 'Pago' : 'Pendente'}</span>
+                      ) : (
+                        <InlineEditSelect
+                          value={despesa.status}
+                          options={[
+                            { value: "settled", label: "Pago" },
+                            { value: "pending", label: "Pendente" }
+                          ]}
+                          onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
+                          getDisplayValue={(value) => value === 'settled' ? 'Pago' : 'Pendente'}
+                        />
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1638,6 +1660,137 @@ const Despesas = () => {
       <Suspense fallback={<div>Carregando calendário...</div>}>
         <DespesasCalendar />
       </Suspense>
+
+      {/* Animação de Sucesso */}
+      {showSuccessAnimation && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 flex flex-col items-center">
+            <div className="w-32 h-32 mb-4">
+              <Lottie
+                animationData={{
+                  v: "5.7.4",
+                  fr: 30,
+                  ip: 0,
+                  op: 60,
+                  w: 200,
+                  h: 200,
+                  nm: "Success",
+                  ddd: 0,
+                  assets: [],
+                  layers: [
+                    {
+                      ddd: 0,
+                      ind: 1,
+                      ty: 4,
+                      nm: "Circle",
+                      sr: 1,
+                      ks: {
+                        o: { a: 0, k: 100 },
+                        r: { a: 0, k: 0 },
+                        p: { a: 0, k: [100, 100, 0] },
+                        a: { a: 0, k: [0, 0, 0] },
+                        s: { a: 1, k: [
+                          { i: { x: [0.667], y: [1] }, o: { x: [0.333], y: [0] }, t: 0, s: [0, 0, 100] },
+                          { t: 20, s: [100, 100, 100] }
+                        ]}
+                      },
+                      ao: 0,
+                      shapes: [
+                        {
+                          ty: "gr",
+                          it: [
+                            {
+                              d: 1,
+                              ty: "el",
+                              s: { a: 0, k: [80, 80] },
+                              p: { a: 0, k: [0, 0] }
+                            },
+                            {
+                              ty: "st",
+                              c: { a: 0, k: [0.2, 0.8, 0.2, 1] },
+                              o: { a: 0, k: 100 },
+                              w: { a: 0, k: 4 }
+                            },
+                            {
+                              ty: "tr",
+                              p: { a: 0, k: [0, 0] },
+                              a: { a: 0, k: [0, 0] },
+                              s: { a: 0, k: [100, 100] },
+                              r: { a: 0, k: 0 },
+                              o: { a: 0, k: 100 }
+                            }
+                          ],
+                          bm: 0
+                        }
+                      ],
+                      ip: 0,
+                      op: 60,
+                      st: 0,
+                      bm: 0
+                    },
+                    {
+                      ddd: 0,
+                      ind: 2,
+                      ty: 4,
+                      nm: "Check",
+                      sr: 1,
+                      ks: {
+                        o: { a: 0, k: 0, ix: 11 },
+                        r: { a: 0, k: 0 },
+                        p: { a: 0, k: [100, 100, 0] },
+                        a: { a: 0, k: [0, 0, 0] },
+                        s: { a: 0, k: [100, 100, 100] }
+                      },
+                      ao: 0,
+                      shapes: [
+                        {
+                          ty: "gr",
+                          it: [
+                            {
+                              d: 1,
+                              ty: "rc",
+                              s: { a: 0, k: [20, 20] },
+                              p: { a: 0, k: [0, 0] },
+                              r: { a: 0, k: 0 }
+                            },
+                            {
+                              ty: "st",
+                              c: { a: 0, k: [1, 1, 1, 1] },
+                              o: { a: 0, k: 100 },
+                              w: { a: 0, k: 3 }
+                            },
+                            {
+                              ty: "tr",
+                              p: { a: 0, k: [0, 0] },
+                              a: { a: 0, k: [0, 0] },
+                              s: { a: 0, k: [100, 100] },
+                              r: { a: 0, k: 0 },
+                              o: { a: 0, k: 100 }
+                            }
+                          ],
+                          bm: 0
+                        }
+                      ],
+                      ip: 15,
+                      op: 60,
+                      st: 15,
+                      bm: 0
+                    }
+                  ],
+                  markers: []
+                }}
+                loop={false}
+                autoplay={true}
+                style={{ width: 128, height: 128 }}
+              />
+            </div>
+            <h3 className="text-xl font-bold text-green-600 mb-2">Sucesso!</h3>
+            <p className="text-gray-600 text-center">
+              Status da dívida atualizado com sucesso!
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
