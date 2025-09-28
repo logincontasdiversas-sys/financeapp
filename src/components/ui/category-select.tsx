@@ -61,7 +61,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     parentCategoryId,
     categoriesCount: categories.length,
     goalsCount: goals.length,
-    debtsCount: debts.length
+    debtsCount: debts.length,
+    categories: categories.map(c => ({ id: c.id, name: c.name, is_system: c.is_system }))
   });
 
   const handleCreateCategory = useCallback(async () => {
@@ -129,25 +130,15 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       totalCategories: categories.length
     });
 
-    if (showSubcategories && isDebtPayment && parentCategoryId) {
-      // Para pagamentos de dívida: mostrar apenas subcategorias da categoria pai
-      const subcategories = categories.filter(cat => 
-        cat.id !== parentCategoryId && 
-        cat.name.toLowerCase().includes('dívida') &&
-        !cat.is_system
+    if (isDebtPayment) {
+      // Para dívidas: mostrar TODAS as categorias disponíveis (pai e sub)
+      const allCategories = categories.filter(cat => 
+        !cat.is_system && 
+        !cat.name.includes(' - Fatura')
       );
       
-      console.log('[CATEGORY_SELECT] Subcategorias encontradas:', subcategories.length);
-      return subcategories;
-    } else if (isDebtPayment) {
-      // Para dívidas: mostrar categorias pai + subcategorias específicas
-      const parentCategories = categories.filter(cat => 
-        !cat.name.toLowerCase().includes('dívida') && 
-        !cat.is_system
-      );
-      
-      console.log('[CATEGORY_SELECT] Categorias pai para dívidas:', parentCategories.length);
-      return parentCategories;
+      console.log('[CATEGORY_SELECT] Todas as categorias para dívidas:', allCategories.length);
+      return allCategories;
     } else {
       // Para despesas normais: mostrar apenas categorias pai
       const standardCategories = categories.filter(category => {
