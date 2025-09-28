@@ -159,8 +159,8 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         return isStandard;
       });
       
-      console.log('[CATEGORY_SELECT] Categorias padrão:', filteredCategories.length);
-      return filteredCategories;
+      console.log('[CATEGORY_SELECT] Categorias padrão:', standardCategories.length);
+      return standardCategories;
     }
   };
 
