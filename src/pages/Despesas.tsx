@@ -736,11 +736,33 @@ const Despesas = () => {
 
   const handleEdit = (despesa: Transaction) => {
     setEditingDespesa(despesa);
+    
+    // Determinar a categoria correta para exibição
+    let displayCategoryId = despesa.category_id || "";
+    
+    // Se a despesa tem debt_id, usar o formato debt-{id}
+    if ((despesa as any).debt_id) {
+      displayCategoryId = `debt-${(despesa as any).debt_id}`;
+    }
+    // Se a despesa tem goal_id, usar o formato goal-{id}
+    else if ((despesa as any).goal_id) {
+      displayCategoryId = `goal-${(despesa as any).goal_id}`;
+    }
+    
+    console.log('[DESPESAS] Editando despesa:', {
+      id: despesa.id,
+      title: despesa.title,
+      originalCategoryId: despesa.category_id,
+      debtId: (despesa as any).debt_id,
+      goalId: (despesa as any).goal_id,
+      displayCategoryId
+    });
+    
     setFormData({
       title: despesa.title,
       amount: despesa.amount.toString(),
       date: despesa.date,
-      category_id: despesa.category_id || "",
+      category_id: displayCategoryId,
       bank_id: despesa.bank_id || "",
       card_id: despesa.card_id || "",
       status: despesa.status,
@@ -753,7 +775,12 @@ const Despesas = () => {
 
   // Funções auxiliares para edição inline
   const handleInlineUpdate = async (id: string, field: string, value: any) => {
-    if (!user || !tenantId) return;
+    console.log('[DESPESAS] handleInlineUpdate chamado:', { id, field, value });
+    
+    if (!user || !tenantId) {
+      console.log('[DESPESAS] Usuário ou tenant não encontrado');
+      return;
+    }
 
     try {
       const transaction = despesas.find(d => d.id === id);
@@ -1583,15 +1610,11 @@ const Despesas = () => {
                       />
                     </TableCell>
                     <TableCell className="font-medium">
-                      {selectionMode ? (
-                        <span className="text-gray-500">{despesa.title}</span>
-                      ) : (
-                        <InlineEditText
-                          value={despesa.title}
-                          onSave={(value) => handleInlineUpdate(despesa.id, 'title', value)}
-                          placeholder="Título da despesa"
-                        />
-                      )}
+                      <InlineEditText
+                        value={despesa.title}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'title', value)}
+                        placeholder="Título da despesa"
+                      />
                     </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-2">
@@ -1600,41 +1623,29 @@ const Despesas = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-red-600 font-semibold">
-                      {selectionMode ? (
-                        <span className="text-gray-500">R$ {despesa.amount.toFixed(2)}</span>
-                      ) : (
-                        <InlineEditNumber
-                          value={despesa.amount}
-                          onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
-                          formatValue={(value) => `R$ ${value.toFixed(2)}`}
-                        />
-                      )}
+                      <InlineEditNumber
+                        value={despesa.amount}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'amount', value)}
+                        formatValue={(value) => `R$ ${value.toFixed(2)}`}
+                      />
                     </TableCell>
                     <TableCell>
-                      {selectionMode ? (
-                        <span className="text-gray-500">{formatDateForDisplay(despesa.date)}</span>
-                      ) : (
-                        <InlineEditDate
-                          value={despesa.date}
-                          onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
-                          formatValue={(date) => formatDateForDisplay(date)}
-                        />
-                      )}
+                      <InlineEditDate
+                        value={despesa.date}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'date', value)}
+                        formatValue={(date) => formatDateForDisplay(date)}
+                      />
                     </TableCell>
                     <TableCell>
-                      {selectionMode ? (
-                        <span className="text-gray-500">{despesa.status === 'settled' ? 'Pago' : 'Pendente'}</span>
-                      ) : (
-                        <InlineEditSelect
-                          value={despesa.status}
-                          options={[
-                            { value: "settled", label: "Pago" },
-                            { value: "pending", label: "Pendente" }
-                          ]}
-                          onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
-                          getDisplayValue={(value) => value === 'settled' ? 'Pago' : 'Pendente'}
-                        />
-                      )}
+                      <InlineEditSelect
+                        value={despesa.status}
+                        options={[
+                          { value: "settled", label: "Pago" },
+                          { value: "pending", label: "Pendente" }
+                        ]}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'status', value)}
+                        getDisplayValue={(value) => value === 'settled' ? 'Pago' : 'Pendente'}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
