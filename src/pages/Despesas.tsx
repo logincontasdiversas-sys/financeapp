@@ -14,6 +14,7 @@ import { useSupabaseExpenses } from "@/hooks/useSupabaseExpenses";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { logger } from "@/utils/logger";
 import { formatDateForDisplay, dateInputToISO, formatDateForMobile } from "@/utils/dateUtils";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -90,6 +91,7 @@ const Despesas = () => {
   const { user } = useStableAuth();
   const { tenantId, loading: tenantLoading } = useTenant();
   const { toast } = useToast();
+  const { sendTestNotification } = usePushNotifications();
   const { 
     createExpense, 
     updateExpense, 
@@ -752,48 +754,209 @@ const Despesas = () => {
     if (!user || !tenantId) return;
 
     try {
-      const updateData: any = {};
-      updateData[field] = value;
-      
-      const { error } = await supabase
-        .from('transactions')
-        .update(updateData)
-        .eq('id', id);
+      const transaction = despesas.find(d => d.id === id);
+      if (!transaction) {
+        console.error('[DESPESAS] Transação não encontrada:', id);
+        return;
+      }
 
-      if (error) throw error;
-
-      // Atualizar estado local
-      setDespesas(prev => 
-        prev.map(d => d.id === id ? { ...d, [field]: value } : d)
-      );
-
-      // Recálculo de dívida se necessário
+      // Verificar se é mudança de status em pagamento de dívida
       if (field === 'status') {
-        const transaction = despesas.find(d => d.id === id);
-        if (transaction && (transaction as any).debt_id) {
-          // Verificar se a transação tem a categoria correta para recálculo
-          const debtId = (transaction as any).debt_id;
-          const selectedDebt = debts.find(d => d.id === debtId);
-          
-          if (selectedDebt && selectedDebt.special_category_id) {
-            // Só recalcular se a categoria da transação for a subcategoria específica
-            if (transaction.category_id === selectedDebt.special_category_id) {
-              console.log('[DESPESAS] Recálculo autorizado - categoria correta:', {
-                transactionCategoryId: transaction.category_id,
-                debtSpecialCategoryId: selectedDebt.special_category_id
-              });
-              await recalculateDebt(debtId);
-            } else {
-              console.log('[DESPESAS] Recálculo ignorado - categoria incorreta:', {
-                transactionCategoryId: transaction.category_id,
-                debtSpecialCategoryId: selectedDebt.special_category_id
-              });
+        const debtId = (transaction as any).debt_id;
+        const selectedDebt = debts.find(d => d.id === debtId);
+        
+        if (selectedDebt && selectedDebt.special_category_id) {
+          // Verificar se é um pagamento de dívida (categoria correta)
+          if (transaction.category_id === selectedDebt.special_category_id) {
+            const oldStatus = transaction.status;
+            const newStatus = value;
+            const amount = transaction.amount;
+            
+            console.log('[DESPESAS] Mudança de status em pagamento de dívida:', {
+              debtId,
+              debtTitle: selectedDebt.title,
+              oldStatus,
+              newStatus,
+              amount,
+              currentPaidAmount: selectedDebt.paid_amount
+            });
+
+            // Confirmação antes de alterar
+            const statusChange = `${oldStatus === 'settled' ? 'Pago' : 'Pendente'} → ${newStatus === 'settled' ? 'Pago' : 'Pendente'}`;
+            const amountChange = oldStatus === 'settled' && newStatus === 'pending' 
+              ? `-R$ ${amount.toFixed(2)}` 
+              : oldStatus === 'pending' && newStatus === 'settled' 
+                ? `+R$ ${amount.toFixed(2)}` 
+                : '0';
+
+            const confirmed = confirm(
+              `Alterar status do pagamento da dívida "${selectedDebt.title}"?\n\n` +
+              `Status: ${statusChange}\n` +
+              `Valor: R$ ${amount.toFixed(2)}\n` +
+              `Impacto no saldo: ${amountChange}\n\n` +
+              `Saldo atual: R$ ${selectedDebt.paid_amount.toFixed(2)}\n` +
+              `Saldo após: R$ ${(selectedDebt.paid_amount + (newStatus === 'settled' ? amount : -amount)).toFixed(2)}`
+            );
+
+            if (!confirmed) {
+              console.log('[DESPESAS] Alteração cancelada pelo usuário');
+              return;
             }
+
+            // Atualizar transação
+            const updateData: any = {};
+            updateData[field] = value;
+            
+            const { error: updateError } = await supabase
+              .from('transactions')
+              .update(updateData)
+              .eq('id', id);
+
+            if (updateError) throw updateError;
+
+            // Calcular novo paid_amount com fallbacks
+            let newPaidAmount = selectedDebt.paid_amount || 0;
+            const transactionAmount = amount || 0;
+            
+            if (oldStatus === 'settled' && newStatus === 'pending') {
+              newPaidAmount = Math.max(0, newPaidAmount - transactionAmount);
+            } else if (oldStatus === 'pending' && newStatus === 'settled') {
+              newPaidAmount += transactionAmount;
+            }
+            
+            // Garantir que não seja negativo
+            newPaidAmount = Math.max(0, newPaidAmount);
+
+            // Verificar se dívida está quitada
+            const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
+            const isConcluded = isFullyPaid;
+
+            console.log('[DESPESAS] Atualizando dívida:', {
+              debtId,
+              oldPaidAmount: selectedDebt.paid_amount,
+              newPaidAmount,
+              totalAmount: selectedDebt.total_amount,
+              isFullyPaid,
+              isConcluded
+            });
+
+            // Atualizar dívida no Supabase com retry
+            let debtUpdateSuccess = false;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (!debtUpdateSuccess && retryCount < maxRetries) {
+              try {
+                const { error: debtError } = await supabase
+                  .from('debts')
+                  .update({ 
+                    paid_amount: newPaidAmount,
+                    is_concluded: isConcluded
+                  })
+                  .eq('id', debtId);
+
+                if (debtError) {
+                  console.error(`[DESPESAS] Erro ao atualizar dívida (tentativa ${retryCount + 1}):`, debtError);
+                  retryCount++;
+                  if (retryCount >= maxRetries) {
+                    throw debtError;
+                  }
+                  // Aguardar antes de tentar novamente
+                  await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                } else {
+                  debtUpdateSuccess = true;
+                }
+              } catch (error) {
+                console.error(`[DESPESAS] Erro na tentativa ${retryCount + 1}:`, error);
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                  throw error;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+              }
+            }
+
+            // Atualizar estado local
+            setDespesas(prev => 
+              prev.map(d => d.id === id ? { ...d, [field]: value } : d)
+            );
+
+            setDebts(prevDebts => 
+              prevDebts.map(d => 
+                d.id === debtId 
+                  ? { ...d, paid_amount: newPaidAmount, is_concluded: isConcluded }
+                  : d
+              )
+            );
+
+            // Notificação de sucesso
+            toast({
+              title: "Status atualizado com sucesso!",
+              description: `Dívida "${selectedDebt.title}" - Saldo: R$ ${newPaidAmount.toFixed(2)}${isConcluded ? ' (QUITADA!)' : ''}`,
+              variant: "default",
+            });
+
+            // Notificação push para mudanças importantes
+            if (isConcluded) {
+              try {
+                await sendTestNotification();
+                console.log('[DESPESAS] Notificação de dívida quitada enviada');
+              } catch (error) {
+                console.error('[DESPESAS] Erro ao enviar notificação:', error);
+              }
+            }
+
+            // Log detalhado
+            console.log('[DESPESAS] Atualização concluída:', {
+              transactionId: id,
+              debtId,
+              statusChange,
+              amountChange,
+              newPaidAmount,
+              isConcluded
+            });
+
           } else {
-            // Fallback para dívidas sem special_category_id
-            await recalculateDebt(debtId);
+            console.log('[DESPESAS] Transação não é pagamento de dívida - categoria incorreta:', {
+              transactionCategoryId: transaction.category_id,
+              debtSpecialCategoryId: selectedDebt.special_category_id
+            });
+            
+            // Atualização normal sem recálculo de dívida
+            const updateData: any = {};
+            updateData[field] = value;
+            
+            const { error } = await supabase
+              .from('transactions')
+              .update(updateData)
+              .eq('id', id);
+
+            if (error) throw error;
+
+            setDespesas(prev => 
+              prev.map(d => d.id === id ? { ...d, [field]: value } : d)
+            );
           }
+        } else {
+          // Fallback para dívidas sem special_category_id
+          console.log('[DESPESAS] Dívida sem special_category_id - usando fallback');
+          await recalculateDebt(debtId);
         }
+      } else {
+        // Atualização normal para outros campos
+        const updateData: any = {};
+        updateData[field] = value;
+        
+        const { error } = await supabase
+          .from('transactions')
+          .update(updateData)
+          .eq('id', id);
+
+        if (error) throw error;
+
+        setDespesas(prev => 
+          prev.map(d => d.id === id ? { ...d, [field]: value } : d)
+        );
       }
 
       clearQueryCache();
