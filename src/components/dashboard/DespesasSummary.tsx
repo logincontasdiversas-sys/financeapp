@@ -24,7 +24,10 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
 
   useEffect(() => {
     if (user && tenantId) {
+      console.log('[DESPESAS SUMMARY] 🔄 Carregando resumo com tenantId:', tenantId);
       loadSummary();
+    } else {
+      console.log('[DESPESAS SUMMARY] ⏳ Aguardando user e tenantId:', { user: !!user, tenantId });
     }
   }, [user, tenantId, refreshKey, dateFilter]);
 

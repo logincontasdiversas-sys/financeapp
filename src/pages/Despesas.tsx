@@ -205,6 +205,7 @@ const Despesas = () => {
 
   useEffect(() => {
     if (user && tenantId) {
+      console.log('[DESPESAS] 🔄 useEffect triggered - Carregando dados:', { user: !!user, tenantId });
       loadDespesas();
       loadCategories();
       loadBanks();
@@ -212,6 +213,8 @@ const Despesas = () => {
       loadGoals();
       loadDebts();
       createTransferCategoryIfNeeded();
+    } else {
+      console.log('[DESPESAS] ⏳ Aguardando user e tenantId:', { user: !!user, tenantId });
     }
   }, [user, tenantId]);
 
@@ -257,10 +260,13 @@ const Despesas = () => {
   }, [formData.payment_method]);
 
   const loadDespesas = async () => {
-    if (!tenantId) return;
+    if (!tenantId) {
+      console.log('[DESPESAS] ⏳ Aguardando tenantId...');
+      return;
+    }
     
     try {
-      console.log('[DEBUG] Iniciando carregamento de despesas...');
+      console.log('[DESPESAS] 🔄 Carregando despesas com tenantId:', tenantId);
       logger.info('DESPESAS_LOAD', 'Iniciando carregamento de despesas', { tenantId });
       
       const { data, error } = await supabase
@@ -288,11 +294,11 @@ const Despesas = () => {
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('[DEBUG] Erro na query de despesas:', error);
+        console.error('[DESPESAS] ❌ Erro na query de despesas:', error);
         throw error;
       }
       
-      console.log('[DEBUG] Despesas carregadas com sucesso:', data?.length || 0, 'itens');
+      console.log('[DESPESAS] ✅ Despesas carregadas com sucesso:', data?.length || 0, 'itens');
       logger.info('DESPESAS_LOAD', 'Despesas carregadas com sucesso', { 
         count: data?.length || 0,
         firstItems: data?.slice(0, 3).map(d => ({ 
@@ -304,7 +310,7 @@ const Despesas = () => {
       
       setDespesas(data || []);
     } catch (error) {
-      console.error('[DEBUG] Erro completo ao carregar despesas:', error);
+      console.error('[DESPESAS] ❌ Erro completo ao carregar despesas:', error);
       logger.error('DESPESAS_LOAD', 'Erro ao carregar despesas', { error });
       console.error('[DESPESAS] Error loading:', error);
       toast({
