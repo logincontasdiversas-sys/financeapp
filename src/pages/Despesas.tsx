@@ -283,11 +283,7 @@ const Despesas = () => {
           card_id,
           status,
           payment_method,
-          note,
-          categories (
-            name,
-            emoji
-          )
+          note
         `)
         .eq('kind', 'expense')
         .eq('tenant_id', tenantId)
@@ -299,16 +295,38 @@ const Despesas = () => {
       }
       
       console.log('[DESPESAS] ✅ Despesas carregadas com sucesso:', data?.length || 0, 'itens');
+      
+      // Buscar categorias separadamente para evitar PGRST201
+      const categoryIds = [...new Set(data?.map(d => d.category_id).filter(Boolean) || [])];
+      let categoriesMap = new Map();
+      
+      if (categoryIds.length > 0) {
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('id, name, emoji')
+          .in('id', categoryIds);
+        
+        if (categoriesData) {
+          categoriesMap = new Map(categoriesData.map(cat => [cat.id, cat]));
+        }
+      }
+      
+      // Mapear dados com categorias
+      const despesasWithCategories = (data || []).map(despesa => ({
+        ...despesa,
+        categories: despesa.category_id ? categoriesMap.get(despesa.category_id) : null
+      }));
+      
       logger.info('DESPESAS_LOAD', 'Despesas carregadas com sucesso', { 
-        count: data?.length || 0,
-        firstItems: data?.slice(0, 3).map(d => ({ 
+        count: despesasWithCategories?.length || 0,
+        firstItems: despesasWithCategories?.slice(0, 3).map(d => ({ 
           id: d.id, 
           title: d.title, 
           category: d.categories?.name 
         })) || []
       });
       
-      setDespesas(data || []);
+      setDespesas(despesasWithCategories);
     } catch (error) {
       console.error('[DESPESAS] ❌ Erro completo ao carregar despesas:', error);
       logger.error('DESPESAS_LOAD', 'Erro ao carregar despesas', { error });
