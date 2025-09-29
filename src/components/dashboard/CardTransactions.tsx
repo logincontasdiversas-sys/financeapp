@@ -52,11 +52,7 @@ export const CardTransactions = ({ cardId, cardName }: CardTransactionsProps) =>
           date,
           status,
           kind,
-          note,
-          categories (
-            name,
-            emoji
-          )
+          note
         `)
         .eq('card_id', cardId)
         .eq('tenant_id', tenantId)
@@ -74,15 +70,11 @@ export const CardTransactions = ({ cardId, cardName }: CardTransactionsProps) =>
           date,
           status,
           kind,
-          note,
-          categories!inner (
-            name,
-            emoji
-          )
+          note
         `)
         .eq('tenant_id', tenantId)
         .eq('kind', 'expense')
-        .ilike('categories.name', `%${cardName} - Fatura%`);
+        .ilike('title', `%${cardName} - Fatura%`);
 
       if (invoiceError) throw invoiceError;
 

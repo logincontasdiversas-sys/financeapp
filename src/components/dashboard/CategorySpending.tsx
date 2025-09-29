@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChartIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/hooks/useTenant";
 
 interface CategorySpending {
   id: string;
@@ -12,14 +13,17 @@ interface CategorySpending {
 }
 
 export const CategorySpending = () => {
+  const { tenantId } = useTenant();
   const [previousMonth, setPreviousMonth] = useState<CategorySpending[]>([]);
   const [currentMonth, setCurrentMonth] = useState<CategorySpending[]>([]);
   const [nextMonth, setNextMonth] = useState<CategorySpending[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadCategorySpending();
-  }, []);
+    if (tenantId) {
+      loadCategorySpending();
+    }
+  }, [tenantId]);
 
   const loadCategorySpending = async () => {
     try {
@@ -57,54 +61,57 @@ export const CategorySpending = () => {
   };
 
   const loadSpendingForPeriod = async (startDate: string, endDate: string, status: string) => {
-    const { data, error } = await supabase
+    console.log('[CATEGORY_SPENDING] 🔄 Carregando dados (sem join):', { startDate, endDate, status, tenantId, version: '4.1.0-NO-JOIN' });
+
+    const { data: tx, error } = await supabase
       .from('transactions')
-      .select(`
-        amount,
-        payment_method,
-        categories (
-          id,
-          name,
-          emoji
-        )
-      `)
+      .select('amount, payment_method, category_id')
       .eq('kind', 'expense')
       .eq('status', status)
+      .eq('tenant_id', tenantId)
       .gte('date', startDate)
-      .lte('date', endDate);
+      .lte('date', endDate)
+      .not('category_id', 'is', null);
 
     if (error) throw error;
 
-    const categoryMap = new Map<string, CategorySpending>();
-
-    data?.forEach((transaction) => {
-      if (transaction.categories) {
-        const category = transaction.categories;
-        
-        // Excluir também as faturas de cartão (categoria "Pagamento de Fatura")
-        if (category.name === 'Pagamento de Fatura' || 
-            category.name === 'Categoria Personalizada' ||
-            category.name?.toLowerCase().includes('fatura') ||
-            category.name?.toLowerCase().includes('cartão')) {
-          return;
-        }
-        
-        const existing = categoryMap.get(category.id);
-        
-        if (existing) {
-          existing.total += Number(transaction.amount);
-        } else {
-          categoryMap.set(category.id, {
-            id: category.id,
-            name: category.name,
-            emoji: category.emoji || '📁',
-            total: Number(transaction.amount)
-          });
-        }
-      }
+    const categoryTotals = new Map<string, number>();
+    (tx || []).forEach((t: any) => {
+      const cid = t.category_id as string;
+      const prev = categoryTotals.get(cid) || 0;
+      categoryTotals.set(cid, prev + Number(t.amount));
     });
 
-    return Array.from(categoryMap.values()).sort((a, b) => b.total - a.total);
+    const categoryIds = Array.from(categoryTotals.keys());
+    if (categoryIds.length === 0) return [] as CategorySpending[];
+
+    const { data: cats, error: catsErr } = await supabase
+      .from('categories')
+      .select('id, name, emoji')
+      .eq('tenant_id', tenantId)
+      .in('id', categoryIds);
+    if (catsErr) throw catsErr;
+
+    const categoriesById = new Map<string, { id: string; name: string; emoji: string | null }>();
+    (cats || []).forEach((c: any) => categoriesById.set(c.id, { id: c.id, name: c.name, emoji: c.emoji }));
+
+    const results: CategorySpending[] = [];
+    categoryTotals.forEach((total, cid) => {
+      const cat = categoriesById.get(cid);
+      if (!cat) return;
+      // Excluir categorias de fatura/cartão
+      const nameLc = (cat.name || '').toLowerCase();
+      if (cat.name === 'Pagamento de Fatura' || nameLc.includes('fatura') || nameLc.includes('cartão')) return;
+
+      results.push({
+        id: cid,
+        name: cat.name,
+        emoji: cat.emoji || '📁',
+        total,
+      });
+    });
+
+    return results.sort((a, b) => b.total - a.total);
   };
 
   const formatCurrency = (value: number) => {

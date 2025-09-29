@@ -61,6 +61,9 @@ export const SingleLineChart = ({
   };
 
   const loadMonthlyData = async () => {
+    if (!tenantId) {
+      return;
+    }
     try {
       setLoading(true);
       const currentYear = new Date().getFullYear();
@@ -127,7 +130,10 @@ export const SingleLineChart = ({
     }
   };
 
-  const debouncedLoad = useCallback(debounce(loadMonthlyData, 300), [user, tenantId, dataType]);
+  const debouncedLoad = useCallback(debounce(() => {
+    if (!tenantId) return;
+    loadMonthlyData();
+  }, 300), [tenantId, dataType]);
   useEffect(() => { debouncedLoad(); }, [debouncedLoad]);
 
   // Recarregar automaticamente quando houver inserts/updates/deletes em transactions

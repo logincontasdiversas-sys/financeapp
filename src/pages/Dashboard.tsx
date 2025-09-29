@@ -83,6 +83,9 @@ const Dashboard = () => {
   }, [user, tenantId]);
 
   const loadDashboardData = async () => {
+    if (!user || !tenantId) {
+      return;
+    }
     try {
       setLoading(true);
       
@@ -107,7 +110,7 @@ const Dashboard = () => {
         .select(`
           amount, 
           status,
-          categories(name)
+          title
         `)
         .eq('kind', 'income')
         .eq('status', 'settled')
@@ -120,7 +123,11 @@ const Dashboard = () => {
       // Debug: verificar se há receitas sem filtro de categoria
       const { data: allIncomeData, error: allIncomeError } = await supabase
         .from('transactions')
-        .select('amount, status, title, categories(name)')
+        .select(`
+          amount, 
+          status, 
+          title
+        `)
         .eq('kind', 'income')
         .eq('status', 'settled')
         .eq('tenant_id', tenantId)
@@ -129,10 +136,11 @@ const Dashboard = () => {
       
       console.log('[DASHBOARD_DEBUG] All income data (no category filter):', { allIncomeData, allIncomeError });
 
-      // Filtrar transferências no código JavaScript
-      const filteredIncomeData = incomeData?.filter(transaction => 
-        transaction.categories?.name !== 'Transferência entre Bancos'
-      ) || [];
+      // Filtrar transferências no código JavaScript (pelo título)
+      const filteredIncomeData = (incomeData || []).filter((t) => {
+        const title = (t?.title || '').toLowerCase();
+        return !(title.includes('transfer') || title.includes('transferência') || title.includes('transferencia'));
+      });
 
       console.log('[DASHBOARD_DEBUG] Filtered income data:', filteredIncomeData);
 
@@ -226,6 +234,7 @@ const Dashboard = () => {
       const { data: prevMonthTransactions } = await supabase
         .from('transactions')
         .select('amount, kind, status, payment_method')
+        .eq('tenant_id', tenantId)
         .lte('date', prevMonthEndDateStr)
         .order('date', { ascending: true });
 

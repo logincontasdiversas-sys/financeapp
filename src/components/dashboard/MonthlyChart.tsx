@@ -65,7 +65,7 @@ export const MonthlyChart = ({ title = "Receitas e Despesas Mensais" }: MonthlyC
           .select(`
             amount, 
             status,
-            categories(name)
+            title
           `)
           .eq('kind', 'income')
           .eq('tenant_id', tenantId)
@@ -78,20 +78,20 @@ export const MonthlyChart = ({ title = "Receitas e Despesas Mensais" }: MonthlyC
           .select(`
             amount, 
             status,
-            categories(name)
+            title
           `)
           .eq('kind', 'expense')
           .eq('tenant_id', tenantId)
           .gte('date', startDateStr)
           .lte('date', endDateStr);
 
-        // Filtrar transferências no JavaScript
-        const filteredIncomeData = (incomeData || []).filter(transaction => 
-          transaction.categories?.name !== 'Transferência entre Bancos'
-        );
-        const filteredExpenseData = (expenseData || []).filter(transaction => 
-          transaction.categories?.name !== 'Transferência entre Bancos'
-        );
+        // Filtrar transferências no JavaScript (pelo título)
+        const isTransfer = (t: any) => {
+          const title = (t?.title || '').toLowerCase();
+          return title.includes('transfer') || title.includes('transferência') || title.includes('transferencia');
+        };
+        const filteredIncomeData = (incomeData || []).filter((t) => !isTransfer(t));
+        const filteredExpenseData = (expenseData || []).filter((t) => !isTransfer(t));
 
         // Regra: mês passado/atual -> soma apenas 'settled'; mês futuro -> soma todos (previsão)
         // Se houver qualquer registro 'settled' no mês futuro, tratar como realizado

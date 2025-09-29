@@ -278,7 +278,7 @@ const Despesas = () => {
           status,
           payment_method,
           note,
-          categories:category_id (
+          categories (
             name,
             emoji
           )

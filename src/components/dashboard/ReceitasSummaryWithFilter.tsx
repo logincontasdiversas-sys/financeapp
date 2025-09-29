@@ -42,6 +42,8 @@ export const ReceitasSummaryWithFilter = ({ refreshKey, onDataChange }: Receitas
           refreshKey={refreshKey} 
           dateFilter={dateFilter}
           onDataChange={onDataChange}
+          receitas={[]}
+          loading={false}
         />
       </CardContent>
     </Card>

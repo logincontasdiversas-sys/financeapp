@@ -150,32 +150,73 @@ const Receitas = () => {
     }
   }, [user, tenantId]);
 
-  const loadReceitas = async () => {
+  const loadReceitas = async (dateFilter?: { from: Date | undefined; to: Date | undefined } | null) => {
+    console.log('[RECEITAS] 🔄 STEP 1 - Iniciando loadReceitas:', { 
+      dateFilter, 
+      tenantId, 
+      hasUser: !!user,
+      timestamp: new Date().toISOString()
+    });
+    
     try {
-      const { data, error } = await supabase
+      // ESTRATÉGIA ULTRA SIMPLIFICADA: Usar exatamente o mesmo padrão que funciona para despesas
+      let query = supabase
         .from('transactions')
         .select(`
-          *,
+          id,
+          title,
+          amount,
+          date,
+          status,
+          bank_id,
+          category_id,
+          note,
           banks (
-            name
-          ),
-          categories:category_id (
             name
           )
         `)
         .eq('kind', 'income')
-        .eq('tenant_id', tenantId)
-        .order('date', { ascending: false });
+        .eq('tenant_id', tenantId);
+
+      // Aplicar filtro de data se fornecido
+      if (dateFilter && dateFilter.from && dateFilter.to) {
+        const startDate = dateFilter.from.toISOString().split('T')[0];
+        const endDate = dateFilter.to.toISOString().split('T')[0];
+        query = query.gte('date', startDate).lte('date', endDate);
+        console.log('[RECEITAS] 📅 Aplicando filtro de data:', { startDate, endDate });
+      }
+
+      const { data, error } = await query.order('date', { ascending: false });
 
       if (error) throw error;
-      // Excluir transferências entre bancos, mas manter receitas sem categoria
-      const filtered = (data || []).filter((row: any) => {
-        const catName = row?.categories?.name;
-        return !catName || catName !== 'Transferência entre Bancos';
+      
+      console.log('[RECEITAS] 📊 STEP 2 - Dados carregados do Supabase:', {
+        totalRecords: data?.length || 0,
+        sampleData: data?.slice(0, 3).map(t => ({ title: t.title, amount: t.amount, status: t.status })),
+        timestamp: new Date().toISOString()
       });
+      
+      // Excluir transferências entre bancos pelo título (sem depender de categoria)
+      const filtered = (data || []).filter((row: any) => {
+        const title = (row?.title || '').toLowerCase();
+        return !(title.includes('transfer') || title.includes('transferência') || title.includes('transferencia'));
+      });
+      
+      console.log('[RECEITAS] 🔍 STEP 3 - Dados filtrados:', {
+        originalCount: data?.length || 0,
+        filteredCount: filtered.length,
+        filteredSample: filtered.slice(0, 3).map(t => ({ title: t.title, amount: t.amount, status: t.status })),
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log('[RECEITAS] 📤 STEP 4 - Definindo receitas no estado:', {
+        receitasLength: filtered.length,
+        timestamp: new Date().toISOString()
+      });
+      
       setReceitas(filtered as any);
     } catch (error) {
-      console.error('[RECEITAS] Error loading:', error);
+      console.error('[RECEITAS] ❌ Error loading:', error);
       toast({
         title: "Erro ao carregar receitas",
         description: "Tente novamente em alguns instantes.",
@@ -798,18 +839,31 @@ const Receitas = () => {
       </div>
 
       {/* Seção de Resumo das Receitas */}
+      {console.log('[RECEITAS] 📤 Passando dados para ReceitasSummaryWithDateSync:', {
+        receitasLength: receitas.length,
+        loading,
+        sampleReceitas: receitas.slice(0, 2).map(r => ({ title: r.title, amount: r.amount, status: r.status }))
+      })}
       <ReceitasSummaryWithDateSync 
         refreshKey={summaryRefreshKey} 
         onDateFilterChange={setSharedDateFilter}
+        onDateFilterApplied={(filter) => {
+          console.log('[RECEITAS] 🔄 Filtro de data aplicado:', filter);
+          loadReceitas(filter);
+        }}
+        receitas={receitas}
+        loading={loading}
       />
 
       {/* Gráfico Mensal de Receitas */}
-      <SingleLineChart 
-        title="Evolução das Receitas ao Longo do Ano"
-        dataType="income"
-        lineColor="hsl(var(--success))"
-        lineName="Receitas"
-      />
+      {tenantId && (
+        <SingleLineChart 
+          title="Evolução das Receitas ao Longo do Ano"
+          dataType="income"
+          lineColor="hsl(var(--success))"
+          lineName="Receitas"
+        />
+      )}
 
       <Card>
         <CardHeader>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'finance-app-v1.1';
+const CACHE_NAME = 'finance-app-v8.0-HARD-RELOAD';
 const ASSET_REGEX = /\.(?:js|css|ico|svg|png|jpg|jpeg|webp|woff2?)$/i;
 const urlsToCache = [
   '/',
@@ -9,10 +9,11 @@ const urlsToCache = [
 
 // Install SW
 self.addEventListener('install', (event) => {
+  console.log('🔄 SERVICE WORKER v8.0 - HARD RELOAD - Instalando...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
+        console.log('🔄 HARD RELOAD - Abrindo cache v8.0');
         return cache.addAll(urlsToCache);
       })
   );
@@ -29,7 +30,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         try {
-          const networkResponse = await fetch(request);
+          const networkResponse = await fetch(request, { cache: 'reload' });
           const cache = await caches.open(CACHE_NAME);
           // Verificar se a URL é válida para cache antes de tentar armazenar
           if (request.url.startsWith('http') && 

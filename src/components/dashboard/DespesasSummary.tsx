@@ -85,14 +85,23 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
         lastExpense: allExpenses?.[allExpenses?.length - 1]
       }, null, 2));
 
-      const { data, error } = await supabase
+      // Aplicar filtro de data apenas se não for o modo "Máximo"
+      let query = supabase
         .from('transactions')
         .select('amount, status, payment_method, date')
         .eq('kind', 'expense')
         .eq('tenant_id', tenantId)
-        .neq('payment_method', 'credit_card')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .neq('payment_method', 'credit_card');
+      
+      // Aplicar filtro de data apenas se especificado
+      if (dateFilter && dateFilter.from && dateFilter.to) {
+        query = query.gte('date', startDate).lte('date', endDate);
+        console.log('[DESPESAS SUMMARY] Aplicando filtro de data:', { startDate, endDate });
+      } else {
+        console.log('[DESPESAS SUMMARY] Buscando todas as despesas (Máximo)');
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 

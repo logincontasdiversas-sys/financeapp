@@ -145,7 +145,12 @@ export const CategoryExpenseChart = ({ dateFilter }: CategoryExpenseChartProps) 
       // 2) Receitas apenas da categoria "Transferência entre Bancos" para subtrair
       let transferIncomeQuery = supabase
         .from('transactions')
-        .select('amount, categories(name)')
+        .select(`
+          amount, 
+          categories (
+            name
+          )
+        `)
         .eq('tenant_id', tenantId)
         .eq('kind', 'income')
         .not('categories', 'is', null)

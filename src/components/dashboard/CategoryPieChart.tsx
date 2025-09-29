@@ -61,10 +61,10 @@ export const CategoryPieChart = () => {
       endOfMonth.setDate(0);
       const endDate = endOfMonth.toISOString().split('T')[0];
 
-      // Total de receitas do mês (sem join, para não perder receitas sem categoria)
+      // Total de receitas do mês (sem join) e filtrando transferências pelo título
       let incomeAllQuery = supabase
         .from('transactions')
-        .select('amount')
+        .select('amount, title')
         .eq('tenant_id', tenantId)
         .eq('kind', 'income')
         .eq('status', 'settled')
@@ -72,35 +72,14 @@ export const CategoryPieChart = () => {
         .lte('date', endDate);
       const { data: incomeAll } = await incomeAllQuery;
 
-      // Receitas da categoria "Transferência entre Bancos" (para subtrair)
-      let incomeTransferQuery = supabase
-        .from('transactions')
-        .select('amount, categories(name)')
-        .eq('tenant_id', tenantId)
-        .eq('kind', 'income')
-        .eq('status', 'settled')
-        .eq('categories.name', 'Transferência entre Bancos')
-        .gte('date', startDate)
-        .lte('date', endDate);
-      const { data: incomeTransfers } = await incomeTransferQuery;
+      const isTransferTitle = (t: any) => {
+        const title = (t?.title || '').toLowerCase();
+        return title.includes('transfer') || title.includes('transferência') || title.includes('transferencia');
+      };
 
-      const sumIncomeAll = (incomeAll || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-      const sumIncomeTransfers = (incomeTransfers || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-      let monthlyIncome = Math.max(0, sumIncomeAll - sumIncomeTransfers);
-
-      // Fallback: se ainda zerado, tenta via join (alguns datasets têm tudo categorizado)
-      if (monthlyIncome === 0) {
-        const { data: incomeJoin } = await supabase
-          .from('transactions')
-          .select('amount, categories(name)')
-          .eq('tenant_id', tenantId)
-          .eq('kind', 'income')
-          .eq('status', 'settled')
-          .not('categories.name', 'eq', 'Transferência entre Bancos')
-          .gte('date', startDate)
-          .lte('date', endDate);
-        monthlyIncome = (incomeJoin || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-      }
+      const monthlyIncome = (incomeAll || [])
+        .filter((t: any) => !isTransferTitle(t))
+        .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
       setTotalIncome(monthlyIncome);
 
       // Buscar despesas, dívidas e categorias para mapear subcategoria (special_category_id) -> categoria-pai
@@ -109,11 +88,11 @@ export const CategoryPieChart = () => {
           .from('transactions')
           .select(`
             amount,
-            categories (
-              id,
-              name,
-              emoji
-            )
+          categories (
+            id,
+            name,
+            emoji
+          )
           `)
           .eq('kind', 'expense')
           .eq('status', 'settled')

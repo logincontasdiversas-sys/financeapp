@@ -83,7 +83,7 @@ const Dividas = () => {
         .from('debts')
         .select(`
           *,
-          categories:category_id (
+          categories (
             id,
             name,
             emoji

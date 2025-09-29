@@ -105,7 +105,10 @@ const BankAnalytics = ({ bankId }: BankAnalyticsProps) => {
             kind, 
             status, 
             date,
-            categories(name, emoji)
+            categories (
+              name, 
+              emoji
+            )
           `)
           .eq('tenant_id', tenantId)
           .eq('bank_id', bank.id)

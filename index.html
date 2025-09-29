@@ -24,9 +24,14 @@
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
-          .then(() => console.log('SW registered'))
-          .catch(() => console.log('SW registration failed'));
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          Promise.all(registrations.map(r => r.unregister())).then(() => {
+            caches && caches.keys && caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+            navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+              .then(() => console.log('SW registered'))
+              .catch(() => console.log('SW registration failed'));
+          });
+        });
       }
     </script>
   </body>

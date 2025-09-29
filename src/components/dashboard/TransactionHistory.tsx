@@ -33,6 +33,8 @@ export const TransactionHistory = () => {
   const loadTransactions = async () => {
     if (!tenantId) return;
     
+    console.log('[HISTORY] 🔄 CACHE FORÇADO - Carregando transações:', { tenantId, version: '4.0.0-CACHE-FORCED' });
+    
     try {
       // Obter o primeiro e último dia do mês atual
       const now = new Date();
@@ -47,11 +49,7 @@ export const TransactionHistory = () => {
           amount,
           date,
           kind,
-          status,
-          categories (
-            name,
-            emoji
-          )
+          status
         `)
         .eq('tenant_id', tenantId)
         .eq('status', 'settled') // Apenas transações recebidas/pagas
@@ -63,13 +61,7 @@ export const TransactionHistory = () => {
 
       if (error) throw error;
 
-      const formattedData = data?.map(item => ({
-        ...item,
-        category: item.categories ? {
-          name: item.categories.name,
-          emoji: item.categories.emoji
-        } : null
-      })) || [];
+      const formattedData = data || [];
 
       setTransactions(formattedData);
     } catch (error) {

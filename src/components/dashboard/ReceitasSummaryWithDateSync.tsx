@@ -7,19 +7,37 @@ interface ReceitasSummaryWithDateSyncProps {
   refreshKey?: number;
   onDateFilterChange?: (filter: { from: Date | undefined; to: Date | undefined } | null) => void;
   onDataChange?: (data: { totalReceitas: number; receitasRecebidas: number; receitasPrevistas: number; }) => void;
+  // Novos props para receber dados já carregados
+  receitas?: any[];
+  loading?: boolean;
+  onDateFilterApplied?: (filter: { from: Date | undefined; to: Date | undefined } | null) => void;
 }
 
 export const ReceitasSummaryWithDateSync = ({ 
   refreshKey, 
   onDateFilterChange, 
-  onDataChange 
+  onDataChange,
+  receitas,
+  loading,
+  onDateFilterApplied
 }: ReceitasSummaryWithDateSyncProps) => {
   const [dateFilter, setDateFilter] = useState<{ from: Date | undefined; to: Date | undefined } | null>(null);
+
+  // Debug: verificar dados recebidos
+  console.log('[RECEITAS SUMMARY WITH DATE SYNC] 🔍 DEBUG - Props recebidas:', {
+    refreshKey,
+    receitasLength: receitas?.length || 0,
+    loading,
+    hasReceitas: !!receitas,
+    receitasType: typeof receitas,
+    timestamp: new Date().toISOString()
+  });
 
   // Sincronizar o filtro com o componente pai
   useEffect(() => {
     onDateFilterChange?.(dateFilter);
-  }, [dateFilter, onDateFilterChange]);
+    onDateFilterApplied?.(dateFilter);
+  }, [dateFilter, onDateFilterChange, onDateFilterApplied]);
 
   const getPeriodTitle = () => {
     if (dateFilter === null) {
@@ -52,6 +70,8 @@ export const ReceitasSummaryWithDateSync = ({
           refreshKey={refreshKey} 
           dateFilter={dateFilter}
           onDataChange={onDataChange}
+          receitas={receitas}
+          loading={loading}
         />
       </CardContent>
     </Card>

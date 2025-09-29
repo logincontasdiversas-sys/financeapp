@@ -60,9 +60,13 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## How can I deploy this project?
+## Deploy
 
-Simply open [Lovable](https://lovable.dev/projects/20b1ba59-d7ac-452a-be5e-16c6b9f25f6a) and click on Share -> Publish.
+Este projeto está integrado ao Vercel com deploy automático em cada push na branch `main`.
+
+- Build: `npm run build`
+- Output: `dist`
+- Hook adicional: `.github/workflows/deploy-vercel-hook.yml` aciona o Deploy Hook da Vercel em todo push.
 
 ## Can I connect a custom domain to my Lovable project?
 
