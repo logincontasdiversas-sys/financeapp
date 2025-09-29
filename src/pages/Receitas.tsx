@@ -184,6 +184,13 @@ const Receitas = () => {
         const endDate = dateFilter.to.toISOString().split('T')[0];
         query = query.gte('date', startDate).lte('date', endDate);
         console.log('[RECEITAS] 📅 Aplicando filtro de data:', { startDate, endDate });
+      } else {
+        // Default to current month
+        const now = new Date();
+        const startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+        query = query.gte('date', startDate).lte('date', endDate);
+        console.log('[RECEITAS] 📅 Usando mês atual por default:', { startDate, endDate });
       }
 
       const { data, error } = await query.order('date', { ascending: false });
