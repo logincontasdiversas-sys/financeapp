@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Building2, Pencil, Trash2, Copy } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
@@ -31,7 +30,6 @@ const Bancos = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBank, setEditingBank] = useState<Bank | null>(null);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -154,46 +152,7 @@ const Bancos = () => {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (selectedItems.length === 0) return;
-    if (!confirm(`Tem certeza que deseja excluir ${selectedItems.length} banco(s)?`)) return;
 
-    try {
-      const { error } = await supabase
-        .from('banks')
-        .delete()
-        .in('id', selectedItems);
-
-      if (error) throw error;
-      toast({ title: `${selectedItems.length} banco(s) excluído(s) com sucesso!` });
-      setSelectedItems([]);
-      clearQueryCache();
-      loadBanks();
-    } catch (error: any) {
-      console.error('[BANCOS] Error bulk deleting:', error);
-      toast({
-        title: "Erro ao excluir bancos",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(banks.map(b => b.id));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  const handleSelectItem = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems([...selectedItems, id]);
-    } else {
-      setSelectedItems(selectedItems.filter(item => item !== id));
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -234,28 +193,6 @@ const Bancos = () => {
         </div>
         
         <div className="flex gap-2">
-          {banks.length > 0 && (
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={selectedItems.length === banks.length && banks.length > 0}
-                onCheckedChange={handleSelectAll}
-                className="bg-background border-primary"
-              />
-              <Label className="text-sm font-medium cursor-pointer" onClick={() => handleSelectAll(selectedItems.length !== banks.length)}>
-                Selecionar Todos ({banks.length})
-              </Label>
-            </div>
-          )}
-          {selectedItems.length > 0 && (
-            <Button
-              variant="destructive"
-              onClick={handleBulkDelete}
-              className="flex items-center gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Excluir Selecionados ({selectedItems.length})
-            </Button>
-          )}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => { resetForm(); setEditingBank(null); }} className="bg-gradient-primary hover:opacity-90">
@@ -322,13 +259,6 @@ const Bancos = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {banks.map((bank) => (
           <Card key={bank.id} className="bg-gradient-card border-0 shadow-sm relative">
-            <div className="absolute top-2 left-2 z-10">
-              <Checkbox
-                checked={selectedItems.includes(bank.id)}
-                onCheckedChange={(checked) => handleSelectItem(bank.id, checked as boolean)}
-                className="bg-background border-primary"
-              />
-            </div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 pt-8">
               <CardTitle className="text-base font-medium flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-primary" />
