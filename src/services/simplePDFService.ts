@@ -304,41 +304,52 @@ export class SimplePDFService {
           yPosition = 20;
         }
         
-        // Bank card background
+        // Card dimensions
+        const cardWidth = pageWidth - 30;
+        const cardHeight = 45;
+        const cardX = 15;
+        const cardY = yPosition - 5;
+        
+        // Bank card background with shadow effect
+        pdf.setFillColor(248, 250, 252); // Light gray shadow
+        pdf.rect(cardX + 2, cardY + 2, cardWidth, cardHeight, 'F');
+        
+        // Bank card main background
         pdf.setFillColor(255, 255, 255); // White background
         pdf.setDrawColor(229, 231, 235); // Light gray border
-        pdf.rect(15, yPosition - 5, pageWidth - 30, 50, 'FD'); // Filled with border
+        pdf.rect(cardX, cardY, cardWidth, cardHeight, 'FD'); // Filled with border
         
-        // Bank name (bold, larger)
+        // Bank name (bold, larger) - top of card
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
-        pdf.text(bank.name, 25, yPosition + 5);
+        pdf.text(bank.name, cardX + 10, cardY + 15);
         
-        // Monthly income (left side)
+        // Left column - Monthly income
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        pdf.text('Receitas do Mês:', 25, yPosition + 15);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Receitas do Mês:', cardX + 10, cardY + 25);
         pdf.setTextColor(34, 197, 94); // Green
-        pdf.text(`R$ ${this.formatCurrency(bank.monthlyIncome)}`, 25, yPosition + 25);
+        pdf.text(`R$ ${this.formatCurrency(bank.monthlyIncome)}`, cardX + 10, cardY + 32);
         
-        // Monthly expenses (left side, below income)
+        // Left column - Monthly expenses
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Despesas do Mês:', 25, yPosition + 35);
+        pdf.text('Despesas do Mês:', cardX + 10, cardY + 38);
         pdf.setTextColor(239, 68, 68); // Red
-        pdf.text(`R$ ${this.formatCurrency(bank.monthlyExpenses)}`, 25, yPosition + 45);
+        pdf.text(`R$ ${this.formatCurrency(bank.monthlyExpenses)}`, cardX + 10, cardY + 45);
         
-        // Current balance (right side)
+        // Right column - Current balance
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Saldo Atual:', pageWidth - 80, yPosition + 15);
+        pdf.text('Saldo Atual:', cardX + cardWidth - 80, cardY + 25);
         const balanceColor = bank.balance >= 0 ? [34, 197, 94] : [239, 68, 68];
         pdf.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, pageWidth - 80, yPosition + 25);
+        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, cardX + cardWidth - 80, cardY + 32);
         
         // Reset text color
         pdf.setTextColor(0, 0, 0);
-        yPosition += 60;
+        yPosition += cardHeight + 10; // Space between cards
       });
       
       yPosition += 10;
