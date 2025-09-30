@@ -1634,6 +1634,53 @@ const Despesas = () => {
               </div>
             </div>
 
+            {/* Ações quando itens selecionados (mobile) */}
+            {selectionMode && selectedItems.length > 0 && (
+              <div className="px-3 -mt-2 mb-1 flex items-center gap-2 flex-wrap">
+                {lastSelectAll ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    className="h-8 px-2 text-xs flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Excluir
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicateSelected()}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Copy className="h-3 w-3" />
+                      Duplicar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleBulkDelete}
+                      className="h-8 px-2 text-xs flex items-center gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Cards das despesas */}
             {sortedDespesas.map((despesa) => (
               <div key={despesa.id} className="bg-muted/50 rounded-lg p-4 relative">
