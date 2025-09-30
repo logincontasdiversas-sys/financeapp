@@ -78,17 +78,17 @@ const Dividas = () => {
   }, [user, tenantId]);
 
   const loadDebts = async () => {
+    if (!tenantId) {
+      console.log('[DIVIDAS] ⏳ Aguardando tenantId...');
+      return;
+    }
+    
     try {
+      console.log('[DIVIDAS] 🔄 Carregando dívidas com tenantId:', tenantId);
       const { data, error } = await supabase
         .from('debts')
-        .select(`
-          *,
-          categories (
-            id,
-            name,
-            emoji
-          )
-        `)
+        .select('*')
+        .eq('tenant_id', tenantId)
         .order('settled', { ascending: true })
         .order('due_date', { ascending: true });
 
@@ -105,6 +105,7 @@ const Dividas = () => {
           const { data: categoriesData } = await supabase
             .from('categories')
             .select('id, name, emoji')
+            .eq('tenant_id', tenantId)
             .in('id', categoryIds);
 
           debtsWithCategories = data.map(debt => ({
@@ -114,15 +115,7 @@ const Dividas = () => {
         }
       }
 
-      console.log('[DEBUG] Dívidas carregadas com valores:');
-      debtsWithCategories.forEach(debt => {
-        console.log(`[DEBUG] Dívida: ${debt.title}`);
-        console.log(`[DEBUG] - Total: ${debt.total_amount}`);
-        console.log(`[DEBUG] - Pago: ${debt.paid_amount}`);
-        console.log(`[DEBUG] - Progresso: ${((debt.paid_amount / debt.total_amount) * 100).toFixed(1)}%`);
-        console.log(`[DEBUG] - Settled: ${debt.settled}`);
-        console.log(`[DEBUG] - Is Concluded: ${debt.is_concluded}`);
-      });
+      console.log('[DIVIDAS] ✅ Dívidas carregadas com sucesso:', debtsWithCategories?.length || 0, 'itens');
       
       setDebts(debtsWithCategories);
     } catch (error) {
@@ -138,7 +131,13 @@ const Dividas = () => {
   };
 
   const loadCategories = async () => {
+    if (!tenantId) {
+      console.log('[DIVIDAS] ⏳ Aguardando tenantId para carregar categorias...');
+      return;
+    }
+    
     try {
+      console.log('[DIVIDAS] 🔄 Carregando categorias com tenantId:', tenantId);
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -147,9 +146,10 @@ const Dividas = () => {
         .order('name');
 
       if (error) throw error;
+      console.log('[DIVIDAS] ✅ Categorias carregadas:', data?.length || 0, 'itens');
       setCategories(data || []);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error('[DIVIDAS] Error loading categories:', error);
     }
   };
 
