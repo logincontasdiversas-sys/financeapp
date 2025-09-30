@@ -271,6 +271,40 @@ export class SimplePDFService {
     pdf.setTextColor(0, 0, 0);
     yPosition += 30;
 
+    // Banks section - NEW
+    if (data.banks.length > 0) {
+      pdf.setFillColor(248, 250, 252); // Light gray background
+      pdf.rect(15, yPosition - 5, pageWidth - 30, 30 + (data.banks.length * 12), 'F');
+      
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Saldos dos Bancos', 25, yPosition);
+      yPosition += 20;
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      
+      data.banks.forEach((bank, index) => {
+        if (yPosition > 250) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        // Bank name
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`• ${bank.name}:`, 25, yPosition);
+        
+        // Bank balance (green if positive, red if negative)
+        const balanceColor = bank.balance >= 0 ? [34, 197, 94] : [239, 68, 68];
+        pdf.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
+        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, 120, yPosition);
+        
+        yPosition += 12;
+      });
+      
+      yPosition += 15;
+    }
+
     // Categories section with better formatting
     if (data.categories.length > 0) {
       pdf.setFont('helvetica', 'bold');

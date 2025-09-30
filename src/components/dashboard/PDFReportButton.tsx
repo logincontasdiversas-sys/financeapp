@@ -125,8 +125,8 @@ export const PDFReportButton = ({ className }: PDFReportButtonProps) => {
             </p>
             <ul className="text-sm text-muted-foreground mt-2 space-y-1">
               <li>• Resumo financeiro do mês</li>
-              <li>• Gastos por categoria</li>
               <li>• Saldos dos bancos</li>
+              <li>• Gastos por categoria</li>
               <li>• Lista completa de transações</li>
             </ul>
           </div>
