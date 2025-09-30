@@ -8,12 +8,14 @@ import { logger } from "@/utils/logger";
 interface DespesasSummaryWithDateSyncProps {
   refreshKey?: number;
   onDateFilterChange?: (filter: { from: Date | undefined; to: Date | undefined } | null) => void;
+  onDateFilterApplied?: (filter: { from: Date | undefined; to: Date | undefined } | null) => void;
   onDataChange?: (data: { totalDespesas: number; despesasPagas: number; despesasPendentes: number; }) => void;
 }
 
 export const DespesasSummaryWithDateSync = ({ 
   refreshKey: externalRefreshKey, 
   onDateFilterChange, 
+  onDateFilterApplied,
   onDataChange 
 }: DespesasSummaryWithDateSyncProps) => {
   const [dateFilter, setDateFilter] = useState<{ from: Date | undefined; to: Date | undefined } | null>(null);
@@ -45,7 +47,8 @@ export const DespesasSummaryWithDateSync = ({
   // Sincronizar o filtro com o componente pai
   useEffect(() => {
     onDateFilterChange?.(dateFilter);
-  }, [dateFilter, onDateFilterChange]);
+    onDateFilterApplied?.(dateFilter);
+  }, [dateFilter, onDateFilterChange, onDateFilterApplied]);
 
   const getPeriodTitle = () => {
     if (dateFilter === null) {

@@ -1534,7 +1534,12 @@ const Despesas = () => {
 
       {/* Seção de Resumo das Despesas */}
       <DespesasSummaryWithDateSync 
-        key={summaryRefreshKey}
+        refreshKey={summaryRefreshKey}
+        onDateFilterChange={setSharedDateFilter}
+        onDateFilterApplied={(filter) => {
+          console.log('[DESPESAS] 🔄 Filtro de data aplicado:', filter);
+          // O filtro já é aplicado automaticamente via sharedDateFilter na lista
+        }}
       />
 
       {/* Gráfico Mensal de Despesas */}
