@@ -16,7 +16,6 @@ import Metas from "./pages/Metas";
 import Bancos from "./pages/Bancos";
 import Cartoes from "./pages/Cartoes";
 import Dividas from "./pages/Dividas";
-import Movimentacoes from "./pages/Movimentacoes";
 import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 import PRDChecklist from "./pages/PRDChecklist";
@@ -115,11 +114,6 @@ const App = () => (
                 <Route path="/dividas" element={
                   <ProtectedRoute>
                     <Dividas />
-                  </ProtectedRoute>
-                } />
-                <Route path="/movimentacoes" element={
-                  <ProtectedRoute>
-                    <Movimentacoes />
                   </ProtectedRoute>
                 } />
                 <Route path="/configuracoes" element={

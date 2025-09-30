@@ -42,7 +42,6 @@ const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Receitas", url: "/receitas", icon: TrendingUp },
   { title: "Despesas", url: "/despesas", icon: TrendingDown },
-  { title: "Movimentações", url: "/movimentacoes", icon: List },
   { title: "Bancos", url: "/bancos", icon: Building2 },
   { title: "Cartões", url: "/cartoes", icon: CreditCard },
   { title: "Categorias", url: "/categorias", icon: FolderOpen },
