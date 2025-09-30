@@ -16,11 +16,6 @@ export const DespesasSummaryWithFilter = ({ refreshKey, onDataChange }: Despesas
       return "Todas as Despesas";
     }
     if (dateFilter && dateFilter.from && dateFilter.to) {
-      // Verificar se é o período máximo (desde 2020)
-      const isMaximum = dateFilter.from.getFullYear() === 2020 && dateFilter.from.getMonth() === 0 && dateFilter.from.getDate() === 1;
-      if (isMaximum) {
-        return "Todas as Despesas (Máximo)";
-      }
       return `Período: ${dateFilter.from.toLocaleDateString('pt-BR')} - ${dateFilter.to.toLocaleDateString('pt-BR')}`;
     }
     return "Despesas do Mês Atual";

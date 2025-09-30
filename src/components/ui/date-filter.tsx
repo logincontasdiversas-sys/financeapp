@@ -22,7 +22,7 @@ interface DateRange {
   to: Date | undefined;
 }
 
-type FilterOption = 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom' | 'maximum';
+type FilterOption = 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom';
 
 interface DateFilterProps {
   onFilterChange: (dateRange: DateRange | null) => void;
@@ -70,14 +70,6 @@ export function DateFilter({ onFilterChange, className }: DateFilterProps) {
         const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
         const range = { from: startOfLastMonth, to: endOfLastMonth };
-        setDateRange(range);
-        onFilterChange(range);
-        break;
-      }
-      case 'maximum': {
-        // Máximo: desde o início dos dados até hoje
-        const startOfData = new Date(2020, 0, 1); // Janeiro de 2020
-        const range = { from: startOfData, to: startOfToday };
         setDateRange(range);
         onFilterChange(range);
         break;
@@ -156,7 +148,6 @@ export function DateFilter({ onFilterChange, className }: DateFilterProps) {
           <SelectItem value="thisWeek">Esta semana</SelectItem>
           <SelectItem value="thisMonth">Este mês</SelectItem>
           <SelectItem value="lastMonth">Mês passado</SelectItem>
-          <SelectItem value="maximum">Máximo</SelectItem>
           <SelectItem value="custom">Período personalizado</SelectItem>
         </SelectContent>
       </Select>

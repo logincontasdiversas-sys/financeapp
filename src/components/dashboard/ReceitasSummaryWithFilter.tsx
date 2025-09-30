@@ -16,11 +16,6 @@ export const ReceitasSummaryWithFilter = ({ refreshKey, onDataChange }: Receitas
       return "Todas as Receitas";
     }
     if (dateFilter && dateFilter.from && dateFilter.to) {
-      // Verificar se é o período máximo (desde 2020)
-      const isMaximum = dateFilter.from.getFullYear() === 2020 && dateFilter.from.getMonth() === 0 && dateFilter.from.getDate() === 1;
-      if (isMaximum) {
-        return "Todas as Receitas (Máximo)";
-      }
       return `Período: ${dateFilter.from.toLocaleDateString('pt-BR')} - ${dateFilter.to.toLocaleDateString('pt-BR')}`;
     }
     return "Receitas do Mês Atual";
