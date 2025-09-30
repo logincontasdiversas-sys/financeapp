@@ -158,6 +158,12 @@ const Receitas = () => {
       timestamp: new Date().toISOString()
     });
     
+    // Guard para evitar queries com tenantId null
+    if (!tenantId) {
+      console.log('[RECEITAS] ⏳ Aguardando tenantId...');
+      return;
+    }
+    
     try {
       // ESTRATÉGIA ULTRA SIMPLIFICADA: Usar exatamente o mesmo padrão que funciona para despesas
       let query = supabase
@@ -235,10 +241,16 @@ const Receitas = () => {
   };
 
   const loadBanks = async () => {
+    if (!tenantId) {
+      console.log('[RECEITAS] ⏳ Aguardando tenantId para carregar bancos...');
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from('banks')
         .select('id, name')
+        .eq('tenant_id', tenantId)
         .order('name');
 
       if (error) throw error;
