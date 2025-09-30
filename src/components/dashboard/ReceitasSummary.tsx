@@ -4,6 +4,7 @@ import { ArrowUpIcon, CheckCircle, ClockIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
+import { getReceitasLabels } from "@/utils/dateFilterLabels";
 
 interface ReceitasSummaryProps {
   refreshKey?: number;
@@ -239,12 +240,15 @@ export const ReceitasSummary = ({ refreshKey, dateFilter, onDataChange, receitas
     );
   }
 
+  // Gerar labels dinâmicos baseados no filtro de período
+  const labels = getReceitasLabels(dateFilter);
+
   return (
     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
-            {getPeriodTitle("Total de Receitas do Mês")}
+            {labels.total}
           </CardTitle>
           <ArrowUpIcon className="h-4 w-4 text-green-600" />
         </CardHeader>
@@ -258,7 +262,7 @@ export const ReceitasSummary = ({ refreshKey, dateFilter, onDataChange, receitas
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
-            Receitas Recebidas
+            {labels.recebidas}
           </CardTitle>
           <CheckCircle className="h-4 w-4 text-green-600" />
         </CardHeader>
@@ -272,7 +276,7 @@ export const ReceitasSummary = ({ refreshKey, dateFilter, onDataChange, receitas
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
-            Receitas Previstas
+            {labels.previstas}
           </CardTitle>
           <ClockIcon className="h-4 w-4 text-yellow-600" />
         </CardHeader>

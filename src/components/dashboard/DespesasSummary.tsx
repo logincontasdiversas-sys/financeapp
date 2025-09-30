@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStableAuth } from "@/hooks/useStableAuth";
 import { useTenant } from "@/hooks/useTenant";
 import { dateInputToISO } from "@/utils/dateUtils";
+import { getDespesasLabels } from "@/utils/dateFilterLabels";
 
 interface DespesasSummaryProps {
   refreshKey?: number;
@@ -173,12 +174,15 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
     );
   }
 
+  // Gerar labels dinâmicos baseados no filtro de período
+  const labels = getDespesasLabels(dateFilter);
+
   return (
     <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
-            {getPeriodTitle("Total de Despesas do Mês")}
+            {labels.total}
           </CardTitle>
           <ArrowDownIcon className="h-4 w-4 text-red-600" />
         </CardHeader>
@@ -192,7 +196,7 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
-            Despesas Pagas
+            {labels.pagas}
           </CardTitle>
           <CheckCircle className="h-4 w-4 text-green-600" />
         </CardHeader>
@@ -206,7 +210,7 @@ const DespesasSummary = ({ refreshKey, dateFilter, onDataChange }: DespesasSumma
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2">
           <CardTitle className="text-sm font-medium">
-            Despesas Pendentes
+            {labels.pendentes}
           </CardTitle>
           <ClockIcon className="h-4 w-4 text-yellow-600" />
         </CardHeader>
