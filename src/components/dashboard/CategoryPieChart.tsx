@@ -91,37 +91,44 @@ export const CategoryPieChart = () => {
         .reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
       setTotalIncome(monthlyIncome);
 
-      // Buscar despesas, dívidas e categorias para mapear subcategoria (special_category_id) -> categoria-pai
-      const [expenseResp, debtsResp, categoriesResp] = await Promise.all([
-        supabase
-          .from('transactions')
-          .select(`
-            amount,
-          categories (
-            id,
-            name,
-            emoji
-          )
-          `)
-          .eq('kind', 'expense')
-          .eq('status', 'settled')
-          .eq('tenant_id', tenantId)
-          .not('categories.name', 'eq', 'Transferência entre Bancos')
-          .gte('date', startDate)
-          .lte('date', endDate),
-        supabase
-          .from('debts')
-          .select('id, category_id, special_category_id')
-          .eq('tenant_id', tenantId),
-        supabase
-          .from('categories')
-          .select('id, name, emoji')
-          .eq('tenant_id', tenantId)
-      ]);
+      // Buscar despesas sem JOIN para evitar PGRST201
+      const { data: expenseData, error: expenseError } = await supabase
+        .from('transactions')
+        .select('amount, category_id')
+        .eq('kind', 'expense')
+        .eq('status', 'settled')
+        .eq('tenant_id', tenantId)
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .not('category_id', 'is', null);
 
-      const expenseData = expenseResp.data || [];
-      const debts = debtsResp.data || [];
-      const categoriesList = categoriesResp.data || [];
+      if (expenseError) {
+        console.error('[PIE_CHART] Erro ao carregar despesas:', expenseError);
+        throw expenseError;
+      }
+
+      // Buscar categorias separadamente
+      const { data: categoriesList, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name, emoji')
+        .eq('tenant_id', tenantId);
+
+      if (categoriesError) {
+        console.error('[PIE_CHART] Erro ao carregar categorias:', categoriesError);
+        throw categoriesError;
+      }
+
+      // Buscar dívidas para mapear subcategorias
+      const { data: debts, error: debtsError } = await supabase
+        .from('debts')
+        .select('id, category_id, special_category_id')
+        .eq('tenant_id', tenantId);
+
+      if (debtsError) {
+        console.error('[PIE_CHART] Erro ao carregar dívidas:', debtsError);
+        throw debtsError;
+      }
+
 
       // Mapa de subcategoria (special) -> categoria-pai
       const specialToParent = new Map<string, string>();
@@ -143,16 +150,20 @@ export const CategoryPieChart = () => {
       const categoryMap = new Map<string, { name: string; emoji: string; amount: number }>();
 
       expenseData?.forEach((transaction: any) => {
-        const cat = transaction.categories;
-        if (!cat) return;
+        const categoryId = transaction.category_id;
+        if (!categoryId) return;
+
+        // Buscar categoria pelos dados carregados separadamente
+        const category = categoriesList.find(cat => cat.id === categoryId);
+        if (!category) return;
 
         // Filtrar categorias de fatura de cartão
-        const isCreditCardCategory = (cat.name?.toLowerCase() || '').includes('- fatura');
+        const isCreditCardCategory = (category.name?.toLowerCase() || '').includes('- fatura');
         if (isCreditCardCategory) return;
 
         // Se for uma subcategoria de dívida (special), consolidar na categoria-pai
-        const effectiveCategoryId = specialToParent.get(cat.id) || cat.id;
-        const effectiveCategory = categoriesById.get(effectiveCategoryId) || { id: effectiveCategoryId, name: cat.name, emoji: cat.emoji || '📁' };
+        const effectiveCategoryId = specialToParent.get(categoryId) || categoryId;
+        const effectiveCategory = categoriesById.get(effectiveCategoryId) || { id: effectiveCategoryId, name: category.name, emoji: category.emoji || '📁' };
 
         const existing = categoryMap.get(effectiveCategoryId);
         if (existing) {
