@@ -572,8 +572,10 @@ const Receitas = () => {
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(receitas.map(r => r.id));
+      setLastSelectAll(true);
     } else {
       setSelectedItems([]);
+      setLastSelectAll(false);
     }
   };
 
