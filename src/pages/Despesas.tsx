@@ -1252,9 +1252,18 @@ const Despesas = () => {
       (paymentMethodFilter === 'normal' && !despesa.card_id) ||
       (paymentMethodFilter === 'credit_card' && despesa.card_id);
 
-    const matchesDate = !sharedDateFilter || 
-      (!sharedDateFilter.from || despesa.date >= sharedDateFilter.from.toISOString().split('T')[0]) &&
-      (!sharedDateFilter.to || despesa.date <= sharedDateFilter.to.toISOString().split('T')[0]);
+    // Aplicar filtro de data (igual ao de Receitas)
+    let matchesDate = true;
+    if (sharedDateFilter && sharedDateFilter.from && sharedDateFilter.to) {
+      // Criar data da despesa sem problema de timezone
+      const despesaDate = new Date(despesa.date + 'T00:00:00');
+      // Comparar apenas as datas (não horas)
+      const despesaDateOnly = new Date(despesaDate.getFullYear(), despesaDate.getMonth(), despesaDate.getDate());
+      const fromDateOnly = new Date(sharedDateFilter.from.getFullYear(), sharedDateFilter.from.getMonth(), sharedDateFilter.from.getDate());
+      const toDateOnly = new Date(sharedDateFilter.to.getFullYear(), sharedDateFilter.to.getMonth(), sharedDateFilter.to.getDate());
+      
+      matchesDate = despesaDateOnly >= fromDateOnly && despesaDateOnly <= toDateOnly;
+    }
 
     return matchesText && matchesPaymentMethod && matchesDate;
   });
