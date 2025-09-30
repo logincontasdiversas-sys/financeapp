@@ -1203,6 +1203,7 @@ const Despesas = () => {
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
+    setLastSelectAll(false); // Reset lastSelectAll when individual item is selected
   };
 
   const handleBulkDelete = async () => {
