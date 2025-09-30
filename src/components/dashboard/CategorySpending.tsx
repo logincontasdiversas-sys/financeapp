@@ -50,7 +50,7 @@ export const CategorySpending = () => {
       const [prevData, currData, nextData] = await Promise.all([
         loadSpendingForPeriod(prevStartDate, prevEndDate, 'settled'),
         loadSpendingForPeriod(currStartDate, currEndDate, 'settled'),
-        loadSpendingForPeriod(nextStartDate, nextEndDate, 'scheduled')
+        loadSpendingForPeriod(nextStartDate, nextEndDate, 'pending')
       ]);
 
       setPreviousMonth(prevData);
