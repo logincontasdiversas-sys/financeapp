@@ -133,19 +133,52 @@ export class SimplePDFService {
       banks: transaction.bank_id ? banksMap.get(transaction.bank_id) : null
     })) || [];
 
-    // Fetch bank balances first
+    // Fetch bank balances and calculate current balance for each bank
     const { data: banks, error: banksError } = await supabase
       .from('banks')
-      .select('name, balance')
+      .select('id, name, balance')
       .eq('tenant_id', this.tenantId);
 
     if (banksError) throw banksError;
 
-    const banksData = banks?.map(bank => ({
-      name: bank.name,
-      balance: bank.balance,
-      initialBalance: bank.balance
-    })) || [];
+    // Calculate current balance for each bank (initial balance + all historical transactions)
+    const banksData = await Promise.all(
+      (banks || []).map(async (bank) => {
+        // Get all transactions for this bank
+        const { data: bankTransactions, error: bankTransactionsError } = await supabase
+          .from('transactions')
+          .select('amount, kind, status, date')
+          .eq('bank_id', bank.id)
+          .eq('tenant_id', this.tenantId)
+          .order('date', { ascending: true });
+
+        if (bankTransactionsError) {
+          console.error(`[PDF] Error fetching transactions for bank ${bank.name}:`, bankTransactionsError);
+        }
+
+        // Calculate current balance: initial balance + all settled transactions
+        const initialBalance = Number(bank.balance || 0);
+        let currentBalance = initialBalance;
+
+        if (bankTransactions) {
+          bankTransactions.forEach(transaction => {
+            if (transaction.status === 'settled') {
+              if (transaction.kind === 'income') {
+                currentBalance += Number(transaction.amount);
+              } else if (transaction.kind === 'expense') {
+                currentBalance -= Number(transaction.amount);
+              }
+            }
+          });
+        }
+
+        return {
+          name: bank.name,
+          balance: currentBalance, // Current calculated balance
+          initialBalance: initialBalance
+        };
+      })
+    );
 
     // Calculate totals for the month
     const totalIncome = enrichedTransactions
