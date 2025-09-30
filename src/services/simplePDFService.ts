@@ -271,38 +271,77 @@ export class SimplePDFService {
     pdf.setTextColor(0, 0, 0);
     yPosition += 30;
 
-    // Banks section - NEW
+    // Banks section - IMPROVED DESIGN
     if (data.banks.length > 0) {
-      pdf.setFillColor(248, 250, 252); // Light gray background
-      pdf.rect(15, yPosition - 5, pageWidth - 30, 30 + (data.banks.length * 12), 'F');
-      
+      // Section header
       pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Saldos dos Bancos', 25, yPosition);
+      pdf.text('Bancos', 20, yPosition);
       yPosition += 20;
       
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'normal');
+      // Calculate bank transactions for the month
+      const bankTransactions = data.transactions.filter(t => t.banks);
+      const bankData = data.banks.map(bank => {
+        const bankTransactions = data.transactions.filter(t => t.banks?.name === bank.name);
+        const monthlyIncome = bankTransactions
+          .filter(t => t.kind === 'income' && t.status === 'settled')
+          .reduce((sum, t) => sum + t.amount, 0);
+        const monthlyExpenses = bankTransactions
+          .filter(t => t.kind === 'expense' && t.status === 'settled')
+          .reduce((sum, t) => sum + t.amount, 0);
+        
+        return {
+          ...bank,
+          monthlyIncome,
+          monthlyExpenses
+        };
+      });
       
-      data.banks.forEach((bank, index) => {
-        if (yPosition > 250) {
+      // Create individual cards for each bank
+      bankData.forEach((bank, index) => {
+        if (yPosition > 200) {
           pdf.addPage();
           yPosition = 20;
         }
         
-        // Bank name
-        pdf.setTextColor(0, 0, 0);
-        pdf.text(`• ${bank.name}:`, 25, yPosition);
+        // Bank card background
+        pdf.setFillColor(255, 255, 255); // White background
+        pdf.setDrawColor(229, 231, 235); // Light gray border
+        pdf.rect(15, yPosition - 5, pageWidth - 30, 50, 'FD'); // Filled with border
         
-        // Bank balance (green if positive, red if negative)
+        // Bank name (bold, larger)
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(bank.name, 25, yPosition + 5);
+        
+        // Monthly income (left side)
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Receitas do Mês:', 25, yPosition + 15);
+        pdf.setTextColor(34, 197, 94); // Green
+        pdf.text(`R$ ${this.formatCurrency(bank.monthlyIncome)}`, 25, yPosition + 25);
+        
+        // Monthly expenses (left side, below income)
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Despesas do Mês:', 25, yPosition + 35);
+        pdf.setTextColor(239, 68, 68); // Red
+        pdf.text(`R$ ${this.formatCurrency(bank.monthlyExpenses)}`, 25, yPosition + 45);
+        
+        // Current balance (right side)
+        pdf.setTextColor(0, 0, 0);
+        pdf.text('Saldo Atual:', pageWidth - 80, yPosition + 15);
         const balanceColor = bank.balance >= 0 ? [34, 197, 94] : [239, 68, 68];
         pdf.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
-        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, 120, yPosition);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, pageWidth - 80, yPosition + 25);
         
-        yPosition += 12;
+        // Reset text color
+        pdf.setTextColor(0, 0, 0);
+        yPosition += 60;
       });
       
-      yPosition += 15;
+      yPosition += 10;
     }
 
     // Categories section with better formatting
