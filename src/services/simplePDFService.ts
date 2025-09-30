@@ -304,9 +304,9 @@ export class SimplePDFService {
           yPosition = 20;
         }
         
-        // Card dimensions
+        // Card dimensions - increased height to prevent text cutoff
         const cardWidth = pageWidth - 30;
-        const cardHeight = 45;
+        const cardHeight = 55; // Increased from 45 to 55
         const cardX = 15;
         const cardY = yPosition - 5;
         
@@ -325,27 +325,32 @@ export class SimplePDFService {
         pdf.setTextColor(0, 0, 0);
         pdf.text(bank.name, cardX + 10, cardY + 15);
         
-        // Left column - Monthly income
+        // Calculate vertical center for financial info
+        const financialInfoStartY = cardY + 20;
+        const financialInfoHeight = cardHeight - 25; // Available height for financial info
+        const centerY = financialInfoStartY + (financialInfoHeight / 2);
+        
+        // Left column - Monthly income (centered vertically)
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Receitas do Mês:', cardX + 10, cardY + 25);
+        pdf.text('Receitas do Mês:', cardX + 10, centerY - 8);
         pdf.setTextColor(34, 197, 94); // Green
-        pdf.text(`R$ ${this.formatCurrency(bank.monthlyIncome)}`, cardX + 10, cardY + 32);
+        pdf.text(`R$ ${this.formatCurrency(bank.monthlyIncome)}`, cardX + 10, centerY - 2);
         
-        // Left column - Monthly expenses
+        // Left column - Monthly expenses (centered vertically)
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Despesas do Mês:', cardX + 10, cardY + 38);
+        pdf.text('Despesas do Mês:', cardX + 10, centerY + 8);
         pdf.setTextColor(239, 68, 68); // Red
-        pdf.text(`R$ ${this.formatCurrency(bank.monthlyExpenses)}`, cardX + 10, cardY + 45);
+        pdf.text(`R$ ${this.formatCurrency(bank.monthlyExpenses)}`, cardX + 10, centerY + 14);
         
-        // Right column - Current balance
+        // Right column - Current balance (centered vertically)
         pdf.setTextColor(0, 0, 0);
-        pdf.text('Saldo Atual:', cardX + cardWidth - 80, cardY + 25);
+        pdf.text('Saldo Atual:', cardX + cardWidth - 80, centerY - 8);
         const balanceColor = bank.balance >= 0 ? [34, 197, 94] : [239, 68, 68];
         pdf.setTextColor(balanceColor[0], balanceColor[1], balanceColor[2]);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, cardX + cardWidth - 80, cardY + 32);
+        pdf.text(`R$ ${this.formatCurrency(bank.balance)}`, cardX + cardWidth - 80, centerY - 2);
         
         // Reset text color
         pdf.setTextColor(0, 0, 0);
