@@ -24,7 +24,10 @@ const SimpleBankSummary = ({ bankId }: SimpleBankSummaryProps) => {
 
   useEffect(() => {
     if (tenantId) {
+      console.log('[SIMPLE_BANK_SUMMARY] 🔄 Carregando bancos com tenantId:', tenantId);
       loadBanks();
+    } else {
+      console.log('[SIMPLE_BANK_SUMMARY] ⏳ Aguardando tenantId...');
     }
   }, [tenantId]);
 

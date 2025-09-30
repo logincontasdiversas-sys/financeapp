@@ -38,6 +38,7 @@ export const MonthlyChart = ({ title = "Receitas e Despesas Mensais" }: MonthlyC
   });
 
   const loadMonthlyData = async () => {
+    if (!tenantId) return;
     try {
       setLoading(true);
       const currentYear = new Date().getFullYear();

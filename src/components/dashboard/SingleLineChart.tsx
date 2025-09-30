@@ -62,8 +62,12 @@ export const SingleLineChart = ({
 
   const loadMonthlyData = async () => {
     if (!tenantId) {
+      console.log('[SINGLE_LINE_CHART] ⏳ Aguardando tenantId...');
       return;
     }
+    
+    console.log('[SINGLE_LINE_CHART] 🔄 Carregando dados com tenantId:', tenantId);
+    
     try {
       setLoading(true);
       const currentYear = new Date().getFullYear();
@@ -134,7 +138,15 @@ export const SingleLineChart = ({
     if (!tenantId) return;
     loadMonthlyData();
   }, 300), [tenantId, dataType]);
-  useEffect(() => { debouncedLoad(); }, [debouncedLoad]);
+  
+  useEffect(() => {
+    if (user && tenantId) {
+      console.log('[SINGLE_LINE_CHART] 🔄 useEffect triggered - Carregando dados:', { user: !!user, tenantId });
+      debouncedLoad();
+    } else {
+      console.log('[SINGLE_LINE_CHART] ⏳ Aguardando user e tenantId:', { user: !!user, tenantId });
+    }
+  }, [user, tenantId, debouncedLoad]);
 
   // Recarregar automaticamente quando houver inserts/updates/deletes em transactions
   useRealtimeSync({

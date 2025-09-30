@@ -21,7 +21,10 @@ export const CategorySpending = () => {
 
   useEffect(() => {
     if (tenantId) {
+      console.log('[CATEGORY_SPENDING] 🔄 Carregando dados com tenantId:', tenantId);
       loadCategorySpending();
+    } else {
+      console.log('[CATEGORY_SPENDING] ⏳ Aguardando tenantId...');
     }
   }, [tenantId]);
 
@@ -61,6 +64,11 @@ export const CategorySpending = () => {
   };
 
   const loadSpendingForPeriod = async (startDate: string, endDate: string, status: string) => {
+    if (!tenantId) {
+      console.log('[CATEGORY_SPENDING] ⏳ Aguardando tenantId...');
+      return [];
+    }
+    
     console.log('[CATEGORY_SPENDING] 🔄 Carregando dados (sem join):', { startDate, endDate, status, tenantId, version: '4.1.0-NO-JOIN' });
 
     const { data: tx, error } = await supabase

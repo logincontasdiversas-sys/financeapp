@@ -26,12 +26,18 @@ export const TransactionHistory = () => {
 
   useEffect(() => {
     if (tenantId) {
+      console.log('[HISTORY] 🔄 Carregando transações com tenantId:', tenantId);
       loadTransactions();
+    } else {
+      console.log('[HISTORY] ⏳ Aguardando tenantId...');
     }
   }, [tenantId]);
 
   const loadTransactions = async () => {
-    if (!tenantId) return;
+    if (!tenantId) {
+      console.log('[HISTORY] ⏳ Aguardando tenantId...');
+      return;
+    }
     
     console.log('[HISTORY] 🔄 CACHE FORÇADO - Carregando transações:', { tenantId, version: '4.0.0-CACHE-FORCED' });
     

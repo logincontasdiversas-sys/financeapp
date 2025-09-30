@@ -35,7 +35,12 @@ export const CategoryPieChart = () => {
   const { tenantId } = useTenant();
 
   useEffect(() => {
-    if (tenantId) loadData();
+    if (tenantId) {
+      console.log('[PIE_CHART] 🔄 Carregando dados com tenantId:', tenantId);
+      loadData();
+    } else {
+      console.log('[PIE_CHART] ⏳ Aguardando tenantId...');
+    }
   }, [tenantId]);
 
   // Atualização automática quando transactions mudarem
@@ -48,8 +53,12 @@ export const CategoryPieChart = () => {
   });
 
   const loadData = async () => {
-    if (!tenantId) return;
-    console.log('[PIE_CHART] Iniciando carregamento de dados...');
+    if (!tenantId) {
+      console.log('[PIE_CHART] ⏳ Aguardando tenantId...');
+      return;
+    }
+    
+    console.log('[PIE_CHART] 🔄 Carregando dados com tenantId:', tenantId);
     try {
       // Get current month dates
       const startOfMonth = new Date();
