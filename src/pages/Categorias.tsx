@@ -12,7 +12,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
 import { useToast } from "@/hooks/use-toast";
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
-import CategoryAnalytics from "@/components/dashboard/CategoryAnalytics";
 
 interface Category {
   id: string;
@@ -469,12 +468,6 @@ const Categorias = () => {
         </Card>
       )}
 
-      {/* Análises Avançadas */}
-      {categories.length > 0 && (
-        <div className="mt-8">
-          <CategoryAnalytics />
-        </div>
-      )}
     </div>
   );
 };
