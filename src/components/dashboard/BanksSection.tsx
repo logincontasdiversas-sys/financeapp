@@ -102,16 +102,12 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
       let filterEndDate: Date;
 
       if (startDate && endDate) {
-        // Usar datas do filtro, normalizando para start-of-day em Brasília
+        // Usar datas do filtro, normalizando para start-of-day
         filterStartDate = new Date(startDate);
         filterStartDate.setHours(0, 0, 0, 0);
-        // Ajustar para timezone de Brasília (UTC-3)
-        filterStartDate.setUTCHours(filterStartDate.getUTCHours() - 3);
         
         filterEndDate = new Date(endDate);
         filterEndDate.setHours(23, 59, 59, 999);
-        // Ajustar para timezone de Brasília (UTC-3)
-        filterEndDate.setUTCHours(filterEndDate.getUTCHours() - 3);
       } else {
         // Usar mês atual (Brasília), normalizando para start-of-day
         filterStartDate = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
@@ -121,41 +117,19 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
         filterEndDate.setHours(23, 59, 59, 999);
       }
       
-      console.log('[BANKS_DEBUG] Filter dates (normalized):', { 
-        filterStartDate: filterStartDate.toISOString(), 
-        filterEndDate: filterEndDate.toISOString(),
-        filterStartDateLocal: filterStartDate.toLocaleDateString('pt-BR'),
-        filterEndDateLocal: filterEndDate.toLocaleDateString('pt-BR')
-      });
           
           const currentMonth = filterStartDate.getMonth();
           const currentYear = filterStartDate.getFullYear();
 
           if (allTransactions) {
-            console.log(`[BANKS_DEBUG] Bank ${bank.name}: Found ${allTransactions.length} transactions`);
-            console.log(`[BANKS_DEBUG] Filter period: ${filterStartDate.toISOString()} to ${filterEndDate.toISOString()}`);
-            console.log(`[BANKS_DEBUG] Initial balance: ${initialBalance}`);
             
             allTransactions.forEach(transaction => {
-              console.log(`[BANKS_DEBUG] Transaction: kind=${transaction.kind}, status=${transaction.status}, amount=${transaction.amount}, date=${transaction.date}`);
-              
               const transactionDate = new Date(transaction.date);
               // Normalizar data da transação para start-of-day
               transactionDate.setHours(0, 0, 0, 0);
               
               // Comparação direta de Date objects normalizados
               const isInFilterPeriod = transactionDate >= filterStartDate && transactionDate <= filterEndDate;
-              
-              console.log('[BANKS_DEBUG] Date comparison:', {
-                transactionDate: transaction.date,
-                transactionDateISO: transactionDate.toISOString(),
-                filterStartDateISO: filterStartDate.toISOString(),
-                filterEndDateISO: filterEndDate.toISOString(),
-                isInFilterPeriod,
-                comparison: `${transactionDate.toISOString()} >= ${filterStartDate.toISOString()} && ${transactionDate.toISOString()} <= ${filterEndDate.toISOString()}`
-              });
-              
-              console.log(`[BANKS_DEBUG] Transaction date: ${transactionDate.toISOString()}, isInFilterPeriod: ${isInFilterPeriod}`);
 
               // Para o saldo atual: considerar TODAS as transações 'settled' (histórico completo)
               // Incluir transferências no cálculo do saldo (afetam o saldo individual do banco)
