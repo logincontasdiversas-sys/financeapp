@@ -1248,7 +1248,7 @@ const Despesas = () => {
       despesa.title.toLowerCase().includes(textFilter.toLowerCase()) ||
       despesa.categories?.name.toLowerCase().includes(textFilter.toLowerCase()) ||
       despesa.amount.toString().includes(textFilter) ||
-      formatCurrency(despesa.amount).toLowerCase().includes(textFilter.toLowerCase());
+      new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(despesa.amount).toLowerCase().includes(textFilter.toLowerCase());
 
     const matchesPaymentMethod = paymentMethodFilter === 'all' ||
       (paymentMethodFilter === 'normal' && !despesa.card_id) ||

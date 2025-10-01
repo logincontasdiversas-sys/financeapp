@@ -630,7 +630,7 @@ const Receitas = () => {
         (receita.banks?.name || '').toLowerCase().includes(searchTerm) ||
         (receita.note || '').toLowerCase().includes(searchTerm) ||
         receita.amount.toString().includes(searchTerm) ||
-        formatCurrency(receita.amount).toLowerCase().includes(searchTerm)
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receita.amount).toLowerCase().includes(searchTerm)
       );
     }
 
