@@ -733,12 +733,22 @@ const Dividas = () => {
                   <span>Pago: {formatCurrency(debt.paid_amount)}</span>
                   <span>Total: {formatCurrency(debt.total_amount)}</span>
                 </div>
-                <Progress value={getProgress(debt.paid_amount, debt.total_amount)} className="bg-red-100" />
+                {debt.current_amount && debt.current_amount > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Valor Efetivo: {formatCurrency(debt.total_amount - debt.current_amount)} (após desconto)
+                  </div>
+                )}
+                {debt.current_amount && debt.current_amount > 0 && (
+                  <div className="text-sm text-blue-600">
+                    Valor Atual: {formatCurrency(debt.current_amount)} (descontado)
+                  </div>
+                )}
+                <Progress value={getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0))} className="bg-red-100" />
                 <div className="text-center text-sm text-muted-foreground">
-                  {getProgress(debt.paid_amount, debt.total_amount).toFixed(1)}% quitado
+                  {getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0)).toFixed(1)}% quitado
                 </div>
                 <div className="text-sm text-red-600 font-semibold">
-                  Restam: {formatCurrency(debt.total_amount - debt.paid_amount)}
+                  Restam: {formatCurrency((debt.total_amount - (debt.current_amount || 0)) - debt.paid_amount)}
                 </div>
               </div>
               
@@ -777,7 +787,7 @@ const Dividas = () => {
             <div className="space-y-3">
               {settledDebts.map((debt) => {
                 const isConcluded = debt.is_concluded;
-                const progress = isConcluded ? 100 : getProgress(debt.paid_amount, debt.total_amount);
+                const progress = isConcluded ? 100 : getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0));
                 
                 return (
                   <div key={debt.id} className={`flex items-center justify-between p-3 rounded-lg border ${
