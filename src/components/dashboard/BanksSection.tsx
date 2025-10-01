@@ -113,34 +113,24 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
 
           if (allTransactions) {
             console.log(`[BANKS_DEBUG] Bank ${bank.name}: Found ${allTransactions.length} transactions`);
-            console.log(`[BANKS_DEBUG] Current year: ${currentYear}, Current month: ${currentMonth}`);
+            console.log(`[BANKS_DEBUG] Filter period: ${filterStartDate.toISOString()} to ${filterEndDate.toISOString()}`);
             console.log(`[BANKS_DEBUG] Initial balance: ${initialBalance}`);
             
             allTransactions.forEach(transaction => {
               console.log(`[BANKS_DEBUG] Transaction: kind=${transaction.kind}, status=${transaction.status}, amount=${transaction.amount}, date=${transaction.date}`);
               
               const transactionDate = new Date(transaction.date);
-              // Comparar datas usando Date objects para maior precisão
-              const transactionDateStr = transactionDate.toISOString().split('T')[0];
-              const filterStartDateStr = filterStartDate.toISOString().split('T')[0];
-              const filterEndDateStr = filterEndDate.toISOString().split('T')[0];
               
-              // Usar Date objects para comparação mais robusta
-              const transactionDateObj = new Date(transactionDateStr);
-              const filterStartDateObj = new Date(filterStartDateStr);
-              const filterEndDateObj = new Date(filterEndDateStr);
-              const isInFilterPeriod = transactionDateObj >= filterStartDateObj && transactionDateObj <= filterEndDateObj;
+              // Comparação direta de Date objects (mais simples e confiável)
+              const isInFilterPeriod = transactionDate >= filterStartDate && transactionDate <= filterEndDate;
               
               console.log('[BANKS_DEBUG] Date comparison:', {
                 transactionDate: transaction.date,
-                transactionDateStr,
-                filterStartDateStr,
-                filterEndDateStr,
-                transactionDateObj: transactionDateObj.toISOString(),
-                filterStartDateObj: filterStartDateObj.toISOString(),
-                filterEndDateObj: filterEndDateObj.toISOString(),
+                transactionDateISO: transactionDate.toISOString(),
+                filterStartDateISO: filterStartDate.toISOString(),
+                filterEndDateISO: filterEndDate.toISOString(),
                 isInFilterPeriod,
-                comparison: `${transactionDateObj.toISOString()} >= ${filterStartDateObj.toISOString()} && ${transactionDateObj.toISOString()} <= ${filterEndDateObj.toISOString()}`
+                comparison: `${transactionDate.toISOString()} >= ${filterStartDate.toISOString()} && ${transactionDate.toISOString()} <= ${filterEndDate.toISOString()}`
               });
               
               console.log(`[BANKS_DEBUG] Transaction date: ${transactionDate.toISOString()}, isInFilterPeriod: ${isInFilterPeriod}`);
