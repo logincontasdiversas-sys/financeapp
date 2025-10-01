@@ -723,23 +723,23 @@ const Dividas = () => {
               
               {/* Título em linha inteira */}
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-red-600" />
-                <CardTitle className="text-lg">{debt.title}</CardTitle>
+                <CreditCard className="h-4 w-4 text-red-600" />
+                <CardTitle className="text-base">{debt.title}</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
+            <CardContent className="space-y-2">
+              <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span>Pago: {formatCurrency(debt.paid_amount)}</span>
                   <span>Total: {formatCurrency(debt.total_amount)}</span>
                 </div>
                 {debt.current_amount && debt.current_amount > 0 && (
-                  <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                  <div className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
                     Desconto: {formatCurrency(debt.current_amount)} → Efetivo: {formatCurrency(debt.total_amount - debt.current_amount)}
                   </div>
                 )}
-                <Progress value={getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0))} className="bg-red-100" />
-                <div className="flex justify-between text-sm">
+                <Progress value={getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0))} className="bg-red-100 h-2" />
+                <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">
                     {getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0)).toFixed(1)}% quitado
                   </span>
@@ -750,19 +750,19 @@ const Dividas = () => {
               </div>
               
               {debt.categories && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span>{debt.categories.emoji} {debt.categories.name}</span>
                 </div>
               )}
               
               {debt.due_date && (
-                <div className="text-sm text-muted-foreground">
-                  Vencimento: {formatDate(debt.due_date)}
+                <div className="text-xs text-muted-foreground">
+                  Vence: {formatDate(debt.due_date)}
                 </div>
               )}
               
               {debt.monthly_interest > 0 && (
-                <div className="text-sm text-red-500">
+                <div className="text-xs text-red-500">
                   Juros: {debt.monthly_interest}% a.m.
                 </div>
               )}
