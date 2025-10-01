@@ -1,0 +1,27 @@
+// Script para verificar o schema da tabela debts
+console.log('🔍 Verificando schema da tabela debts...');
+console.log('');
+console.log('📋 Para verificar se a coluna current_amount existe na tabela debts:');
+console.log('');
+console.log('1. Acesse: https://supabase.com/dashboard');
+console.log('2. Selecione o projeto: cibtvihaydjlsjjfytkt');
+console.log('3. Vá para SQL Editor');
+console.log('4. Execute este SQL para verificar:');
+console.log('');
+console.log('```sql');
+console.log('SELECT column_name, data_type, is_nullable, column_default');
+console.log('FROM information_schema.columns');
+console.log('WHERE table_name = \'debts\'');
+console.log('ORDER BY ordinal_position;');
+console.log('```');
+console.log('');
+console.log('5. Se a coluna current_amount NÃO aparecer na lista, execute:');
+console.log('');
+console.log('```sql');
+console.log('ALTER TABLE debts ADD COLUMN current_amount DECIMAL(10,2) NULL;');
+console.log('COMMENT ON COLUMN debts.current_amount IS \'Current amount of the debt (optional)\';');
+console.log('```');
+console.log('');
+console.log('6. Execute novamente a consulta do passo 4 para confirmar que a coluna foi criada');
+console.log('');
+console.log('✅ Após isso, o campo "Valor Atual" na página de Dívidas deve funcionar!');
