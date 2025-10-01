@@ -1246,7 +1246,9 @@ const Despesas = () => {
   const filteredDespesas = despesas.filter(despesa => {
     const matchesText = textFilter === "" || 
       despesa.title.toLowerCase().includes(textFilter.toLowerCase()) ||
-      despesa.categories?.name.toLowerCase().includes(textFilter.toLowerCase());
+      despesa.categories?.name.toLowerCase().includes(textFilter.toLowerCase()) ||
+      despesa.amount.toString().includes(textFilter) ||
+      formatCurrency(despesa.amount).toLowerCase().includes(textFilter.toLowerCase());
 
     const matchesPaymentMethod = paymentMethodFilter === 'all' ||
       (paymentMethodFilter === 'normal' && !despesa.card_id) ||
@@ -1558,7 +1560,7 @@ const Despesas = () => {
             </div>
             <div className="w-72">
               <Input
-                placeholder="Filtrar por título, categoria ou observações..."
+                placeholder="Filtrar por título, categoria, valor ou observações..."
                 value={textFilter}
                 onChange={(e) => setTextFilter(e.target.value)}
                 className="h-9"
