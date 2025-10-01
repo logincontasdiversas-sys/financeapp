@@ -284,6 +284,29 @@ npm run preview      # Preview build
 npm run lint         # ESLint check
 ```
 
+### Vercel Deploy (IMPORTANTE - Deploy Único)
+```bash
+# ✅ FLUXO CORRETO - Apenas um deploy
+git add .
+git commit -m "sua mensagem"
+git push origin main  # Deploy automático via GitHub Integration
+
+# ❌ NÃO FAZER - Evita deploy duplo
+# npx vercel --prod  # Deploy manual desnecessário
+```
+
+**⚠️ ATENÇÃO**: O Vercel está configurado com GitHub Integration para deploy automático. 
+- **Deploy automático**: Acontece a cada `git push origin main`
+- **Deploy manual**: `npx vercel --prod` causa deploy duplicado
+- **Cursor Auto-commit**: Cursor pode fazer commit automático ao aceitar mudanças
+- **Limite gratuito**: 100 deploys/dia - evitar desperdício com deploys duplos
+
+**🔧 SOLUÇÃO PARA DEPLOYS DUPLOS**:
+1. **Desabilitar auto-commit no Cursor**: Configurações → Git → Auto-commit desabilitado
+2. **Usar apenas git push**: Nunca usar `npx vercel --prod` manualmente
+3. **Verificar commits**: `git log --oneline -3` antes de fazer push
+4. **Monitorar Vercel**: Verificar se há apenas 1 deploy por push
+
 ### Supabase
 ```bash
 # Políticas já configuradas via migração
