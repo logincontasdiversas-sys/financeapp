@@ -17,7 +17,12 @@ interface Transaction {
   status: string;
 }
 
-export const CalendarSection = () => {
+interface CalendarSectionProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const CalendarSection = ({ startDate, endDate }: CalendarSectionProps) => {
   const { user } = useAuth();
   const { tenantId } = useTenant();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -29,22 +34,31 @@ export const CalendarSection = () => {
     if (user && tenantId) {
       loadTransactions();
     }
-  }, [user, tenantId]);
+  }, [user, tenantId, startDate, endDate]);
 
   const loadTransactions = async () => {
     if (!tenantId) return;
     
     try {
-      // Carregar transações dos últimos 6 meses para garantir que todas as datas sejam capturadas
-      const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 6);
-      const startDateStr = startDate.toISOString().split('T')[0];
+      // Usar datas do filtro ou período padrão
+      let startDateStr: string;
+      let endDateStr: string;
       
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + 6);
-      const endDateStr = endDate.toISOString().split('T')[0];
-
-      console.log('[CALENDAR SECTION] Loading transactions from', startDateStr, 'to', endDateStr);
+      if (startDate && endDate) {
+        startDateStr = startDate.toISOString().split('T')[0];
+        endDateStr = endDate.toISOString().split('T')[0];
+        console.log('[CALENDAR SECTION] Usando período filtrado:', { startDateStr, endDateStr });
+      } else {
+        // Carregar transações dos últimos 6 meses para garantir que todas as datas sejam capturadas
+        const defaultStartDate = new Date();
+        defaultStartDate.setMonth(defaultStartDate.getMonth() - 6);
+        startDateStr = defaultStartDate.toISOString().split('T')[0];
+        
+        const defaultEndDate = new Date();
+        defaultEndDate.setMonth(defaultEndDate.getMonth() + 6);
+        endDateStr = defaultEndDate.toISOString().split('T')[0];
+        console.log('[CALENDAR SECTION] Usando período padrão:', { startDateStr, endDateStr });
+      }
 
       const [incomeData, expenseData] = await Promise.all([
         supabase

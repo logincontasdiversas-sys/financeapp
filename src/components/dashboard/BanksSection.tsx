@@ -20,7 +20,12 @@ interface BankWithCalculatedBalance extends Bank {
   trend: 'up' | 'down' | 'stable';
 }
 
-export const BanksSection = () => {
+interface BanksSectionProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
   const { tenantId } = useTenant();
   const [banks, setBanks] = useState<BankWithCalculatedBalance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +34,7 @@ export const BanksSection = () => {
     if (tenantId) {
       loadBanks();
     }
-  }, [tenantId]);
+  }, [tenantId, startDate, endDate]);
 
   // Realtime sync para atualizar saldos quando transações mudarem
   useRealtimeSync({
@@ -89,10 +94,19 @@ export const BanksSection = () => {
           let monthlyExpense = 0;
           let settledCount = 0;
 
-          // Data atual para calcular movimentação do mês
-          const currentDate = new Date();
-          const currentMonth = currentDate.getMonth();
-          const currentYear = new Date().getFullYear();
+      // Usar datas do filtro ou mês atual
+      const filterStartDate = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const filterEndDate = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+      
+      console.log('[BANKS_DEBUG] Filter dates:', { 
+        filterStartDate: filterStartDate.toISOString(), 
+        filterEndDate: filterEndDate.toISOString(),
+        filterStartDateLocal: filterStartDate.toLocaleDateString('pt-BR'),
+        filterEndDateLocal: filterEndDate.toLocaleDateString('pt-BR')
+      });
+          
+          const currentMonth = filterStartDate.getMonth();
+          const currentYear = filterStartDate.getFullYear();
 
           if (allTransactions) {
             console.log(`[BANKS_DEBUG] Bank ${bank.name}: Found ${allTransactions.length} transactions`);
@@ -103,10 +117,30 @@ export const BanksSection = () => {
               console.log(`[BANKS_DEBUG] Transaction: kind=${transaction.kind}, status=${transaction.status}, amount=${transaction.amount}, date=${transaction.date}`);
               
               const transactionDate = new Date(transaction.date);
-              const isCurrentMonth = transactionDate.getMonth() === currentMonth && 
-                                   transactionDate.getFullYear() === currentYear;
+              // Comparar datas usando Date objects para maior precisão
+              const transactionDateStr = transactionDate.toISOString().split('T')[0];
+              const filterStartDateStr = filterStartDate.toISOString().split('T')[0];
+              const filterEndDateStr = filterEndDate.toISOString().split('T')[0];
               
-              console.log(`[BANKS_DEBUG] Transaction date: ${transactionDate.toISOString()}, isCurrentMonth: ${isCurrentMonth}`);
+              // Usar Date objects para comparação mais robusta
+              const transactionDateObj = new Date(transactionDateStr);
+              const filterStartDateObj = new Date(filterStartDateStr);
+              const filterEndDateObj = new Date(filterEndDateStr);
+              const isInFilterPeriod = transactionDateObj >= filterStartDateObj && transactionDateObj <= filterEndDateObj;
+              
+              console.log('[BANKS_DEBUG] Date comparison:', {
+                transactionDate: transaction.date,
+                transactionDateStr,
+                filterStartDateStr,
+                filterEndDateStr,
+                transactionDateObj: transactionDateObj.toISOString(),
+                filterStartDateObj: filterStartDateObj.toISOString(),
+                filterEndDateObj: filterEndDateObj.toISOString(),
+                isInFilterPeriod,
+                comparison: `${transactionDateObj.toISOString()} >= ${filterStartDateObj.toISOString()} && ${transactionDateObj.toISOString()} <= ${filterEndDateObj.toISOString()}`
+              });
+              
+              console.log(`[BANKS_DEBUG] Transaction date: ${transactionDate.toISOString()}, isInFilterPeriod: ${isInFilterPeriod}`);
 
               // Para o saldo atual: considerar TODAS as transações 'settled' (histórico completo)
               // Incluir transferências no cálculo do saldo (afetam o saldo individual do banco)
@@ -118,9 +152,9 @@ export const BanksSection = () => {
                 }
               }
 
-              // Para dados do mês: considerar apenas transações do mês atual e 'settled'
-              // Incluir transferências nos dados mensais (são movimentações reais do banco)
-              if (transaction.status === 'settled' && isCurrentMonth) {
+              // Para dados do período: considerar apenas transações do período filtrado e 'settled'
+              // Incluir transferências nos dados do período (são movimentações reais do banco)
+              if (transaction.status === 'settled' && isInFilterPeriod) {
                 settledCount++;
                 if (transaction.kind === 'income') {
                   monthlyIncome += Number(transaction.amount);

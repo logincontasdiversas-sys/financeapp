@@ -27,7 +27,12 @@ const COLORS = [
   '#8C8C8C'  // Cinza
 ];
 
-export const CategoryPieChart = () => {
+interface CategoryPieChartProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const CategoryPieChart = ({ startDate, endDate }: CategoryPieChartProps) => {
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
@@ -41,7 +46,7 @@ export const CategoryPieChart = () => {
     } else {
       console.log('[PIE_CHART] ⏳ Aguardando tenantId...');
     }
-  }, [tenantId]);
+  }, [tenantId, startDate, endDate]);
 
   // Atualização automática quando transactions mudarem
   useRealtimeSync({
@@ -60,15 +65,26 @@ export const CategoryPieChart = () => {
     
     console.log('[PIE_CHART] 🔄 Carregando dados com tenantId:', tenantId);
     try {
-      // Get current month dates
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      const startDate = startOfMonth.toISOString().split('T')[0];
+      // Usar datas do filtro ou mês atual
+      let startDateStr: string;
+      let endDateStr: string;
       
-      const endOfMonth = new Date();
-      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-      endOfMonth.setDate(0);
-      const endDate = endOfMonth.toISOString().split('T')[0];
+      if (startDate && endDate) {
+        startDateStr = startDate.toISOString().split('T')[0];
+        endDateStr = endDate.toISOString().split('T')[0];
+        console.log('[PIE_CHART] 🔄 Usando período filtrado:', { startDateStr, endDateStr });
+      } else {
+        // Get current month dates
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startDateStr = startOfMonth.toISOString().split('T')[0];
+        
+        const endOfMonth = new Date();
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+        endOfMonth.setDate(0);
+        endDateStr = endOfMonth.toISOString().split('T')[0];
+        console.log('[PIE_CHART] 🔄 Usando mês atual:', { startDateStr, endDateStr });
+      }
 
       // Total de receitas do mês (sem join) e filtrando transferências pelo título
       let incomeAllQuery = supabase
@@ -77,8 +93,8 @@ export const CategoryPieChart = () => {
         .eq('tenant_id', tenantId)
         .eq('kind', 'income')
         .eq('status', 'settled')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .gte('date', startDateStr)
+        .lte('date', endDateStr);
       const { data: incomeAll } = await incomeAllQuery;
 
       const isTransferTitle = (t: any) => {
@@ -98,8 +114,8 @@ export const CategoryPieChart = () => {
         .eq('kind', 'expense')
         .eq('status', 'settled')
         .eq('tenant_id', tenantId)
-        .gte('date', startDate)
-        .lte('date', endDate)
+        .gte('date', startDateStr)
+        .lte('date', endDateStr)
         .not('category_id', 'is', null);
 
       if (expenseError) {

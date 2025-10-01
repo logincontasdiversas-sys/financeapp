@@ -14,7 +14,12 @@ interface CreditCard {
   spent_amount?: number;
 }
 
-export const CreditCardsSection = () => {
+interface CreditCardsSectionProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const CreditCardsSection = ({ startDate, endDate }: CreditCardsSectionProps) => {
   const { tenantId, loading: tenantLoading } = useTenant();
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +72,7 @@ export const CreditCardsSection = () => {
       // Se o tenant está carregado mas não há tenantId, não há cartões para mostrar
       setLoading(false);
     }
-  }, [tenantId, tenantLoading]);
+  }, [tenantId, tenantLoading, startDate, endDate]);
 
   const loadCards = async () => {
     if (!tenantId) {
@@ -93,15 +98,26 @@ export const CreditCardsSection = () => {
         tenantId 
       });
 
-      // Get current month expenses for each card
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      const startDate = startOfMonth.toISOString().split('T')[0];
+      // Usar datas do filtro ou mês atual
+      let startDateStr: string;
+      let endDateStr: string;
       
-      const endOfMonth = new Date();
-      endOfMonth.setMonth(endOfMonth.getMonth() + 1);
-      endOfMonth.setDate(0);
-      const endDate = endOfMonth.toISOString().split('T')[0];
+      if (startDate && endDate) {
+        startDateStr = startDate.toISOString().split('T')[0];
+        endDateStr = endDate.toISOString().split('T')[0];
+        console.log('[CARDS_SECTION_DEBUG] Usando período filtrado:', { startDateStr, endDateStr });
+      } else {
+        // Get current month expenses for each card
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startDateStr = startOfMonth.toISOString().split('T')[0];
+        
+        const endOfMonth = new Date();
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+        endOfMonth.setDate(0);
+        endDateStr = endOfMonth.toISOString().split('T')[0];
+        console.log('[CARDS_SECTION_DEBUG] Usando mês atual:', { startDateStr, endDateStr });
+      }
 
       const cardsWithSpent = await Promise.all(
         (cardsData || []).map(async (card) => {
@@ -110,8 +126,8 @@ export const CreditCardsSection = () => {
             .select('amount')
             .eq('card_id', card.id)
             .eq('kind', 'expense')
-            .gte('date', startDate)
-            .lte('date', endDate);
+            .gte('date', startDateStr)
+            .lte('date', endDateStr);
 
           const spent_amount = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
           

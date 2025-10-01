@@ -12,7 +12,12 @@ interface CategorySpending {
   total: number;
 }
 
-export const CategorySpending = () => {
+interface CategorySpendingProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const CategorySpending = ({ startDate, endDate }: CategorySpendingProps) => {
   const { tenantId } = useTenant();
   const [previousMonth, setPreviousMonth] = useState<CategorySpending[]>([]);
   const [currentMonth, setCurrentMonth] = useState<CategorySpending[]>([]);
@@ -26,26 +31,40 @@ export const CategorySpending = () => {
     } else {
       console.log('[CATEGORY_SPENDING] ⏳ Aguardando tenantId...');
     }
-  }, [tenantId]);
+  }, [tenantId, startDate, endDate]);
 
   const loadCategorySpending = async () => {
     try {
-      // Previous month
-      const prevDate = new Date();
-      prevDate.setMonth(prevDate.getMonth() - 1);
-      const prevStartDate = new Date(prevDate.getFullYear(), prevDate.getMonth(), 1).toISOString().split('T')[0];
-      const prevEndDate = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).toISOString().split('T')[0];
+      let prevStartDate: string, prevEndDate: string;
+      let currStartDate: string, currEndDate: string;
+      let nextStartDate: string, nextEndDate: string;
 
-      // Current month
-      const currDate = new Date();
-      const currStartDate = new Date(currDate.getFullYear(), currDate.getMonth(), 1).toISOString().split('T')[0];
-      const currEndDate = new Date(currDate.getFullYear(), currDate.getMonth() + 1, 0).toISOString().split('T')[0];
+      if (startDate && endDate) {
+        // Usar período filtrado
+        currStartDate = startDate.toISOString().split('T')[0];
+        currEndDate = endDate.toISOString().split('T')[0];
+        
+        // Para período filtrado, não carregar meses anteriores/próximos
+        prevStartDate = currStartDate;
+        prevEndDate = currEndDate;
+        nextStartDate = currStartDate;
+        nextEndDate = currEndDate;
+      } else {
+        // Usar lógica padrão de meses
+        const prevDate = new Date();
+        prevDate.setMonth(prevDate.getMonth() - 1);
+        prevStartDate = new Date(prevDate.getFullYear(), prevDate.getMonth(), 1).toISOString().split('T')[0];
+        prevEndDate = new Date(prevDate.getFullYear(), prevDate.getMonth() + 1, 0).toISOString().split('T')[0];
 
-      // Next month (scheduled transactions)
-      const nextDate = new Date();
-      nextDate.setMonth(nextDate.getMonth() + 1);
-      const nextStartDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1).toISOString().split('T')[0];
-      const nextEndDate = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).toISOString().split('T')[0];
+        const currDate = new Date();
+        currStartDate = new Date(currDate.getFullYear(), currDate.getMonth(), 1).toISOString().split('T')[0];
+        currEndDate = new Date(currDate.getFullYear(), currDate.getMonth() + 1, 0).toISOString().split('T')[0];
+
+        const nextDate = new Date();
+        nextDate.setMonth(nextDate.getMonth() + 1);
+        nextStartDate = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1).toISOString().split('T')[0];
+        nextEndDate = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).toISOString().split('T')[0];
+      }
 
       const [prevData, currData, nextData] = await Promise.all([
         loadSpendingForPeriod(prevStartDate, prevEndDate, 'settled'),
@@ -192,6 +211,25 @@ export const CategorySpending = () => {
     );
   }
 
+  const getTabLabels = () => {
+    if (startDate && endDate) {
+      const startStr = startDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      const endStr = endDate.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      return {
+        previous: startStr,
+        current: `${startStr} - ${endStr}`,
+        next: endStr
+      };
+    }
+    return {
+      previous: 'Mês Anterior',
+      current: 'Este Mês',
+      next: 'Próximo Mês'
+    };
+  };
+
+  const tabLabels = getTabLabels();
+
   return (
     <Card>
       <CardHeader>
@@ -203,9 +241,9 @@ export const CategorySpending = () => {
       <CardContent>
         <Tabs defaultValue="current" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="previous">Mês Anterior</TabsTrigger>
-            <TabsTrigger value="current">Este Mês</TabsTrigger>
-            <TabsTrigger value="next">Próximo Mês</TabsTrigger>
+            <TabsTrigger value="previous">{tabLabels.previous}</TabsTrigger>
+            <TabsTrigger value="current">{tabLabels.current}</TabsTrigger>
+            <TabsTrigger value="next">{tabLabels.next}</TabsTrigger>
           </TabsList>
           <TabsContent value="previous" className="mt-4">
             {renderSpendingList(previousMonth)}

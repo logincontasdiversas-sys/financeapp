@@ -19,7 +19,12 @@ interface Transaction {
   } | null;
 }
 
-export const TransactionHistory = () => {
+interface TransactionHistoryProps {
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryProps) => {
   const { tenantId } = useTenant();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +36,7 @@ export const TransactionHistory = () => {
     } else {
       console.log('[HISTORY] ⏳ Aguardando tenantId...');
     }
-  }, [tenantId]);
+  }, [tenantId, startDate, endDate]);
 
   const loadTransactions = async () => {
     if (!tenantId) {
@@ -42,10 +47,14 @@ export const TransactionHistory = () => {
     console.log('[HISTORY] 🔄 CACHE FORÇADO - Carregando transações:', { tenantId, version: '4.0.0-CACHE-FORCED' });
     
     try {
-      // Obter o primeiro e último dia do mês atual
-      const now = new Date();
-      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      // Usar datas do filtro ou mês atual
+      const filterStartDate = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      const filterEndDate = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+      
+      const startDateStr = filterStartDate.toISOString().split('T')[0];
+      const endDateStr = filterEndDate.toISOString().split('T')[0];
+      
+      console.log('[HISTORY] 🔄 Usando período:', { startDateStr, endDateStr });
       
       const { data, error } = await supabase
         .from('transactions')
@@ -59,9 +68,8 @@ export const TransactionHistory = () => {
         `)
         .eq('tenant_id', tenantId)
         .eq('status', 'settled') // Apenas transações recebidas/pagas
-        .neq('kind', 'transfer') // Excluir transferências dos relatórios
-        .gte('date', firstDay.toISOString().split('T')[0]) // A partir do primeiro dia do mês
-        .lte('date', lastDay.toISOString().split('T')[0]) // Até o último dia do mês
+        .gte('date', startDateStr) // A partir da data inicial do filtro
+        .lte('date', endDateStr) // Até a data final do filtro
         .order('date', { ascending: false })
         .limit(10);
 
@@ -98,11 +106,20 @@ export const TransactionHistory = () => {
     return statusMap[status as keyof typeof statusMap] || { label: status, variant: 'outline' as const };
   };
 
+  const getTitle = () => {
+    if (startDate && endDate) {
+      const startStr = startDate.toLocaleDateString('pt-BR');
+      const endStr = endDate.toLocaleDateString('pt-BR');
+      return `Movimentações (${startStr} - ${endStr})`;
+    }
+    return 'Movimentações do Mês';
+  };
+
   if (loading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Histórico de Movimentação</CardTitle>
+          <CardTitle>{getTitle()}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-3">
@@ -129,13 +146,13 @@ export const TransactionHistory = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <HistoryIcon className="h-5 w-5" />
-          Movimentações do Mês
+          {getTitle()}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {transactions.length === 0 ? (
           <p className="text-muted-foreground text-center py-4">
-            Nenhuma transação recebida/paga neste mês
+            Nenhuma transação recebida/paga no período selecionado
           </p>
         ) : (
           <div className="space-y-4 w-full">
