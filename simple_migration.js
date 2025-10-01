@@ -1,0 +1,20 @@
+// Script simples para aplicar migração
+console.log('🚀 Aplicando migração para adicionar coluna current_amount...');
+console.log('');
+console.log('📋 INSTRUÇÕES MANUAIS:');
+console.log('');
+console.log('1. Acesse: https://supabase.com/dashboard');
+console.log('2. Selecione o projeto: cibtvihaydjlsjjfytkt');
+console.log('3. Vá para SQL Editor (ícone de código)');
+console.log('4. Execute o seguinte SQL:');
+console.log('');
+console.log('```sql');
+console.log('ALTER TABLE debts ADD COLUMN current_amount DECIMAL(10,2) NULL;');
+console.log('COMMENT ON COLUMN debts.current_amount IS \'Current amount of the debt (optional)\';');
+console.log('```');
+console.log('');
+console.log('5. Clique em "Run" para executar');
+console.log('');
+console.log('6. Após executar, teste novamente o campo "Valor Atual" na página de Dívidas');
+console.log('');
+console.log('✅ Após aplicar a migração, o erro não deve mais aparecer!');
