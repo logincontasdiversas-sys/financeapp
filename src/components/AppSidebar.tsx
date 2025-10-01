@@ -110,7 +110,7 @@ export function AppSidebar() {
                         }`
                       }
                     >
-                      <item.icon className="h-5 w-5 flex-shrink-0" />
+                      <item.icon className="h-6 w-6 flex-shrink-0" />
                       {!isCollapsed && (
                         <span className="truncate">{item.title}</span>
                       )}
@@ -129,7 +129,7 @@ export function AppSidebar() {
               {/* Informações do usuário */}
               <SidebarMenuItem>
                 <div className="flex items-center gap-3 px-3 py-2 text-sidebar-foreground">
-                  <User className="h-5 w-5 flex-shrink-0" />
+                  <User className="h-6 w-6 flex-shrink-0" />
                   {!isCollapsed && (
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{user?.email}</p>
@@ -169,7 +169,7 @@ export function AppSidebar() {
                       }
                     }}
                   >
-                    <Bell className="h-5 w-5 flex-shrink-0" />
+                    <Bell className="h-6 w-6 flex-shrink-0" />
                     {!isCollapsed && <span className="text-sm">Ativar Push</span>}
                   </Button>
                 </SidebarMenuItem>
@@ -191,7 +191,7 @@ export function AppSidebar() {
                   onClick={handleLogout}
                   className="w-full justify-start gap-3 px-3 py-2 h-auto text-sidebar-foreground hover:text-destructive hover:bg-destructive/10"
                 >
-                  <LogOut className="h-5 w-5 flex-shrink-0" />
+                  <LogOut className="h-6 w-6 flex-shrink-0" />
                   {!isCollapsed && <span className="text-sm">Sair</span>}
                 </Button>
               </SidebarMenuItem>
