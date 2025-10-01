@@ -848,7 +848,6 @@ const Despesas = () => {
   // Funções auxiliares para edição inline
   const handleInlineUpdate = async (id: string, field: string, value: any) => {
     console.log('[DESPESAS] handleInlineUpdate chamado:', { id, field, value });
-    console.log('[DESPESAS] Usuário:', user?.id, 'Tenant:', tenantId);
     
     if (!user || !tenantId) {
       console.log('[DESPESAS] Usuário ou tenant não encontrado');
@@ -856,245 +855,41 @@ const Despesas = () => {
     }
 
     try {
-      const transaction = despesas.find(d => d.id === id);
-      if (!transaction) {
-        console.error('[DESPESAS] Transação não encontrada:', id);
-        return;
-      }
-
-      // Verificar se é mudança de status em pagamento de dívida
-      if (field === 'status') {
-        const debtId = (transaction as any).debt_id;
-        console.log('[DESPESAS] Verificando dívida:', { debtId, transactionId: id });
-        
-        if (!debtId) {
-          console.log('[DESPESAS] Transação sem debt_id - atualização normal');
-          // Atualização normal sem recálculo de dívida
-          const updateData: any = {};
-          updateData[field] = value;
-          
-          const { error } = await supabase
-            .from('transactions')
-            .update(updateData)
-            .eq('id', id);
-
-          if (error) throw error;
-
-          setDespesas(prev => 
-            prev.map(d => d.id === id ? { ...d, [field]: value } : d)
-          );
-          
-          clearQueryCache();
-          loadDespesas();
-          setSummaryRefreshKey(k => k + 1);
-          return;
-        }
-        
-        const selectedDebt = debts.find(d => d.id === debtId);
-        
-        if (selectedDebt && selectedDebt.special_category_id) {
-          // Verificar se é um pagamento de dívida (categoria correta)
-          if (transaction.category_id === selectedDebt.special_category_id) {
-            const oldStatus = transaction.status;
-            const newStatus = value;
-            const amount = transaction.amount;
-            
-            console.log('[DESPESAS] Mudança de status em pagamento de dívida:', {
-              debtId,
-              debtTitle: selectedDebt.title,
-              oldStatus,
-              newStatus,
-              amount,
-              currentPaidAmount: selectedDebt.paid_amount
-            });
-
-            // Confirmação antes de alterar
-            const statusChange = `${oldStatus === 'settled' ? 'Pago' : 'Pendente'} → ${newStatus === 'settled' ? 'Pago' : 'Pendente'}`;
-            const amountChange = oldStatus === 'settled' && newStatus === 'pending' 
-              ? `-R$ ${amount.toFixed(2)}` 
-              : oldStatus === 'pending' && newStatus === 'settled' 
-                ? `+R$ ${amount.toFixed(2)}` 
-                : '0';
-
-            const confirmed = confirm(
-              `Alterar status do pagamento da dívida "${selectedDebt.title}"?\n\n` +
-              `Status: ${statusChange}\n` +
-              `Valor: R$ ${amount.toFixed(2)}\n` +
-              `Impacto no saldo: ${amountChange}\n\n` +
-              `Saldo atual: R$ ${selectedDebt.paid_amount.toFixed(2)}\n` +
-              `Saldo após: R$ ${(selectedDebt.paid_amount + (newStatus === 'settled' ? amount : -amount)).toFixed(2)}`
-            );
-
-            if (!confirmed) {
-              console.log('[DESPESAS] Alteração cancelada pelo usuário');
-              return;
-            }
-
-            // Atualizar transação
-            const updateData: any = {};
-            updateData[field] = value;
-            
-            const { error: updateError } = await supabase
-              .from('transactions')
-              .update(updateData)
-              .eq('id', id);
-
-            if (updateError) throw updateError;
-
-            // Calcular novo paid_amount com fallbacks
-            let newPaidAmount = selectedDebt.paid_amount || 0;
-            const transactionAmount = amount || 0;
-            
-            if (oldStatus === 'settled' && newStatus === 'pending') {
-              newPaidAmount = Math.max(0, newPaidAmount - transactionAmount);
-            } else if (oldStatus === 'pending' && newStatus === 'settled') {
-              newPaidAmount += transactionAmount;
-            }
-            
-            // Garantir que não seja negativo
-            newPaidAmount = Math.max(0, newPaidAmount);
-
-            // Verificar se dívida está quitada
-            const isFullyPaid = newPaidAmount >= selectedDebt.total_amount;
-            const isConcluded = isFullyPaid;
-
-            console.log('[DESPESAS] Atualizando dívida:', {
-              debtId,
-              oldPaidAmount: selectedDebt.paid_amount,
-              newPaidAmount,
-              totalAmount: selectedDebt.total_amount,
-              isFullyPaid,
-              isConcluded
-            });
-
-            // Atualizar dívida no Supabase com retry
-            let debtUpdateSuccess = false;
-            let retryCount = 0;
-            const maxRetries = 3;
-            
-            while (!debtUpdateSuccess && retryCount < maxRetries) {
-              try {
-                const { error: debtError } = await supabase
-                  .from('debts')
-                  .update({ 
-                    paid_amount: newPaidAmount,
-                    is_concluded: isConcluded
-                  })
-                  .eq('id', debtId);
-
-                if (debtError) {
-                  console.error(`[DESPESAS] Erro ao atualizar dívida (tentativa ${retryCount + 1}):`, debtError);
-                  retryCount++;
-                  if (retryCount >= maxRetries) {
-                    throw debtError;
-                  }
-                  // Aguardar antes de tentar novamente
-                  await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-                } else {
-                  debtUpdateSuccess = true;
-                }
-              } catch (error) {
-                console.error(`[DESPESAS] Erro na tentativa ${retryCount + 1}:`, error);
-                retryCount++;
-                if (retryCount >= maxRetries) {
-                  throw error;
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              }
-            }
-
-            // Atualizar estado local
-            setDespesas(prev => 
-              prev.map(d => d.id === id ? { ...d, [field]: value } : d)
-            );
-
-            setDebts(prevDebts => 
-              prevDebts.map(d => 
-                d.id === debtId 
-                  ? { ...d, paid_amount: newPaidAmount, is_concluded: isConcluded }
-                  : d
-              )
-            );
-
-            // Notificação de sucesso
-            toast({
-              title: "Status atualizado com sucesso!",
-              description: `Dívida "${selectedDebt.title}" - Saldo: R$ ${newPaidAmount.toFixed(2)}${isConcluded ? ' (QUITADA!)' : ''}`,
-              variant: "default",
-            });
-
-            // Removido modal central; usamos apenas toast no canto
-
-            // Notificação push para mudanças importantes
-            if (isConcluded) {
-              try {
-                await sendTestNotification();
-                console.log('[DESPESAS] Notificação de dívida quitada enviada');
-              } catch (error) {
-                console.error('[DESPESAS] Erro ao enviar notificação:', error);
-              }
-            }
-
-            // Log detalhado
-            console.log('[DESPESAS] Atualização concluída:', {
-              transactionId: id,
-              debtId,
-              statusChange,
-              amountChange,
-              newPaidAmount,
-              isConcluded
-            });
-
-          } else {
-            console.log('[DESPESAS] Transação não é pagamento de dívida - categoria incorreta:', {
-              transactionCategoryId: transaction.category_id,
-              debtSpecialCategoryId: selectedDebt.special_category_id
-            });
-            
-            // Atualização normal sem recálculo de dívida
-            const updateData: any = {};
-            updateData[field] = value;
-            
-            const { error } = await supabase
-              .from('transactions')
-              .update(updateData)
-              .eq('id', id);
-
-            if (error) throw error;
-
-            setDespesas(prev => 
-              prev.map(d => d.id === id ? { ...d, [field]: value } : d)
-            );
-          }
-        } else {
-          // Fallback para dívidas sem special_category_id
-          console.log('[DESPESAS] Dívida sem special_category_id - usando fallback');
-          await recalculateDebt(debtId);
-        }
+      const updateData: any = {};
+      
+      if (field === 'date') {
+        updateData[field] = dateInputToISO(value);
       } else {
-        // Atualização normal para outros campos
-        const updateData: any = {};
         updateData[field] = value;
-        
-        const { error } = await supabase
-          .from('transactions')
-          .update(updateData)
-          .eq('id', id);
-
-        if (error) throw error;
-
-        setDespesas(prev => 
-          prev.map(d => d.id === id ? { ...d, [field]: value } : d)
-        );
       }
 
+      const { error } = await supabase
+        .from('transactions')
+        .update(updateData)
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({ title: "Despesa atualizada com sucesso!" });
       clearQueryCache();
+
+      // Atualização otimista imediata na lista
+      setDespesas(prev => prev.map(d => {
+        if (d.id !== id) return d;
+        const next: any = { ...d };
+        next[field as keyof typeof next] = updateData[field as keyof typeof updateData];
+        // Garantir tipos coerentes
+        if (field === 'amount') next.amount = Number(updateData.amount);
+        return next as typeof d;
+      }));
+
+      // Garantia extra: recarregar (realtime também cobre)
       loadDespesas();
       setSummaryRefreshKey(k => k + 1);
     } catch (error: any) {
       console.error('[DESPESAS] Error updating inline:', error);
       toast({
-        title: "Erro ao atualizar",
+        title: "Erro ao atualizar despesa",
         description: error.message,
         variant: "destructive",
       });
