@@ -91,7 +91,7 @@ export const SingleLineChart = ({
         return;
       }
 
-      // Filtrar transferências no JavaScript (pelo título)
+      // Filtrar transferências no JavaScript (pelo título) - Deploy fix
       const isTransfer = (t: any) => {
         const title = (t?.title || '').toLowerCase();
         return title.includes('transfer') || title.includes('transferência') || title.includes('transferencia');
