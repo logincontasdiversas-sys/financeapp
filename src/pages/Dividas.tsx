@@ -493,8 +493,17 @@ const Dividas = () => {
     return Math.min((paid / total) * 100, 100);
   };
 
-  const activeDebts = debts.filter(debt => !debt.settled && !debt.is_concluded);
-  const settledDebts = debts.filter(debt => debt.settled || debt.is_concluded);
+  const activeDebts = debts.filter(debt => {
+    const totalPaid = debt.paid_amount + (debt.current_amount || 0);
+    const isFullyPaid = totalPaid >= debt.total_amount;
+    return !debt.settled && !debt.is_concluded && !isFullyPaid;
+  });
+  
+  const settledDebts = debts.filter(debt => {
+    const totalPaid = debt.paid_amount + (debt.current_amount || 0);
+    const isFullyPaid = totalPaid >= debt.total_amount;
+    return debt.settled || debt.is_concluded || isFullyPaid;
+  });
 
   if (loading || tenantLoading) {
     return <div className="flex items-center justify-center h-32">Carregando...</div>;
@@ -783,7 +792,9 @@ const Dividas = () => {
           <CardContent>
             <div className="space-y-3">
               {settledDebts.map((debt) => {
-                const isConcluded = debt.is_concluded;
+                const totalPaid = debt.paid_amount + (debt.current_amount || 0);
+                const isFullyPaid = totalPaid >= debt.total_amount;
+                const isConcluded = debt.is_concluded || isFullyPaid;
                 const progress = isConcluded ? 100 : getProgress(debt.paid_amount + (debt.current_amount || 0), debt.total_amount);
                 
                 return (
@@ -801,7 +812,7 @@ const Dividas = () => {
                         <p className={`text-sm ${isConcluded ? 'text-blue-600' : 'text-green-600'}`}>
                           {formatCurrency(debt.total_amount)}
                           {debt.categories && ` • ${debt.categories.emoji} ${debt.categories.name}`}
-                          {isConcluded && ' • Quitada sem valores'}
+                          {isConcluded && (debt.is_concluded ? ' • Quitada sem valores' : ' • Quitada automaticamente')}
                         </p>
                         {debt.observations && (
                           <p className={`text-xs mt-1 italic ${isConcluded ? 'text-blue-600' : 'text-green-600'}`}>
