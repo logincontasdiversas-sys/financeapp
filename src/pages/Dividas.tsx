@@ -738,13 +738,13 @@ const Dividas = () => {
                     Desconto: {formatCurrency(debt.current_amount)} → Efetivo: {formatCurrency(debt.total_amount - debt.current_amount)}
                   </div>
                 )}
-                <Progress value={getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0))} className="bg-red-100 h-2" />
+                <Progress value={getProgress(debt.paid_amount + (debt.current_amount || 0), debt.total_amount)} className="bg-red-100 h-2" />
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">
-                    {getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0)).toFixed(1)}% quitado
+                    {getProgress(debt.paid_amount + (debt.current_amount || 0), debt.total_amount).toFixed(1)}% quitado
                   </span>
                   <span className="text-red-600 font-semibold">
-                    Restam: {formatCurrency((debt.total_amount - (debt.current_amount || 0)) - debt.paid_amount)}
+                    Restam: {formatCurrency(debt.total_amount - debt.paid_amount - (debt.current_amount || 0))}
                   </span>
                 </div>
               </div>
@@ -784,7 +784,7 @@ const Dividas = () => {
             <div className="space-y-3">
               {settledDebts.map((debt) => {
                 const isConcluded = debt.is_concluded;
-                const progress = isConcluded ? 100 : getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0));
+                const progress = isConcluded ? 100 : getProgress(debt.paid_amount + (debt.current_amount || 0), debt.total_amount);
                 
                 return (
                   <div key={debt.id} className={`flex items-center justify-between p-3 rounded-lg border ${
