@@ -116,18 +116,22 @@ const Dashboard = () => {
         const brasiliaDate = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
         
         const startOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
+        startOfMonth.setHours(0, 0, 0, 0);
         startDate = startOfMonth.toISOString().split('T')[0];
         
         const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
         endDate = endOfMonth.toISOString().split('T')[0];
         
-        console.log('[DASHBOARD_DEBUG] Using current month (Brasília):', { 
+        console.log('[DASHBOARD_DEBUG] Using current month (Brasília - normalized):', { 
           now: now.toISOString(),
           brasiliaDate: brasiliaDate.toISOString(),
           startDate, 
           endDate,
           brasiliaYear: brasiliaDate.getFullYear(),
-          brasiliaMonth: brasiliaDate.getMonth() + 1
+          brasiliaMonth: brasiliaDate.getMonth() + 1,
+          startOfMonthISO: startOfMonth.toISOString(),
+          endOfMonthISO: endOfMonth.toISOString()
         });
       }
 

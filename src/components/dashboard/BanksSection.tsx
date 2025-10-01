@@ -98,10 +98,26 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
       const now = new Date();
       const brasiliaDate = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
       
-      const filterStartDate = startDate || new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
-      const filterEndDate = endDate || new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
+      let filterStartDate: Date;
+      let filterEndDate: Date;
+
+      if (startDate && endDate) {
+        // Usar datas do filtro, normalizando para start-of-day
+        filterStartDate = new Date(startDate);
+        filterStartDate.setHours(0, 0, 0, 0);
+        
+        filterEndDate = new Date(endDate);
+        filterEndDate.setHours(23, 59, 59, 999);
+      } else {
+        // Usar mês atual (Brasília), normalizando para start-of-day
+        filterStartDate = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
+        filterStartDate.setHours(0, 0, 0, 0);
+        
+        filterEndDate = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
+        filterEndDate.setHours(23, 59, 59, 999);
+      }
       
-      console.log('[BANKS_DEBUG] Filter dates:', { 
+      console.log('[BANKS_DEBUG] Filter dates (normalized):', { 
         filterStartDate: filterStartDate.toISOString(), 
         filterEndDate: filterEndDate.toISOString(),
         filterStartDateLocal: filterStartDate.toLocaleDateString('pt-BR'),
@@ -120,8 +136,10 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
               console.log(`[BANKS_DEBUG] Transaction: kind=${transaction.kind}, status=${transaction.status}, amount=${transaction.amount}, date=${transaction.date}`);
               
               const transactionDate = new Date(transaction.date);
+              // Normalizar data da transação para start-of-day
+              transactionDate.setHours(0, 0, 0, 0);
               
-              // Comparação direta de Date objects (mais simples e confiável)
+              // Comparação direta de Date objects normalizados
               const isInFilterPeriod = transactionDate >= filterStartDate && transactionDate <= filterEndDate;
               
               console.log('[BANKS_DEBUG] Date comparison:', {
