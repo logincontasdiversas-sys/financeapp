@@ -108,6 +108,8 @@ const Dashboard = () => {
         endDate = dateFilter.to.toISOString().split('T')[0];
         console.log('[DASHBOARD_DEBUG] Using date filter:', { startDate, endDate });
         console.log('[DASHBOARD_DEBUG] Date filter object:', dateFilter);
+        console.log('[DASHBOARD_DEBUG] Date filter from:', dateFilter.from);
+        console.log('[DASHBOARD_DEBUG] Date filter to:', dateFilter.to);
       } else {
         // Get current month transactions using Brasília timezone
         const now = new Date();
@@ -137,6 +139,13 @@ const Dashboard = () => {
         .lte('date', endDate);
 
       console.log('[DASHBOARD_DEBUG] Income query result:', { incomeData, incomeError });
+      console.log('[DASHBOARD_DEBUG] Income query params:', { 
+        kind: 'income', 
+        status: 'settled', 
+        tenantId, 
+        startDate, 
+        endDate 
+      });
       
       // Temporariamente desabilitar filtro de transferências para debug
       const filteredIncomeData = incomeData || [];
@@ -144,6 +153,7 @@ const Dashboard = () => {
       // Debug: verificar se há receitas sem filtro
       console.log('[DASHBOARD_DEBUG] All income data (before filter):', incomeData);
       console.log('[DASHBOARD_DEBUG] Filtered income data (after filter):', filteredIncomeData);
+      console.log('[DASHBOARD_DEBUG] Income data length:', incomeData?.length || 0);
 
       console.log('[DASHBOARD_DEBUG] Filtered income data:', filteredIncomeData);
 
@@ -158,12 +168,22 @@ const Dashboard = () => {
         .lte('date', endDate);
 
       console.log('[DASHBOARD_DEBUG] Expense query result:', { expenseData, expenseError });
+      console.log('[DASHBOARD_DEBUG] Expense query params:', { 
+        kind: 'expense', 
+        status: 'settled', 
+        tenantId, 
+        startDate, 
+        endDate 
+      });
       
       // Log individual expense transactions
       if (expenseData) {
+        console.log('[DASHBOARD_DEBUG] Expense data length:', expenseData.length);
         expenseData.forEach((t, index) => {
           console.log(`[DASHBOARD_DEBUG] Expense transaction ${index}:`, { title: t.title, amount: t.amount });
         });
+      } else {
+        console.log('[DASHBOARD_DEBUG] No expense data found');
       }
 
       // Fetch active goals
