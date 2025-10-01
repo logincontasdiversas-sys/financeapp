@@ -91,13 +91,23 @@ export const SingleLineChart = ({
         return;
       }
 
+      // Filtrar transferências no JavaScript (pelo título)
+      const isTransfer = (t: any) => {
+        const title = (t?.title || '').toLowerCase();
+        return title.includes('transfer') || title.includes('transferência') || title.includes('transferencia');
+      };
+
       let monthlyData: MonthlyData[] = months.map((month, index) => {
         const monthTransactions = transactionData?.filter((t) => new Date(t.date).getMonth() === index) || [];
-        const hasSettled = monthTransactions.some((t: any) => t.status === 'settled');
+        
+        // Filtrar transferências
+        const filteredTransactions = monthTransactions.filter((t: any) => !isTransfer(t));
+        
+        const hasSettled = filteredTransactions.some((t: any) => t.status === 'settled');
         const isFutureMonth = index > currentMonth;
 
-        const totalAll = monthTransactions.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-        const totalSettled = monthTransactions
+        const totalAll = filteredTransactions.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+        const totalSettled = filteredTransactions
           .filter((t: any) => t.status === 'settled')
           .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
 
