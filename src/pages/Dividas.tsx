@@ -21,6 +21,7 @@ interface Debt {
   title: string;
   total_amount: number;
   paid_amount: number;
+  current_amount: number | null;
   due_date: string | null;
   monthly_interest: number;
   settled: boolean;
@@ -62,6 +63,7 @@ const Dividas = () => {
   const [formData, setFormData] = useState({
     title: "",
     total_amount: "",
+    current_amount: "",
     due_date: "",
     monthly_interest: "",
     image_url: "",
@@ -193,6 +195,7 @@ const Dividas = () => {
       const debtData = {
         title: formData.title,
         total_amount: parseFloat(formData.total_amount),
+        current_amount: formData.current_amount ? parseFloat(formData.current_amount) : null,
         due_date: formData.due_date || null,
         monthly_interest: parseFloat(formData.monthly_interest) || 0,
         category_id: formData.category_id || null, // Categoria padrão
@@ -241,6 +244,7 @@ const Dividas = () => {
     setFormData({
       title: debt.title,
       total_amount: debt.total_amount.toString(),
+      current_amount: debt.current_amount ? debt.current_amount.toString() : "",
       due_date: debt.due_date || "",
       monthly_interest: debt.monthly_interest.toString(),
       image_url: debt.image_url || "",
@@ -256,6 +260,7 @@ const Dividas = () => {
     setFormData({
       title: `${debt.title} (Cópia)`,
       total_amount: debt.total_amount.toString(),
+      current_amount: debt.current_amount ? debt.current_amount.toString() : "",
       due_date: debt.due_date || "",
       monthly_interest: debt.monthly_interest.toString(),
       image_url: debt.image_url || "",
@@ -463,6 +468,7 @@ const Dividas = () => {
     setFormData({
       title: "",
       total_amount: "",
+      current_amount: "",
       due_date: "",
       monthly_interest: "",
       image_url: "",
@@ -560,6 +566,17 @@ const Dividas = () => {
                   value={formData.total_amount}
                   onChange={(e) => setFormData({ ...formData, total_amount: e.target.value })}
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="current_amount">Valor Atual (opcional)</Label>
+                <Input
+                  id="current_amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.current_amount}
+                  onChange={(e) => setFormData({ ...formData, current_amount: e.target.value })}
+                  placeholder="Valor atual da dívida"
                 />
               </div>
               <div className="space-y-2">
