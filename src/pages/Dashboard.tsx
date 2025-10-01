@@ -234,7 +234,7 @@ const Dashboard = () => {
 
       const { data: prevMonthTransactions } = await supabase
         .from('transactions')
-        .select('amount, kind, status, payment_method')
+        .select('amount, kind, status')
         .eq('tenant_id', tenantId)
         .lte('date', prevMonthEndDateStr)
         .order('date', { ascending: true });
@@ -245,7 +245,7 @@ const Dashboard = () => {
           if (transaction.status === 'settled') {
             if (transaction.kind === 'income') {
               prevMonthBalance += Number(transaction.amount);
-            } else if (transaction.kind === 'expense' && transaction.payment_method !== 'credit_card') {
+            } else if (transaction.kind === 'expense') {
               prevMonthBalance -= Number(transaction.amount);
             }
           }
