@@ -21,7 +21,7 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { ImportCSV } from '@/components/ImportCSV';
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
 import { CategorySelect } from '@/components/ui/category-select';
-import { InlineEditText, InlineEditNumber, InlineEditDate, InlineEditSelect } from "@/components/ui/inline-edit";
+import { InlineEditText, InlineEditNumber, InlineEditDate, InlineEditSelect, InlineEditCategory } from "@/components/ui/inline-edit";
 import { createTransferCategory } from "@/utils/createTransferCategory";
 
 import { DespesasSummaryWithDateSync } from "@/components/dashboard/DespesasSummaryWithDateSync";
@@ -1554,10 +1554,12 @@ const Despesas = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      <span className="flex items-center gap-2">
-                        <span>{despesa.categories?.emoji}</span>
-                        <span>{despesa.categories?.name}</span>
-                      </span>
+                      <InlineEditCategory
+                        value={despesa.category_id || ""}
+                        categories={categories}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'category_id', value)}
+                        placeholder="Selecionar categoria"
+                      />
                     </TableCell>
                     <TableCell className="text-red-600 font-semibold">
                       <InlineEditNumber

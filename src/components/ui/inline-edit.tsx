@@ -296,3 +296,69 @@ export function InlineEditSelect({
     </span>
   );
 }
+
+interface Category {
+  id: string;
+  name: string;
+  emoji: string;
+}
+
+interface InlineEditCategoryProps {
+  value: string;
+  categories: Category[];
+  onSave: (value: string) => void;
+  className?: string;
+  placeholder?: string;
+}
+
+export function InlineEditCategory({ 
+  value, 
+  categories, 
+  onSave, 
+  className, 
+  placeholder = "Selecionar categoria"
+}: InlineEditCategoryProps) {
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleValueChange = (newValue: string) => {
+    if (newValue !== value) {
+      onSave(newValue);
+    }
+    setIsEditing(false);
+  };
+
+  const selectedCategory = categories.find(cat => cat.id === value);
+  const displayValue = selectedCategory ? `${selectedCategory.emoji} ${selectedCategory.name}` : placeholder;
+
+  if (isEditing) {
+    return (
+      <Select value={value} onValueChange={handleValueChange} open={isEditing} onOpenChange={setIsEditing}>
+        <SelectTrigger className="h-8 text-sm w-auto min-w-[150px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-background border z-50 overflow-y-auto max-h-[200px]">
+          {categories.map((category) => (
+            <SelectItem key={category.id} value={category.id}>
+              <span className="flex items-center gap-2">
+                <span>{category.emoji}</span>
+                <span>{category.name}</span>
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        "cursor-pointer hover:bg-muted/50 rounded px-2 py-1 min-h-[24px] inline-block transition-colors",
+        className
+      )}
+      onClick={() => setIsEditing(true)}
+    >
+      {displayValue}
+    </span>
+  );
+}
