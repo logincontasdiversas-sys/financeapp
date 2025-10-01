@@ -102,12 +102,16 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
       let filterEndDate: Date;
 
       if (startDate && endDate) {
-        // Usar datas do filtro, normalizando para start-of-day
+        // Usar datas do filtro, normalizando para start-of-day em Brasília
         filterStartDate = new Date(startDate);
         filterStartDate.setHours(0, 0, 0, 0);
+        // Ajustar para timezone de Brasília (UTC-3)
+        filterStartDate.setUTCHours(filterStartDate.getUTCHours() - 3);
         
         filterEndDate = new Date(endDate);
         filterEndDate.setHours(23, 59, 59, 999);
+        // Ajustar para timezone de Brasília (UTC-3)
+        filterEndDate.setUTCHours(filterEndDate.getUTCHours() - 3);
       } else {
         // Usar mês atual (Brasília), normalizando para start-of-day
         filterStartDate = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);

@@ -117,10 +117,14 @@ const Dashboard = () => {
         
         const startOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
         startOfMonth.setHours(0, 0, 0, 0);
+        // Ajustar para timezone de Brasília (UTC-3)
+        startOfMonth.setUTCHours(startOfMonth.getUTCHours() - 3);
         startDate = startOfMonth.toISOString().split('T')[0];
         
         const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
         endOfMonth.setHours(23, 59, 59, 999);
+        // Ajustar para timezone de Brasília (UTC-3)
+        endOfMonth.setUTCHours(endOfMonth.getUTCHours() - 3);
         endDate = endOfMonth.toISOString().split('T')[0];
         
         console.log('[DASHBOARD_DEBUG] Using current month (Brasília - normalized):', { 
