@@ -94,9 +94,12 @@ export const BanksSection = ({ startDate, endDate }: BanksSectionProps) => {
           let monthlyExpense = 0;
           let settledCount = 0;
 
-      // Usar datas do filtro ou mês atual
-      const filterStartDate = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      const filterEndDate = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+      // Usar datas do filtro ou mês atual (Brasília)
+      const now = new Date();
+      const brasiliaDate = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+      
+      const filterStartDate = startDate || new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
+      const filterEndDate = endDate || new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
       
       console.log('[BANKS_DEBUG] Filter dates:', { 
         filterStartDate: filterStartDate.toISOString(), 

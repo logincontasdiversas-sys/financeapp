@@ -121,7 +121,14 @@ const Dashboard = () => {
         const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
         endDate = endOfMonth.toISOString().split('T')[0];
         
-        console.log('[DASHBOARD_DEBUG] Using current month:', { startDate, endDate });
+        console.log('[DASHBOARD_DEBUG] Using current month (Brasília):', { 
+          now: now.toISOString(),
+          brasiliaDate: brasiliaDate.toISOString(),
+          startDate, 
+          endDate,
+          brasiliaYear: brasiliaDate.getFullYear(),
+          brasiliaMonth: brasiliaDate.getMonth() + 1
+        });
       }
 
       // Fetch income transactions (settled only, excluding transfers)
@@ -145,6 +152,13 @@ const Dashboard = () => {
         tenantId, 
         startDate, 
         endDate 
+      });
+      console.log('[DASHBOARD_DEBUG] Date filter being used:', { 
+        hasDateFilter: !!dateFilter,
+        dateFilterFrom: dateFilter?.from,
+        dateFilterTo: dateFilter?.to,
+        startDate,
+        endDate
       });
       
       // Temporariamente desabilitar filtro de transferências para debug
