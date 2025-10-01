@@ -578,14 +578,14 @@ const Dividas = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="current_amount">Valor Atual (opcional)</Label>
+                <Label htmlFor="current_amount">Desconto/Abatimento (opcional)</Label>
                 <Input
                   id="current_amount"
                   type="number"
                   step="0.01"
                   value={formData.current_amount}
                   onChange={(e) => setFormData({ ...formData, current_amount: e.target.value })}
-                  placeholder="Valor atual da dívida"
+                  placeholder="Ex: valor de troca, entrada, desconto"
                 />
               </div>
               <div className="space-y-2">
