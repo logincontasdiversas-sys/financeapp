@@ -734,21 +734,18 @@ const Dividas = () => {
                   <span>Total: {formatCurrency(debt.total_amount)}</span>
                 </div>
                 {debt.current_amount && debt.current_amount > 0 && (
-                  <div className="text-sm text-muted-foreground">
-                    Valor Efetivo: {formatCurrency(debt.total_amount - debt.current_amount)} (após desconto)
-                  </div>
-                )}
-                {debt.current_amount && debt.current_amount > 0 && (
-                  <div className="text-sm text-blue-600">
-                    Valor Atual: {formatCurrency(debt.current_amount)} (descontado)
+                  <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                    Desconto: {formatCurrency(debt.current_amount)} → Efetivo: {formatCurrency(debt.total_amount - debt.current_amount)}
                   </div>
                 )}
                 <Progress value={getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0))} className="bg-red-100" />
-                <div className="text-center text-sm text-muted-foreground">
-                  {getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0)).toFixed(1)}% quitado
-                </div>
-                <div className="text-sm text-red-600 font-semibold">
-                  Restam: {formatCurrency((debt.total_amount - (debt.current_amount || 0)) - debt.paid_amount)}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {getProgress(debt.paid_amount, debt.total_amount - (debt.current_amount || 0)).toFixed(1)}% quitado
+                  </span>
+                  <span className="text-red-600 font-semibold">
+                    Restam: {formatCurrency((debt.total_amount - (debt.current_amount || 0)) - debt.paid_amount)}
+                  </span>
                 </div>
               </div>
               
