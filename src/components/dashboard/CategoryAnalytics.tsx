@@ -276,12 +276,6 @@ const CategoryAnalytics = ({ categoryId }: CategoryAnalyticsProps) => {
                 <span className="text-lg">{category.emoji}</span>
                 {category.categoryName}
               </CardTitle>
-              <div className="flex items-center gap-1">
-                {getTrendIcon(category.growthRate)}
-                <span className={`text-xs ${getTrendColor(category.growthRate)}`}>
-                  {category.growthRate > 0 ? '+' : ''}{category.growthRate.toFixed(1)}%
-                </span>
-              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
