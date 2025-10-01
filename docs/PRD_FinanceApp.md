@@ -301,11 +301,19 @@ git push origin main  # Deploy automático via GitHub Integration
 - **Cursor Auto-commit**: Cursor pode fazer commit automático ao aceitar mudanças
 - **Limite gratuito**: 100 deploys/dia - evitar desperdício com deploys duplos
 
-**🔧 SOLUÇÃO PARA DEPLOYS DUPLOS**:
-1. **Desabilitar auto-commit no Cursor**: Configurações → Git → Auto-commit desabilitado
-2. **Usar apenas git push**: Nunca usar `npx vercel --prod` manualmente
-3. **Verificar commits**: `git log --oneline -3` antes de fazer push
-4. **Monitorar Vercel**: Verificar se há apenas 1 deploy por push
+**🔧 ESTRATÉGIA DE DEPLOY AUTOMÁTICO ÚNICO**:
+1. **Deploy automático**: Após cada edição, fazer commit + push automaticamente
+2. **Apenas 1 deploy**: Garantir que cada alteração gere apenas 1 deploy
+3. **Evitar duplicação**: Nunca usar `npx vercel --prod` manualmente
+4. **Fluxo padronizado**: Sempre `git add .` → `git commit` → `git push origin main`
+5. **Monitoramento**: Verificar se há apenas 1 deploy por push no Vercel
+
+**⚠️ PROBLEMA IDENTIFICADO: Deploy Hook Duplicado**:
+- **GitHub Integration**: Deploy automático via push
+- **Deploy Hook**: Deploy adicional desnecessário
+- **Solução**: Desabilitar Deploy Hook no Vercel Dashboard
+- **Configuração**: Settings → Git → Desabilitar Deploy Hook
+- **Manter apenas**: GitHub Integration ativo
 
 ### Supabase
 ```bash
