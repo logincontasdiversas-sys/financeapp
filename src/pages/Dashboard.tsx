@@ -117,14 +117,10 @@ const Dashboard = () => {
         
         const startOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
         startOfMonth.setHours(0, 0, 0, 0);
-        // Ajustar para timezone de Brasília (UTC-3)
-        startOfMonth.setUTCHours(startOfMonth.getUTCHours() - 3);
         startDate = startOfMonth.toISOString().split('T')[0];
         
         const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
         endOfMonth.setHours(23, 59, 59, 999);
-        // Ajustar para timezone de Brasília (UTC-3)
-        endOfMonth.setUTCHours(endOfMonth.getUTCHours() - 3);
         endDate = endOfMonth.toISOString().split('T')[0];
         
         console.log('[DASHBOARD_DEBUG] Using current month (Brasília - normalized):', { 
@@ -161,6 +157,10 @@ const Dashboard = () => {
         startDate, 
         endDate 
       });
+      
+      if (incomeError) {
+        console.error('[DASHBOARD_DEBUG] Income query error:', incomeError);
+      }
       console.log('[DASHBOARD_DEBUG] Date filter being used:', { 
         hasDateFilter: !!dateFilter,
         dateFilterFrom: dateFilter?.from,
@@ -169,8 +169,11 @@ const Dashboard = () => {
         endDate
       });
       
-      // Temporariamente desabilitar filtro de transferências para debug
-      const filteredIncomeData = incomeData || [];
+      // Filtrar transferências entre bancos pelo título
+      const filteredIncomeData = (incomeData || []).filter((item: any) => {
+        const title = (item?.title || '').toLowerCase();
+        return !(title.includes('transfer') || title.includes('transferência') || title.includes('transferencia'));
+      });
       
       // Debug: verificar se há receitas sem filtro
       console.log('[DASHBOARD_DEBUG] All income data (before filter):', incomeData);
@@ -197,6 +200,10 @@ const Dashboard = () => {
         startDate, 
         endDate 
       });
+      
+      if (expenseError) {
+        console.error('[DASHBOARD_DEBUG] Expense query error:', expenseError);
+      }
       
       // Log individual expense transactions
       if (expenseData) {
@@ -251,7 +258,7 @@ const Dashboard = () => {
       // Simplificar cálculo do saldo para usar apenas o período filtrado
       const totalInitialBankBalance = banksData?.reduce((sum, bank) => sum + Number(bank.balance || 0), 0) || 0;
       
-      // Calcular saldo baseado apenas no período filtrado
+      // Calcular saldo baseado no saldo inicial + receitas - despesas do período
       const totalBalance = totalInitialBankBalance + totalReceitas - totalDespesas;
       
       console.log('[DASHBOARD_DEBUG] Simplified balance calculation:', {
@@ -269,7 +276,7 @@ const Dashboard = () => {
         allTransactionsCount: allTransactionsUntilNow?.length || 0
       });
 
-      // Simplificar cálculo do saldo do mês passado
+      // Calcular saldo do mês passado baseado no saldo inicial dos bancos
       const prevMonthBalance = totalInitialBankBalance;
       
       console.log('[DASHBOARD_DEBUG] Previous month balance:', {
