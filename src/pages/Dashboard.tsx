@@ -255,6 +255,15 @@ const Dashboard = () => {
         expenseDataCount: expenseData?.length || 0
       });
       
+      console.log('[DASHBOARD_DEBUG] Detailed calculation:', {
+        totalReceitas: totalReceitas,
+        totalDespesas: totalDespesas,
+        totalReceitasType: typeof totalReceitas,
+        totalDespesasType: typeof totalDespesas,
+        isNaNReceitas: isNaN(totalReceitas),
+        isNaNDespesas: isNaN(totalDespesas)
+      });
+      
       // Simplificar cálculo do saldo para usar apenas o período filtrado
       const totalInitialBankBalance = banksData?.reduce((sum, bank) => sum + Number(bank.balance || 0), 0) || 0;
       
@@ -283,14 +292,18 @@ const Dashboard = () => {
         prevMonthBalance
       });
 
-      setStats({
+      const newStats = {
         totalReceitas,
         totalDespesas,
         saldo: totalBalance,
         saldoMesPassado: prevMonthBalance,
         metasAtivas: goalsData?.length || 0,
         dividasAbertas: debtsData?.length || 0,
-      });
+      };
+      
+      console.log('[DASHBOARD_DEBUG] Setting new stats:', newStats);
+      
+      setStats(newStats);
       
     } catch (error) {
       logger.error('DASHBOARD', 'Error loading data', { error });
