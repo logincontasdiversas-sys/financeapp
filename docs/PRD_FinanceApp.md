@@ -274,6 +274,249 @@ POST /functions/v1/send-push
 - Buttons com variantes
 - Charts responsivos
 
+## 💰 Lógica de Cálculo de Saldo Sequencial e Dinâmico
+
+### 🎯 Conceito Principal
+O sistema implementa um **cálculo de saldo sequencial** onde o saldo inicial do banco é usado apenas uma vez (no primeiro período com transações), e todos os períodos subsequentes calculam seu saldo baseado no saldo final do período anterior.
+
+### 📋 Regras Fundamentais
+
+#### 1. **Identificação do Primeiro Período**
+- **Critério**: Período que contém a transação mais antiga do usuário
+- **Implementação**: Função `checkIfFirstMonth(tenantId, startDate)`
+- **Lógica**: Busca a transação mais antiga e verifica se está no período atual
+
+#### 2. **Cálculo do Primeiro Período**
+```typescript
+// PRIMEIRO PERÍODO: Saldo inicial + receitas - despesas
+totalBalance = saldoInicialBanco + receitasPeriodo - despesasPeriodo
+saldoMesPassado = saldoInicialBanco
+```
+
+#### 3. **Cálculo dos Períodos Subsequentes**
+```typescript
+// PERÍODOS SUBSEQUENTES: Saldo anterior + receitas - despesas
+totalBalance = saldoFinalPeriodoAnterior + receitasPeriodo - despesasPeriodo
+saldoMesPassado = saldoFinalPeriodoAnterior
+```
+
+### 🔄 Cálculo Dinâmico Baseado em Filtros
+
+#### **Função Principal**: `getPreviousPeriodBalance(tenantId, currentStartDate, currentEndDate)`
+
+#### **Lógica de Período Anterior**:
+1. **Duração do período atual**: `periodDuration = currentEnd - currentStart`
+2. **Fim do período anterior**: `previousEnd = currentStart - 1 dia`
+3. **Início do período anterior**: `previousStart = previousEnd - periodDuration`
+
+#### **Exemplos Práticos**:
+
+##### **Dashboard Nativo (Mês Atual - Outubro)**:
+- **Período atual**: 01/10/2025 a 31/10/2025
+- **Período anterior**: 01/09/2025 a 30/09/2025
+- **Saldo mostrado**: Saldo acumulado até 30/09/2025
+
+##### **Filtro "Mês Passado" (Setembro)**:
+- **Período atual**: 01/09/2025 a 30/09/2025
+- **Período anterior**: 01/08/2025 a 31/08/2025
+- **Saldo mostrado**: Saldo acumulado até 31/08/2025
+
+##### **Filtro "Agosto"**:
+- **Período atual**: 01/08/2025 a 31/08/2025
+- **Período anterior**: 01/07/2025 a 31/07/2025
+- **Saldo mostrado**: Saldo acumulado até 31/07/2025
+
+##### **Período Personalizado (15/09 a 25/09)**:
+- **Período atual**: 15/09/2025 a 25/09/2025 (11 dias)
+- **Período anterior**: 04/09/2025 a 14/09/2025 (11 dias)
+- **Saldo mostrado**: Saldo acumulado até 14/09/2025
+
+### 🧮 Fórmula de Cálculo Acumulado
+
+```typescript
+// Para qualquer período anterior:
+saldoAcumulado = saldoInicialBanco + Σ(receitas) - Σ(despesas)
+// Onde Σ = soma de todas as transações desde o início até o final do período anterior
+```
+
+### 🚫 Filtros Aplicados
+
+#### **Transferências Entre Bancos Excluídas**:
+```typescript
+const isRealTransfer = (
+  title.includes('transferência entre bancos') ||
+  title.includes('transferencia entre bancos') ||
+  title.includes('transfer between banks') ||
+  (title.includes('transferência de') && title.includes('para')) ||
+  (title.includes('transferencia de') && title.includes('para'))
+);
+```
+
+#### **Apenas Transações Liquidadas**:
+```sql
+.eq('status', 'settled')
+```
+
+### 📊 Exemplo Sequencial Completo
+
+#### **Cenário**: Usuário com saldo inicial R$ 1.000,00
+
+| Período | Receitas | Despesas | Saldo Anterior | Saldo Final | Saldo Mês Passado |
+|---------|----------|----------|----------------|-------------|-------------------|
+| **Agosto** (1º) | R$ 2.000 | R$ 1.100 | R$ 1.000 | R$ 1.900 | R$ 1.000 |
+| **Setembro** | R$ 1.500 | R$ 1.200 | R$ 1.900 | R$ 2.200 | R$ 1.900 |
+| **Outubro** | R$ 800 | R$ 1.000 | R$ 2.200 | R$ 2.000 | R$ 2.200 |
+
+### 🔧 Implementação Técnica
+
+#### **Arquivos Principais**:
+- **`src/pages/Dashboard.tsx`**: Lógica principal de cálculo
+- **`src/components/dashboard/FinancialSummary.tsx`**: Exibição dos valores
+
+#### **Funções Chave**:
+1. **`checkIfFirstMonth()`**: Identifica se é o primeiro período
+2. **`getPreviousPeriodBalance()`**: Calcula saldo do período anterior
+3. **`loadDashboardData()`**: Orquestra todo o cálculo
+
+#### **Estados Gerenciados**:
+```typescript
+const [stats, setStats] = useState({
+  totalBalance: 0,        // Saldo total do período
+  prevMonthBalance: 0,    // Saldo do período anterior
+  totalReceitas: 0,       // Receitas do período
+  totalDespesas: 0,       // Despesas do período
+  // ... outros campos
+});
+```
+
+### ⚡ Performance e Otimização
+
+#### **Queries Otimizadas**:
+- **Uma query por período**: Busca todas as transações até o final do período anterior
+- **Filtros no banco**: Aplicados via Supabase para reduzir dados transferidos
+- **Cache local**: Resultados armazenados para evitar recálculos desnecessários
+
+#### **Tratamento de Erros**:
+- **Fallback para saldo inicial**: Em caso de erro, retorna saldo inicial do banco
+- **Logs detalhados**: Console logs para debug e monitoramento
+- **Validação de dados**: Verificação de existência de transações
+
+### 🎯 Benefícios da Implementação
+
+1. **Precisão Histórica**: Saldo sempre reflete o estado real acumulado
+2. **Flexibilidade de Filtros**: Funciona com qualquer período selecionado
+3. **Consistência**: Mesma lógica aplicada independente do filtro
+4. **Performance**: Cálculos otimizados e cache inteligente
+5. **Manutenibilidade**: Código modular e bem documentado
+
+## 📊 Parâmetros de Gráficos e Visualizações
+
+### 1. Gráfico de Barras Mensais (MonthlyChart)
+**Localização**: `src/components/dashboard/MonthlyChart.tsx`  
+**Uso**: Dashboard principal - "Evolução das Receitas e Despesas"
+
+#### Parâmetros Visuais
+- **Container**: `h-80` (320px), `ResponsiveContainer` 100% width/height
+- **Margens**: `{ top: 5, right: 30, left: 20, bottom: 5 }`
+- **Barras**: `barSize={80}`, `barCategoryGap="2%"`, `radius={[4, 4, 0, 0]}`
+- **Cores**:
+  - Receitas Pagas: `#10b981` (Verde)
+  - Despesas Pagas: `#ef4444` (Vermelho) 
+  - Receitas Pendentes: `#86efac` (Verde claro)
+  - Despesas Pendentes: `#fca5a5` (Vermelho claro)
+- **Transparência Futura**: 
+  - Receitas Pagas: `rgba(16, 185, 129, 0.6)` (Verde 60% opacidade)
+  - Despesas Pagas: `rgba(239, 68, 68, 0.6)` (Vermelho 60% opacidade)
+  - Receitas Pendentes: `rgba(134, 239, 172, 0.6)` (Verde claro 60% opacidade)
+  - Despesas Pendentes: `rgba(252, 165, 165, 0.6)` (Vermelho claro 60% opacidade)
+- **Eixos**: X rotacionado -45°, Y formatado em milhares (R$ Xk)
+- **Legenda**: Customizada com 4 itens únicos, sem duplicação
+- **Empilhamento**: `stackId="receitas"` e `stackId="despesas"`
+
+### 2. Gráfico de Linha Simples (SingleLineChart)
+**Localização**: `src/components/dashboard/SingleLineChart.tsx`  
+**Uso**: Páginas de Receitas/Despesas - "Evolução ao Longo do Ano"
+
+#### Parâmetros Visuais
+- **Container**: `h-80` (320px), `ResponsiveContainer` 100% width/height
+- **Margens**: `{ top: 5, right: 30, left: 20, bottom: 5 }`
+- **Linhas**:
+  - Sólida: `strokeWidth={3}`, cor dinâmica via prop
+  - Projetada: `strokeWidth={3}`, `strokeOpacity={0.4}`, `strokeDasharray="4 4"`
+- **Pontos**: Raio 4px, cor dinâmica, opacidade 0.4 para projetada
+- **Eixos**: `fontSize={12}`, formatação `R$${v}`
+- **Legenda**: Customizada abaixo do gráfico com indicadores coloridos
+
+### 3. Gráfico de Pizza - Categorias (CategoryPieChart)
+**Localização**: `src/components/dashboard/CategoryPieChart.tsx`  
+**Uso**: Dashboard - "Distribuição de Gastos por Categoria"
+
+#### Parâmetros Visuais
+- **Container**: `height={400}`, layout grid `md:grid-cols-3`
+- **Pizza**: `outerRadius={140}`, `innerRadius={0}`, `strokeWidth={2}`
+- **Cores da Paleta**:
+  ```javascript
+  ['#4472C4', '#0F4761', '#E15759', '#C5504B', '#70AD47', 
+   '#F79646', '#9966CC', '#4BACC6', '#8C8C8C']
+  ```
+- **Labels**: `labelLine={false}`, apenas porcentagem `toFixed(0)%`
+- **Tooltip**: `bg-background border rounded-lg p-3 shadow-md max-w-xs`
+- **Legenda**: Lista vertical com círculos coloridos `w-3 h-3 rounded-full`
+
+### 4. Gráfico de Pizza - Despesas (CategoryExpenseChart)
+**Localização**: `src/components/dashboard/CategoryExpenseChart.tsx`  
+**Uso**: Páginas de Despesas - "Distribuição de Gastos por Categoria"
+
+#### Parâmetros Visuais
+- **Container**: `height={500}`, layout grid `md:grid-cols-3`
+- **Margens**: `{ top: 20, right: 80, bottom: 20, left: 80 }`
+- **Pizza**: `outerRadius={140}`, `innerRadius={0}`, `strokeWidth={2}`
+- **Cores**: Mesma paleta do CategoryPieChart
+- **Labels**: Customizados via `CustomLabel`, apenas se `percentage >= 3`
+- **Tooltip**: Mesmo estilo do CategoryPieChart
+- **Legenda**: Lista vertical com indicadores e valores formatados
+
+### 5. Configurações Globais dos Gráficos
+
+#### Biblioteca e Framework
+- **Recharts**: BarChart, LineChart, PieChart, ResponsiveContainer
+- **Tema**: Cores baseadas em CSS variables (`hsl(var(--muted))`)
+- **Responsividade**: `ResponsiveContainer` com `width="100%"`
+
+#### Formatação de Dados
+- **Moeda**: `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`
+- **Valores Grandes**: `R$ ${(value / 1000).toFixed(0)}k`
+- **Porcentagens**: `toFixed(1)` para uma casa decimal
+
+#### Performance e Otimização
+- **Debounce**: `debounceMs: 700` para realtime sync
+- **Loading States**: `animate-pulse` com skeleton
+- **Cache**: Queries otimizadas para evitar PGRST201 errors
+- **Animações**: `isAnimationActive={true}` quando aplicável
+
+#### Acessibilidade
+- **Contraste**: Cores com contraste adequado
+- **Legendas**: Sempre presentes e descritivas
+- **Tooltips**: Informações detalhadas ao hover
+- **Estados Vazios**: Mensagens descritivas quando sem dados
+
+### 6. Manutenção e Extensibilidade
+
+#### Cores Customizáveis
+- **CSS Variables**: `hsl(var(--muted))` para temas
+- **Paleta Centralizada**: Arrays de cores reutilizáveis
+- **Transparência**: Valores RGBA para flexibilidade
+
+#### Configuração Flexível
+- **Props**: Títulos, cores e comportamentos via props
+- **Filtros**: Suporte a filtros de data customizados
+- **Períodos**: Suporte a períodos futuros com transparência
+
+#### Debugging
+- **Console Logs**: Logs detalhados para debugging
+- **Error Handling**: Try/catch com mensagens específicas
+- **Validação**: Verificação de dados antes da renderização
+
 ## 🔧 Scripts e Comandos
 
 ### Desenvolvimento

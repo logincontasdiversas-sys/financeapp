@@ -38,6 +38,7 @@ const Dashboard = () => {
     metasAtivas: 0,
     dividasAbertas: 0,
   });
+  
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<{ from: Date | undefined; to: Date | undefined } | null>(null);
 
@@ -80,13 +81,142 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
+    console.log('[DASHBOARD_DEBUG] useEffect triggered:', {
+      hasUser: !!user,
+      hasTenantId: !!tenantId,
+      dateFilter,
+      dateFilterFrom: dateFilter?.from,
+      dateFilterTo: dateFilter?.to
+    });
+    
     if (user && tenantId) {
       loadDashboardData();
     }
   }, [user, tenantId, dateFilter]);
 
   const handleDateFilterChange = (filter: { from: Date | undefined; to: Date | undefined } | null) => {
+    console.log('[DASHBOARD] Date filter changed:', filter);
     setDateFilter(filter);
+  };
+
+  // Função para verificar se é o primeiro período de uso do sistema
+  const checkIfFirstMonth = async (tenantId: string, startDate: string): Promise<boolean> => {
+    try {
+      // Buscar a transação mais antiga do sistema
+      const { data: oldestTransaction } = await supabase
+        .from('transactions')
+        .select('date')
+        .eq('tenant_id', tenantId)
+        .order('date', { ascending: true })
+        .limit(1);
+      
+      if (!oldestTransaction || oldestTransaction.length === 0) {
+        // Se não há transações, é o primeiro período
+        return true;
+      }
+      
+      // Verificar se o período atual contém a transação mais antiga
+      const oldestDate = new Date(oldestTransaction[0].date);
+      const currentStart = new Date(startDate);
+      const currentEnd = new Date(startDate);
+      currentEnd.setMonth(currentEnd.getMonth() + 1);
+      currentEnd.setDate(0); // Último dia do período
+      
+      // Se a transação mais antiga está no período atual, é o primeiro período
+      const isFirstMonth = oldestDate >= currentStart && oldestDate <= currentEnd;
+      
+      console.log('[DASHBOARD_DEBUG] Checking if first period:', {
+        startDate,
+        oldestDate: oldestDate.toISOString().split('T')[0],
+        currentStart: currentStart.toISOString().split('T')[0],
+        currentEnd: currentEnd.toISOString().split('T')[0],
+        isFirstMonth
+      });
+      
+      return isFirstMonth;
+    } catch (error) {
+      console.error('[DASHBOARD_DEBUG] Error checking first month:', error);
+      return true; // Em caso de erro, assumir primeiro período
+    }
+  };
+
+  // Função para calcular saldo cumulativo do período anterior (baseado no filtro)
+  const getPreviousPeriodBalance = async (tenantId: string, currentStartDate: string, currentEndDate: string): Promise<number> => {
+    try {
+      // Busca saldo inicial do banco
+      const { data: banksData } = await supabase
+        .from('banks')
+        .select('balance')
+        .eq('tenant_id', tenantId);
+      
+      const totalInitialBankBalance = banksData?.reduce((sum, bank) => sum + Number(bank.balance || 0), 0) || 0;
+
+      // Calcular período anterior baseado no filtro atual
+      const currentStart = new Date(currentStartDate);
+      const currentEnd = new Date(currentEndDate);
+      
+      // Calcular duração do período atual
+      const periodDuration = currentEnd.getTime() - currentStart.getTime();
+      
+      // Período anterior = mesmo tamanho, terminando no dia anterior ao início do período atual
+      const previousEnd = new Date(currentStart);
+      previousEnd.setDate(previousEnd.getDate() - 1);
+      
+      const previousStart = new Date(previousEnd);
+      previousStart.setTime(previousStart.getTime() - periodDuration);
+      
+      const startStr = previousStart.toISOString().split('T')[0];
+      const endStr = previousEnd.toISOString().split('T')[0];
+
+      console.log('[DASHBOARD_DEBUG] Calculando saldo período anterior:', { 
+        currentPeriod: { start: currentStartDate, end: currentEndDate },
+        previousPeriod: { start: startStr, end: endStr }
+      });
+
+      // Transações desde o início até o final do período anterior (acumulado)
+      const { data: previousTransactions, error } = await supabase
+        .from('transactions')
+        .select('amount, kind, title')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'settled')
+        .lte('date', endStr);
+
+      if (error) {
+        console.error('[DASHBOARD_DEBUG] Erro na query:', error);
+        return totalInitialBankBalance; // Fallback pro inicial
+      }
+
+      // Filtrar transferências entre bancos
+      const filteredTransactions = previousTransactions?.filter(item => {
+        const title = (item.title || '').toLowerCase();
+        const isRealTransfer = (
+          title.includes('transferência entre bancos') ||
+          title.includes('transferencia entre bancos') ||
+          title.includes('transfer between banks') ||
+          (title.includes('transferência de') && title.includes('para')) ||
+          (title.includes('transferencia de') && title.includes('para'))
+        );
+        return !isRealTransfer;
+      }) || [];
+
+      // Entradas - saídas acumuladas até o final do período anterior
+      const entradas = filteredTransactions.filter(t => t.kind === 'income').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const saídas = filteredTransactions.filter(t => t.kind === 'expense').reduce((sum, t) => sum + Number(t.amount || 0), 0);
+      const saldoAcumulado = totalInitialBankBalance + entradas - saídas;
+
+      console.log('[DASHBOARD_DEBUG] Saldo período anterior calculado:', { 
+        totalInitialBankBalance,
+        entradas, 
+        saídas, 
+        saldoAcumulado,
+        calculation: `${totalInitialBankBalance} + ${entradas} - ${saídas} = ${saldoAcumulado}`
+      });
+
+      return saldoAcumulado;
+    } catch (error) {
+      console.error('[DASHBOARD_DEBUG] Error calculating previous period balance:', error);
+      return 0; // Em caso de erro, retornar 0
+    }
   };
 
   const loadDashboardData = async () => {
@@ -110,16 +240,18 @@ const Dashboard = () => {
         console.log('[DASHBOARD_DEBUG] Date filter object:', dateFilter);
         console.log('[DASHBOARD_DEBUG] Date filter from:', dateFilter.from);
         console.log('[DASHBOARD_DEBUG] Date filter to:', dateFilter.to);
+        console.log('[DASHBOARD_DEBUG] Date filter from ISO:', dateFilter.from.toISOString());
+        console.log('[DASHBOARD_DEBUG] Date filter to ISO:', dateFilter.to.toISOString());
       } else {
-        // Get current month transactions using Brasília timezone
-        const now = new Date();
-        const brasiliaDate = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-        
-        const startOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
+      // Get current month transactions using Brasília timezone
+      const now = new Date();
+      const brasiliaDate = new Date(now.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+      
+      const startOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), 1);
         startOfMonth.setHours(0, 0, 0, 0);
         startDate = startOfMonth.toISOString().split('T')[0];
-        
-        const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
+      
+      const endOfMonth = new Date(brasiliaDate.getFullYear(), brasiliaDate.getMonth() + 1, 0);
         endOfMonth.setHours(23, 59, 59, 999);
         endDate = endOfMonth.toISOString().split('T')[0];
         
@@ -136,6 +268,14 @@ const Dashboard = () => {
       }
 
       // Fetch income transactions (settled only, excluding transfers)
+      console.log('[DASHBOARD_DEBUG] Executing income query with params:', {
+        kind: 'income',
+        status: 'settled',
+        tenantId,
+        startDate,
+        endDate
+      });
+      
       const { data: incomeData, error: incomeError } = await supabase
         .from('transactions')
         .select(`
@@ -166,13 +306,31 @@ const Dashboard = () => {
         dateFilterFrom: dateFilter?.from,
         dateFilterTo: dateFilter?.to,
         startDate,
-        endDate
+        endDate,
+        dateFilterType: typeof dateFilter,
+        dateFilterFromType: typeof dateFilter?.from,
+        dateFilterToType: typeof dateFilter?.to
       });
       
-      // Filtrar transferências entre bancos pelo título
+      // Filtrar transferências entre bancos pelo título (apenas transferências reais entre bancos)
       const filteredIncomeData = (incomeData || []).filter((item: any) => {
         const title = (item?.title || '').toLowerCase();
-        return !(title.includes('transfer') || title.includes('transferência') || title.includes('transferencia'));
+        
+        // Filtros mais específicos para transferências reais entre bancos
+        // NÃO filtrar TRANSFERENCIA PIX, apenas transferências entre bancos
+        const isRealTransfer = (
+          title.includes('transferência entre bancos') ||
+          title.includes('transferencia entre bancos') ||
+          title.includes('transfer between banks') ||
+          (title.includes('transferência de') && title.includes('para')) ||
+          (title.includes('transferencia de') && title.includes('para'))
+        );
+        
+        if (isRealTransfer) {
+          console.log('[DASHBOARD_DEBUG] 🚫 Excluindo transferência real:', { title: item.title, amount: item.amount });
+        }
+        
+        return !isRealTransfer;
       });
       
       // Debug: verificar se há receitas sem filtro
@@ -183,6 +341,14 @@ const Dashboard = () => {
       console.log('[DASHBOARD_DEBUG] Filtered income data:', filteredIncomeData);
 
       // Fetch expense transactions (settled only)
+      console.log('[DASHBOARD_DEBUG] Executing expense query with params:', {
+        kind: 'expense',
+        status: 'settled',
+        tenantId,
+        startDate,
+        endDate
+      });
+      
       const { data: expenseData, error: expenseError } = await supabase
         .from('transactions')
         .select('amount, status, title')
@@ -216,24 +382,36 @@ const Dashboard = () => {
       }
 
       // Fetch active goals
-      const { data: goalsData } = await supabase
+      const { data: goalsData, error: goalsError } = await supabase
         .from('goals')
         .select('id')
         .eq('tenant_id', tenantId)
         .eq('completed', false);
 
+      if (goalsError) {
+        console.error('[DASHBOARD_DEBUG] Goals query error:', goalsError);
+      }
+
       // Fetch open debts
-      const { data: debtsData } = await supabase
+      const { data: debtsData, error: debtsError } = await supabase
         .from('debts')
         .select('id')
         .eq('tenant_id', tenantId)
         .eq('settled', false);
 
+      if (debtsError) {
+        console.error('[DASHBOARD_DEBUG] Debts query error:', debtsError);
+      }
+
       // Fetch banks to get initial balances
-      const { data: banksData } = await supabase
+      const { data: banksData, error: banksError } = await supabase
         .from('banks')
         .select('balance')
         .eq('tenant_id', tenantId);
+
+      if (banksError) {
+        console.error('[DASHBOARD_DEBUG] Banks query error:', banksError);
+      }
 
       // Calculate totals for settled transactions only
       const totalReceitas = filteredIncomeData?.reduce((sum, item) => {
@@ -264,29 +442,56 @@ const Dashboard = () => {
         isNaNDespesas: isNaN(totalDespesas)
       });
       
-      // Simplificar cálculo do saldo para usar apenas o período filtrado
+      // Saldo inicial dos bancos (usado APENAS no primeiro mês de uso do sistema)
       const totalInitialBankBalance = banksData?.reduce((sum, bank) => sum + Number(bank.balance || 0), 0) || 0;
       
-      // Calcular saldo baseado no saldo inicial + receitas - despesas do período
-      const totalBalance = totalInitialBankBalance + totalReceitas - totalDespesas;
+      // Verificar se é o primeiro mês de uso do sistema
+      // O primeiro mês é aquele que contém a transação mais antiga
+      const isFirstMonth = await checkIfFirstMonth(tenantId, startDate);
       
-      console.log('[DASHBOARD_DEBUG] Simplified balance calculation:', {
-        totalInitialBankBalance,
+      let totalBalance: number;
+      let prevMonthBalance: number;
+      
+      if (isFirstMonth) {
+        // PRIMEIRO MÊS: Saldo inicial + receitas - despesas do período
+        // O saldo inicial é usado APENAS uma vez, no primeiro mês
+        totalBalance = totalInitialBankBalance + totalReceitas - totalDespesas;
+        prevMonthBalance = totalInitialBankBalance;
+        
+        console.log('[DASHBOARD_DEBUG] FIRST MONTH calculation:', {
+          totalInitialBankBalance,
+          totalReceitas,
+          totalDespesas,
+          totalBalance,
+          calculation: `${totalInitialBankBalance} + ${totalReceitas} - ${totalDespesas} = ${totalBalance}`,
+          note: 'FIRST MONTH: initial balance + period transactions (initial balance used only once)'
+        });
+      } else {
+        // MESES SUBSEQUENTES: Calcular o saldo final do período anterior
+        const previousPeriodBalance = await getPreviousPeriodBalance(tenantId, startDate, endDate);
+        totalBalance = previousPeriodBalance + totalReceitas - totalDespesas;
+        prevMonthBalance = previousPeriodBalance;
+        
+      console.log('[DASHBOARD_DEBUG] SUBSEQUENT PERIOD calculation:', {
+        previousPeriodBalance,
         totalReceitas,
         totalDespesas,
-        totalBalance
+        totalBalance,
+        calculation: `${previousPeriodBalance} + ${totalReceitas} - ${totalDespesas} = ${totalBalance}`,
+        note: 'SUBSEQUENT PERIOD: previous period final balance + current period transactions'
       });
+      }
       
-      console.log('[DASHBOARD_DEBUG] Final balance calculation:', {
+      console.log('[DASHBOARD_DEBUG] Final calculation:', {
+        isFirstMonth,
         initialBalance: totalInitialBankBalance,
-        finalBalance: totalBalance,
+        previousBalance: prevMonthBalance,
+        periodBalance: totalBalance,
         totalReceitas,
         totalDespesas,
-        allTransactionsCount: allTransactionsUntilNow?.length || 0
+        incomeCount: filteredIncomeData?.length || 0,
+        expenseCount: expenseData?.length || 0
       });
-
-      // Calcular saldo do mês passado baseado no saldo inicial dos bancos
-      const prevMonthBalance = totalInitialBankBalance;
       
       console.log('[DASHBOARD_DEBUG] Previous month balance:', {
         prevMonthBalance
@@ -306,6 +511,7 @@ const Dashboard = () => {
       setStats(newStats);
       
     } catch (error) {
+      console.error('[DASHBOARD_DEBUG] Error loading data:', error);
       logger.error('DASHBOARD', 'Error loading data', { error });
     } finally {
       setLoading(false);
@@ -345,19 +551,20 @@ const Dashboard = () => {
       <Card>
         <CardHeader>
           <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-              <p className="text-muted-foreground">
-                Visão geral das suas finanças
-              </p>
-            </div>
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Visão geral das suas finanças
+          </p>
+        </div>
             <div className="flex flex-col sm:flex-row gap-4">
-              <DateFilter 
-                onFilterChange={handleDateFilterChange}
-                className="sm:max-w-md"
-              />
-              <PDFReportButton />
-            </div>
+      <DateFilter 
+        onFilterChange={handleDateFilterChange}
+        value={dateFilter}
+        className="sm:max-w-md"
+      />
+        <PDFReportButton />
+      </div>
           </div>
         </CardHeader>
       </Card>
@@ -372,7 +579,9 @@ const Dashboard = () => {
       />
 
       {/* Gráfico Mensal de Receitas e Despesas */}
-      <MonthlyChart title="Evolução das Receitas e Despesas" />
+        <MonthlyChart 
+          title="Evolução das Receitas e Despesas" 
+        />
 
       {/* Seção de Bancos e Cartões */}
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">

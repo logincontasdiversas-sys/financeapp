@@ -13,7 +13,9 @@ interface Transaction {
   date: string;
   kind: 'income' | 'expense' | 'transfer';
   status: string;
-  category: {
+  category_id?: string;
+  categories: {
+    id: string;
     name: string;
     emoji: string;
   } | null;
@@ -48,15 +50,31 @@ export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryPro
     
     try {
       // Usar datas do filtro ou mês atual
-      const filterStartDate = startDate || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-      const filterEndDate = endDate || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+      let filterStartDate: Date;
+      let filterEndDate: Date;
+      
+      if (startDate && endDate) {
+        // Usar datas do filtro
+        filterStartDate = new Date(startDate);
+        filterStartDate.setHours(0, 0, 0, 0);
+        filterEndDate = new Date(endDate);
+        filterEndDate.setHours(23, 59, 59, 999);
+      } else {
+        // Usar mês atual
+        const now = new Date();
+        filterStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        filterStartDate.setHours(0, 0, 0, 0);
+        filterEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        filterEndDate.setHours(23, 59, 59, 999);
+      }
       
       const startDateStr = filterStartDate.toISOString().split('T')[0];
       const endDateStr = filterEndDate.toISOString().split('T')[0];
       
-      console.log('[HISTORY] 🔄 Usando período:', { startDateStr, endDateStr });
+      console.log('[HISTORY] 🔄 Usando período:', { startDateStr, endDateStr, hasFilter: !!(startDate && endDate) });
       
-      const { data, error } = await supabase
+      // Primeiro, buscar as transações sem JOIN para evitar erro de relacionamento
+      const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select(`
           id,
@@ -64,16 +82,80 @@ export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryPro
           amount,
           date,
           kind,
-          status
+          status,
+          category_id
         `)
         .eq('tenant_id', tenantId)
         .eq('status', 'settled') // Apenas transações recebidas/pagas
         .gte('date', startDateStr) // A partir da data inicial do filtro
         .lte('date', endDateStr) // Até a data final do filtro
         .order('date', { ascending: false })
-        .limit(10);
+        .limit(20); // Aumentar limite para mostrar mais transações
 
-      if (error) throw error;
+      if (transactionsError) {
+        console.error('[HISTORY] Error fetching transactions:', transactionsError);
+        throw transactionsError;
+      }
+
+      // Buscar categorias separadamente
+      const categoryIds = [...new Set(transactionsData?.map(t => t.category_id).filter(Boolean) || [])];
+      let categoriesData: any[] = [];
+      
+      if (categoryIds.length > 0) {
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id, name, emoji')
+          .in('id', categoryIds);
+        
+        if (categoriesError) {
+          console.error('[HISTORY] Error fetching categories:', categoriesError);
+        } else {
+          categoriesData = categories || [];
+        }
+      }
+
+      // Combinar transações com categorias
+      const data = transactionsData?.map(transaction => ({
+        ...transaction,
+        categories: categoriesData.find(cat => cat.id === transaction.category_id) || null
+      })) || [];
+
+      console.log('[HISTORY] Query result:', {
+        dataLength: data?.length || 0,
+        sampleData: data?.slice(0, 3).map(t => ({ 
+          title: t.title, 
+          amount: t.amount, 
+          date: t.date, 
+          kind: t.kind, 
+          status: t.status 
+        })),
+        queryParams: { startDateStr, endDateStr, tenantId }
+      });
+
+      // Debug: Verificar se há transações no banco de dados para o período
+      if (data?.length === 0) {
+        console.log('[HISTORY] 🔍 Nenhuma transação encontrada. Verificando se há transações no banco...');
+        
+        // Verificar todas as transações do tenant
+        const { data: allTenantTransactions, error: allError } = await supabase
+          .from('transactions')
+          .select('id, title, amount, date, kind, status')
+          .eq('tenant_id', tenantId)
+          .order('date', { ascending: false })
+          .limit(5);
+        
+        if (allError) {
+          console.error('[HISTORY] Erro ao buscar todas as transações:', allError);
+        } else {
+          console.log('[HISTORY] 📊 Total de transações do tenant:', allTenantTransactions?.length || 0);
+          if (allTenantTransactions && allTenantTransactions.length > 0) {
+            console.log('[HISTORY] 📋 Últimas 5 transações do tenant:');
+            allTenantTransactions.forEach((t, i) => {
+              console.log(`  ${i + 1}. ${t.title} - R$ ${t.amount} - ${t.date} - ${t.kind} - ${t.status}`);
+            });
+          }
+        }
+      }
 
       const formattedData = data || [];
 
@@ -112,7 +194,7 @@ export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryPro
       const endStr = endDate.toLocaleDateString('pt-BR');
       return `Movimentações (${startStr} - ${endStr})`;
     }
-    return 'Movimentações do Mês';
+    return 'Movimentações do Mês Atual';
   };
 
   if (loading) {
@@ -151,9 +233,15 @@ export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryPro
       </CardHeader>
       <CardContent>
         {transactions.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">
-            Nenhuma transação recebida/paga no período selecionado
-          </p>
+          <div className="text-center py-8">
+            <HistoryIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+            <p className="text-muted-foreground">
+              Nenhuma transação recebida/paga no período selecionado
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {startDate && endDate ? 'Tente selecionar um período diferente' : 'Adicione receitas e despesas para ver as movimentações'}
+            </p>
+          </div>
         ) : (
           <div className="space-y-4 w-full">
             {transactions.map((transaction) => (
@@ -177,8 +265,8 @@ export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryPro
                 <div className="flex-1 min-w-0">
                   {/* Descrição em uma linha */}
                   <div className="flex items-center gap-2 mb-1">
-                    {transaction.category?.emoji && (
-                      <span className="text-sm flex-shrink-0">{transaction.category.emoji}</span>
+                    {transaction.categories?.emoji && (
+                      <span className="text-sm flex-shrink-0">{transaction.categories.emoji}</span>
                     )}
                     <p className="font-medium text-sm truncate">{transaction.title}</p>
                   </div>
@@ -208,9 +296,9 @@ export const TransactionHistory = ({ startDate, endDate }: TransactionHistoryPro
                   </div>
                   
                   {/* Categoria */}
-                  {transaction.category && (
+                  {transaction.categories && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      {transaction.category.name}
+                      {transaction.categories.name}
                     </p>
                   )}
                 </div>

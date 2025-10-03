@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DateFilter } from "@/components/ui/date-filter";
+import { DateFilterWithThisMonth } from "@/components/ui/date-filter-with-this-month";
 import DespesasSummary from "./DespesasSummary";
 import { useRealtimeSync } from "@/hooks/useRealtimeSync";
 import { logger } from "@/utils/logger";
@@ -70,7 +70,7 @@ export const DespesasSummaryWithDateSync = ({
       <CardHeader>
         <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <CardTitle>{getPeriodTitle()}</CardTitle>
-          <DateFilter 
+          <DateFilterWithThisMonth 
             onFilterChange={setDateFilter}
             className="sm:max-w-md"
           />

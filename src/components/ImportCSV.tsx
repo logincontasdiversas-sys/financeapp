@@ -22,7 +22,7 @@ interface CSVRow {
 
 interface ColumnMapping {
   csvColumn: string;
-  systemField: 'title' | 'amount' | 'date' | 'category' | 'bank' | 'note' | 'transaction_type' | 'ignore';
+  systemField: 'title' | 'amount' | 'date' | 'category' | 'bank' | 'note' | 'transaction_type' | 'status' | 'ignore';
 }
 
 interface Category {
@@ -44,7 +44,7 @@ interface ProcessedTransaction {
   bank_id?: string;
   note?: string;
   kind: 'expense' | 'income';
-  status: 'settled';
+  status: 'settled' | 'pending' | 'scheduled';
   payment_method: string;
   user_id: string;
   tenant_id: string;
@@ -78,6 +78,8 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
   const [categoryMappings, setCategoryMappings] = useState<{[key: string]: string}>({});
   const [bankMappings, setBankMappings] = useState<{[key: string]: string}>({});
   const [transactionType, setTransactionType] = useState<'expense' | 'income' | 'auto'>(defaultTransactionType);
+  const [defaultStatus, setDefaultStatus] = useState<'settled' | 'pending' | 'scheduled'>('settled');
+  const [defaultBankId, setDefaultBankId] = useState<string>('');
 
   useEffect(() => {
     if (tenantId) {
@@ -253,6 +255,17 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
                    lowerHeader.includes('natureza') ||
                    lowerHeader.includes('operacao')) {
             systemField = 'transaction_type';
+          } 
+          // Status
+          else if (lowerHeader.includes('status') || 
+                   lowerHeader.includes('situacao') ||
+                   lowerHeader.includes('estado') ||
+                   lowerHeader.includes('pago') ||
+                   lowerHeader.includes('pendente') ||
+                   lowerHeader.includes('agendado') ||
+                   lowerHeader.includes('liquidado') ||
+                   lowerHeader.includes('processado')) {
+            systemField = 'status';
           }
           
           console.log(`Mapeamento - Coluna: "${originalHeader}" -> Campo: "${systemField}"`);
@@ -383,6 +396,7 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
     const bankMapping = mappings.find(m => m.systemField === 'bank');
     const noteMapping = mappings.find(m => m.systemField === 'note');
     const typeMapping = mappings.find(m => m.systemField === 'transaction_type');
+    const statusMapping = mappings.find(m => m.systemField === 'status');
 
     return csvData.map((row, index) => {
       const title = titleMapping ? (row[titleMapping.csvColumn]?.trim() || `Transação ${index + 1}`) : `Transação ${index + 1}`;
@@ -505,6 +519,21 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
       
       const note = noteMapping ? row[noteMapping.csvColumn] : undefined;
       
+      // Processar status
+      let status: 'settled' | 'pending' | 'scheduled' = defaultStatus;
+      if (statusMapping) {
+        const statusValue = row[statusMapping.csvColumn]?.toLowerCase().trim();
+        if (statusValue) {
+          if (statusValue.includes('pago') || statusValue.includes('liquidado') || statusValue.includes('processado') || statusValue.includes('settled')) {
+            status = 'settled';
+          } else if (statusValue.includes('pendente') || statusValue.includes('pending') || statusValue.includes('aguardando')) {
+            status = 'pending';
+          } else if (statusValue.includes('agendado') || statusValue.includes('scheduled') || statusValue.includes('programado')) {
+            status = 'scheduled';
+          }
+        }
+      }
+      
       let kind: 'expense' | 'income' = 'expense';
       
       // Determinar tipo baseado na configuração selecionada
@@ -519,16 +548,19 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
         }
       }
 
+      // Usar banco padrão se não foi mapeado do CSV
+      const finalBankId = bank_id || (defaultBankId && defaultBankId !== 'none' ? defaultBankId : undefined);
+      
       const transaction = {
         title,
         amount,
         date,
         category_id,
-        bank_id,
+        bank_id: finalBankId,
         note,
         kind,
-        status: 'settled' as const,
-        payment_method: bank_id ? 'Débito em conta' : 'Dinheiro',
+        status,
+        payment_method: finalBankId ? 'Débito em conta' : 'Dinheiro',
         user_id: user.id,
         tenant_id: tenantId,
         created_at: new Date().toISOString()
@@ -541,6 +573,7 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
           valor: transaction.amount,
           data: transaction.date,
           banco: transaction.bank_id || 'Sem banco',
+          status: transaction.status,
           tipo: transaction.kind
         });
       }
@@ -730,6 +763,43 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
           </Select>
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="default-status">Status Padrão</Label>
+          <Select value={defaultStatus} onValueChange={(value: 'settled' | 'pending' | 'scheduled') => setDefaultStatus(value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o status padrão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="settled">✅ Pago/Recebido</SelectItem>
+              <SelectItem value="pending">⏳ Pendente</SelectItem>
+              <SelectItem value="scheduled">📅 Agendado</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Status que será aplicado a todas as transações (exceto se houver coluna de status no CSV)
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="default-bank">Banco Padrão (Opcional)</Label>
+          <Select value={defaultBankId} onValueChange={setDefaultBankId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione um banco padrão" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sem banco padrão</SelectItem>
+              {banks.map(bank => (
+                <SelectItem key={bank.id} value={bank.id}>
+                  {bank.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Banco que será aplicado a todas as transações (exceto se houver coluna de banco no CSV)
+          </p>
+        </div>
+
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -798,6 +868,7 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
                           <SelectItem value="bank">🏦 Banco</SelectItem>
                           <SelectItem value="note">📋 Observação</SelectItem>
                           <SelectItem value="transaction_type">🔄 Tipo (Receita/Despesa)</SelectItem>
+                          <SelectItem value="status">✅ Status</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

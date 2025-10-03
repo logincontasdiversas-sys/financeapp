@@ -18,7 +18,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { logger } from "@/utils/logger";
 import { formatDateForDisplay, dateInputToISO, formatDateForMobile } from "@/utils/dateUtils";
 import { SortableHeader } from "@/components/ui/sortable-header";
-import { ImportCSV } from '@/components/ImportCSV';
+import { ImportCSVDespesas } from '@/components/ImportCSVDespesas';
 import { clearQueryCache } from "@/hooks/useSupabaseQuery";
 import { CategorySelect } from '@/components/ui/category-select';
 import { InlineEditText, InlineEditNumber, InlineEditDate, InlineEditSelect, InlineEditCategory } from "@/components/ui/inline-edit";
@@ -987,7 +987,8 @@ const Despesas = () => {
       setSelectedItems([]);
       setLastSelectAll(false);
     } else {
-      setSelectedItems(despesas.map(d => d.id));
+      // Selecionar apenas as despesas visíveis (filtradas)
+      setSelectedItems(filteredDespesas.map(d => d.id));
       setLastSelectAll(true);
     }
   };
@@ -1067,8 +1068,30 @@ const Despesas = () => {
 
   // Ordenação
   const sortedDespesas = [...filteredDespesas].sort((a, b) => {
-    if (!sortField) return 0;
-    
+    // Se não há filtro de ordenação aplicado pelo usuário, usar ordenação padrão inteligente
+    if (!sortField) {
+      // Ordenação padrão: Data (ascendente) > Valor (maior) > Status (pago primeiro)
+      
+      // 1. Por data (ascendente - mais antiga primeiro)
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      if (dateA !== dateB) {
+        return dateA - dateB; // Ascendente - mais antiga primeiro
+      }
+      
+      // 2. Por valor (maior primeiro)
+      if (a.amount !== b.amount) {
+        return b.amount - a.amount; // Maior valor primeiro
+      }
+      
+      // 3. Por status (pago primeiro)
+      const statusOrder = { 'settled': 0, 'pending': 1, 'scheduled': 2 };
+      const statusA = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+      const statusB = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+      return statusA - statusB;
+    }
+
+    // Ordenação personalizada pelo usuário
     const aValue = a[sortField as keyof Transaction];
     const bValue = b[sortField as keyof Transaction];
     
@@ -1099,6 +1122,7 @@ const Despesas = () => {
         </div>
         
         <div className="flex gap-2">
+          <ImportCSVDespesas onImportComplete={() => { /* Realtime sync já atualiza */ }} />
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => { resetForm(); setEditingDespesa(null); }}>
@@ -1559,6 +1583,9 @@ const Despesas = () => {
                         categories={categories}
                         onSave={(value) => handleInlineUpdate(despesa.id, 'category_id', value)}
                         placeholder="Selecionar categoria"
+                        goals={goals}
+                        debts={debts}
+                        onCategoriesChange={setCategories}
                       />
                     </TableCell>
                     <TableCell className="text-red-600 font-semibold">

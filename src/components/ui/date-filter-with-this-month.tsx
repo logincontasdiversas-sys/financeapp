@@ -23,15 +23,15 @@ interface DateRange {
   to: Date | undefined;
 }
 
-type FilterOption = 'thisWeek' | 'lastMonth' | 'maximum' | 'custom';
+type FilterOption = 'thisMonth' | 'thisWeek' | 'lastMonth' | 'custom';
 
-interface DateFilterProps {
+interface DateFilterWithThisMonthProps {
   onFilterChange: (dateRange: DateRange | null) => void;
   className?: string;
   value?: DateRange | null;
 }
 
-export function DateFilter({ onFilterChange, className, value }: DateFilterProps) {
+export function DateFilterWithThisMonth({ onFilterChange, className, value }: DateFilterWithThisMonthProps) {
   const [filterOption, setFilterOption] = React.useState<FilterOption | ''>('');
   const [dateRange, setDateRange] = React.useState<DateRange>({
     from: undefined,
@@ -47,6 +47,15 @@ export function DateFilter({ onFilterChange, className, value }: DateFilterProps
       if (value.from && value.to) {
         const today = new Date();
         const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        
+        // Verificar se é este mês
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        if (value.from.getTime() === startOfMonth.getTime() && value.to.getTime() === endOfMonth.getTime()) {
+          setFilterOption('thisMonth');
+          return;
+        }
         
         // Verificar se é esta semana
         const dayOfWeek = today.getDay();
@@ -64,15 +73,6 @@ export function DateFilter({ onFilterChange, className, value }: DateFilterProps
         
         if (value.from.getTime() === startOfLastMonth.getTime() && value.to.getTime() === endOfLastMonth.getTime()) {
           setFilterOption('lastMonth');
-          return;
-        }
-        
-        // Verificar se é período máximo (desde 2020 até hoje)
-        const startOfMaximum = new Date(2020, 0, 1);
-        const endOfMaximum = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        
-        if (value.from.getTime() === startOfMaximum.getTime() && value.to.getTime() === endOfMaximum.getTime()) {
-          setFilterOption('maximum');
           return;
         }
         
@@ -94,6 +94,15 @@ export function DateFilter({ onFilterChange, className, value }: DateFilterProps
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     switch (option) {
+      case 'thisMonth': {
+        // Este mês
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const range = { from: startOfMonth, to: endOfMonth };
+        setDateRange(range);
+        onFilterChange(range);
+        break;
+      }
       case 'thisWeek': {
         // Esta semana (domingo a sábado)
         const dayOfWeek = today.getDay();
@@ -109,15 +118,6 @@ export function DateFilter({ onFilterChange, className, value }: DateFilterProps
         const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
         const range = { from: startOfLastMonth, to: endOfLastMonth };
-        setDateRange(range);
-        onFilterChange(range);
-        break;
-      }
-      case 'maximum': {
-        // Período máximo (desde 2020 até hoje)
-        const startOfMaximum = new Date(2020, 0, 1);
-        const endOfMaximum = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const range = { from: startOfMaximum, to: endOfMaximum };
         setDateRange(range);
         onFilterChange(range);
         break;
@@ -175,9 +175,9 @@ export function DateFilter({ onFilterChange, className, value }: DateFilterProps
       return "Selecionar período";
     }
     
+    if (filterOption === 'thisMonth') return "Este mês";
     if (filterOption === 'thisWeek') return "Esta semana";
     if (filterOption === 'lastMonth') return "Mês passado";
-    if (filterOption === 'maximum') return "Máximo";
     
     if (dateRange.from && dateRange.to) {
       return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
@@ -194,8 +194,8 @@ export function DateFilter({ onFilterChange, className, value }: DateFilterProps
         </SelectTrigger>
         <SelectContent className="overflow-y-auto">
           <SelectItem value="thisWeek">Esta semana</SelectItem>
+          <SelectItem value="thisMonth">Este mês</SelectItem>
           <SelectItem value="lastMonth">Mês passado</SelectItem>
-          <SelectItem value="maximum">Máximo</SelectItem>
           <SelectItem value="custom">Período personalizado</SelectItem>
         </SelectContent>
       </Select>

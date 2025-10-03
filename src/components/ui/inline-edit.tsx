@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Button } from "./button";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CategorySelect } from "./category-select";
 
 interface InlineEditTextProps {
   value: string;
@@ -309,6 +310,12 @@ interface InlineEditCategoryProps {
   onSave: (value: string) => void;
   className?: string;
   placeholder?: string;
+  goals?: Array<{ id: string; title: string; current_amount: number }>;
+  debts?: Array<{ id: string; title: string; paid_amount: number }>;
+  showSubcategories?: boolean;
+  isDebtPayment?: boolean;
+  parentCategoryId?: string;
+  onCategoriesChange?: (categories: Category[]) => void;
 }
 
 export function InlineEditCategory({ 
@@ -316,7 +323,13 @@ export function InlineEditCategory({
   categories, 
   onSave, 
   className, 
-  placeholder = "Selecionar categoria"
+  placeholder = "Selecionar categoria",
+  goals = [],
+  debts = [],
+  showSubcategories = false,
+  isDebtPayment = false,
+  parentCategoryId,
+  onCategoriesChange
 }: InlineEditCategoryProps) {
   const [isEditing, setIsEditing] = useState(false);
 
@@ -332,21 +345,18 @@ export function InlineEditCategory({
 
   if (isEditing) {
     return (
-      <Select value={value} onValueChange={handleValueChange} open={isEditing} onOpenChange={setIsEditing}>
-        <SelectTrigger className="h-8 text-sm w-auto min-w-[150px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent className="bg-background border z-50 overflow-y-auto max-h-[200px]">
-          {categories.map((category) => (
-            <SelectItem key={category.id} value={category.id}>
-              <span className="flex items-center gap-2">
-                <span>{category.emoji}</span>
-                <span>{category.name}</span>
-              </span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <CategorySelect
+        value={value}
+        onValueChange={handleValueChange}
+        categories={categories}
+        onCategoriesChange={onCategoriesChange}
+        goals={goals}
+        debts={debts}
+        showSubcategories={showSubcategories}
+        isDebtPayment={isDebtPayment}
+        parentCategoryId={parentCategoryId}
+        placeholder={placeholder}
+      />
     );
   }
 

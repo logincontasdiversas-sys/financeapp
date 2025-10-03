@@ -205,10 +205,24 @@ const Receitas = () => {
         timestamp: new Date().toISOString()
       });
       
-      // Excluir transferências entre bancos pelo título (sem depender de categoria)
+      // Excluir transferências entre bancos pelo título (apenas transferências reais entre bancos)
       const filtered = (data || []).filter((row: any) => {
         const title = (row?.title || '').toLowerCase();
-        return !(title.includes('transfer') || title.includes('transferência') || title.includes('transferencia'));
+        
+        // Filtros mais específicos para transferências reais entre bancos
+        const isRealTransfer = (
+          title.includes('transferência entre bancos') ||
+          title.includes('transferencia entre bancos') ||
+          title.includes('transfer between banks') ||
+          title.includes('transferência de') && title.includes('para') ||
+          title.includes('transferencia de') && title.includes('para')
+        );
+        
+        if (isRealTransfer) {
+          console.log('[RECEITAS] 🚫 Excluindo transferência real:', { title: row.title, amount: row.amount });
+        }
+        
+        return !isRealTransfer;
       });
       
       console.log('[RECEITAS] 🔍 STEP 3 - Dados filtrados:', {
@@ -571,7 +585,9 @@ const Receitas = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(receitas.map(r => r.id));
+      // Selecionar apenas as receitas visíveis (filtradas)
+      const filteredReceitas = getFilteredAndSortedReceitas();
+      setSelectedItems(filteredReceitas.map(r => r.id));
       setLastSelectAll(true);
     } else {
       setSelectedItems([]);
@@ -651,9 +667,31 @@ const Receitas = () => {
     }
 
     // Aplicar ordenação
-    if (!sortField) return filteredReceitas;
-
     return [...filteredReceitas].sort((a, b) => {
+      // Se não há filtro de ordenação aplicado pelo usuário, usar ordenação padrão inteligente
+      if (!sortField) {
+        // Ordenação padrão: Data (ascendente) > Valor (maior) > Status (recebido primeiro)
+        
+        // 1. Por data (ascendente - mais antiga primeiro)
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) {
+          return dateA - dateB; // Ascendente - mais antiga primeiro
+        }
+        
+        // 2. Por valor (maior primeiro)
+        if (a.amount !== b.amount) {
+          return b.amount - a.amount; // Maior valor primeiro
+        }
+        
+        // 3. Por status (recebido primeiro)
+        const statusOrder = { 'settled': 0, 'pending': 1, 'scheduled': 2 };
+        const statusA = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
+        const statusB = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
+        return statusA - statusB;
+      }
+
+      // Ordenação personalizada pelo usuário
       let aValue: any;
       let bValue: any;
 

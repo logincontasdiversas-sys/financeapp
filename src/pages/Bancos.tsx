@@ -234,17 +234,19 @@ const Bancos = () => {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="balance">Saldo Inicial</Label>
                 <Input
                   id="balance"
                   type="number"
                   step="0.01"
                   value={formData.balance}
                   onChange={(e) => setFormData({ ...formData, balance: e.target.value })}
-                  placeholder="Saldo Inicial"
+                  placeholder="0,00"
                 />
                 <p className="text-xs text-muted-foreground">
                   ⚠️ <strong>Importante:</strong> O saldo inicial é apenas o valor que já existia no banco antes de usar o sistema. 
-                  NÃO registre este valor também como uma receita, pois isso causará duplicação nos cálculos mensais.
+                  Este valor é usado apenas uma vez para equalizar o histórico e NÃO é aplicado mensalmente. 
+                  NÃO registre este valor também como uma receita.
                 </p>
               </div>
               <Button type="submit" className="w-full bg-gradient-primary hover:opacity-90">
