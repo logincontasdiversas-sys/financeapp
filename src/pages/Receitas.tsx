@@ -499,6 +499,15 @@ const Receitas = () => {
     }
   };
 
+  // Função para normalizar UUIDs opcionais
+  const normalizeOptionalUUID = (value?: string | null) => {
+    if (value === undefined || value === null) return null;
+    const trimmed = String(value).trim();
+    if (trimmed === '' || trimmed.toLowerCase() === 'null' || trimmed.toLowerCase() === 'undefined') return null;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(trimmed) ? trimmed : null;
+  };
+
   const handleInlineUpdate = async (id: string, field: string, value: any) => {
     if (!user || !tenantId) return;
 
@@ -507,6 +516,9 @@ const Receitas = () => {
       
       if (field === 'date') {
         updateData[field] = dateInputToISO(value);
+      } else if (['category_id', 'bank_id', 'card_id', 'debt_id', 'goal_id'].includes(field)) {
+        // Normalizar campos UUID
+        updateData[field] = normalizeOptionalUUID(value);
       } else {
         updateData[field] = value;
       }
