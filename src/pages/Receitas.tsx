@@ -543,6 +543,11 @@ const Receitas = () => {
         return next as typeof r;
       }));
 
+      // Se foi uma atualização de categoria, recarregar categorias também
+      if (field === 'category_id') {
+        loadCategories();
+      }
+
       // Garantia extra: recarregar (realtime também cobre)
       loadReceitas();
     } catch (error: any) {

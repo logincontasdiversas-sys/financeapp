@@ -900,6 +900,11 @@ const Despesas = () => {
         return next as typeof d;
       }));
 
+      // Se foi uma atualização de categoria, recarregar categorias também
+      if (field === 'category_id') {
+        loadCategories();
+      }
+
       // Garantia extra: recarregar (realtime também cobre)
       loadDespesas();
       setSummaryRefreshKey(k => k + 1);
