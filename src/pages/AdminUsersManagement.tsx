@@ -266,9 +266,9 @@ export default function AdminUsersManagement() {
         console.log('[ADMIN_USERS] Email:', newUser.email);
         console.log('[ADMIN_USERS] Redirect URL:', window.location.origin + '/auth/callback');
         
-        // Usar generateLink com type 'invite' para enviar email automaticamente
+        // Usar generateLink com type 'signup' para enviar email automaticamente
         const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'invite',
+          type: 'signup',  // Mudar de 'invite' para 'signup'
           email: newUser.email,
           options: {
             emailRedirectTo: window.location.origin + '/auth/callback'
