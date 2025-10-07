@@ -41,6 +41,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log("[AUTH] Verificando status de admin para:", userId);
       
+      // Verificar cache primeiro
+      const cachedData = localStorage.getItem(`admin_${userId}`);
+      if (cachedData) {
+        const profile = JSON.parse(cachedData);
+        console.log("[AUTH] Usando dados do cache:", profile);
+        const adminStatus = profile?.is_admin === true || profile?.role === 'admin';
+        setIsAdmin(adminStatus);
+        setAdminData(profile);
+        return;
+      }
+      
       // Adicionar timeout para evitar loop infinito
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Timeout na verificação de admin')), 10000)
@@ -50,7 +61,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select('user_id, display_name, email, role, is_admin')
         .eq('user_id', userId)
-        .single();
+        .single()
+        .abortSignal(AbortSignal.timeout(5000)); // Timeout de 5 segundos
 
       const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
 
@@ -78,6 +90,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("[AUTH] Dados do perfil:", profile);
       const adminStatus = profile?.is_admin === true || profile?.role === 'admin';
       console.log("[AUTH] É admin:", adminStatus);
+      
+      // Salvar no cache para próximas consultas
+      localStorage.setItem(`admin_${userId}`, JSON.stringify(profile));
       
       setIsAdmin(adminStatus);
       setAdminData(profile);
@@ -129,6 +144,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Limpar dados locais do usuário antes de fazer logout
     if (user) {
       localStorageService.clearUserData(user.id);
+      // Limpar cache de admin
+      localStorage.removeItem(`admin_${user.id}`);
     }
     
     // Limpar dados de admin

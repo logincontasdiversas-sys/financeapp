@@ -23,10 +23,27 @@ export function AdminMenu() {
   const { isAdmin, loading } = useAdminAuth();
   const location = useLocation();
 
-  // Se não é admin ou ainda carregando, não mostrar menu
-  if (loading || !isAdmin) {
+  // Debug: Log do status do admin
+  console.log('[ADMIN_MENU] Status:', { isAdmin, loading });
+
+  // Se ainda carregando, mostrar indicador
+  if (loading) {
+    console.log('[ADMIN_MENU] Ainda carregando...');
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="w-4 h-4 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin"></div>
+        Verificando permissões...
+      </div>
+    );
+  }
+
+  // Se não é admin, não mostrar menu
+  if (!isAdmin) {
+    console.log('[ADMIN_MENU] Usuário não é admin - menu não exibido');
     return null;
   }
+
+  console.log('[ADMIN_MENU] Usuário é admin - exibindo menu');
 
   const adminMenuItems = [
     {

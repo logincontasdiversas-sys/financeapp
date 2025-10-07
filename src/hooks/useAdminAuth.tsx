@@ -1,10 +1,24 @@
 import { useAuth } from './useAuth';
+import { useState, useEffect } from 'react';
 
 export function useAdminAuth() {
   const { user, isAdmin, adminData, loading } = useAuth();
+  const [adminLoading, setAdminLoading] = useState(true);
 
   // Usar dados já verificados no useAuth (sem consultas extras)
   const adminUser = adminData;
+
+  // Sincronizar loading state
+  useEffect(() => {
+    if (!loading) {
+      // Pequeno delay para garantir que os dados foram carregados
+      const timer = setTimeout(() => {
+        setAdminLoading(false);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading, isAdmin, adminData]);
 
   const hasPermission = (permission: string) => {
     if (!isAdmin) return false;
@@ -25,7 +39,7 @@ export function useAdminAuth() {
   return {
     adminUser,
     isAdmin,
-    loading,
+    loading: adminLoading,
     hasPermission
   };
 }
