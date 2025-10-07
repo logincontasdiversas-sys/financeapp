@@ -436,7 +436,7 @@ export default function AdminUsersManagement() {
         type: 'recovery',
         email: userEmail,
         options: {
-          redirectTo: window.location.origin + '/auth/callback'
+          redirectTo: window.location.origin + '/auth/callback?type=recovery'
         }
       });
 

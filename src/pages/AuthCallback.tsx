@@ -29,6 +29,12 @@ export default function AuthCallback() {
         console.log('[AUTH_CALLBACK] Processando callback de autenticação...');
         console.log('[AUTH_CALLBACK] URL atual:', window.location.href);
         console.log('[AUTH_CALLBACK] Hash:', window.location.hash);
+        console.log('[AUTH_CALLBACK] Search params:', window.location.search);
+        
+        // Verificar se é redefinição de senha (parâmetro na URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isPasswordReset = urlParams.get('type') === 'recovery' || urlParams.get('type') === 'signup';
+        console.log('[AUTH_CALLBACK] É redefinição de senha:', isPasswordReset);
         
         // Obter a sessão atual do Supabase
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -43,16 +49,34 @@ export default function AuthCallback() {
         if (session?.user) {
           console.log('[AUTH_CALLBACK] Usuário autenticado:', session.user.email);
           console.log('[AUTH_CALLBACK] Email confirmado:', session.user.email_confirmed_at);
-          console.log('[AUTH_CALLBACK] Primeiro acesso:', !session.user.email_confirmed_at);
+          console.log('[AUTH_CALLBACK] Último login:', session.user.last_sign_in_at);
+          console.log('[AUTH_CALLBACK] Criado em:', session.user.created_at);
           
-          // Verificar se é primeiro acesso (email não confirmado anteriormente)
-          if (!session.user.email_confirmed_at) {
+          // Verificar se é redefinição de senha baseado no parâmetro da URL
+          if (isPasswordReset) {
+            console.log('[AUTH_CALLBACK] Redefinição de senha detectada - mostrando formulário');
+            setIsFirstAccess(true);
+            setLoading(false);
+            return; // Não redirecionar, mostrar formulário
+          }
+          
+          // Verificar se é primeiro acesso (usuário criado recentemente)
+          const userCreatedAt = new Date(session.user.created_at);
+          const now = new Date();
+          const timeDiff = now.getTime() - userCreatedAt.getTime();
+          const isRecentUser = timeDiff < 5 * 60 * 1000; // 5 minutos
+          
+          console.log('[AUTH_CALLBACK] Usuário criado há:', Math.round(timeDiff / 1000), 'segundos');
+          console.log('[AUTH_CALLBACK] É usuário recente:', isRecentUser);
+          
+          // Verificar se é primeiro acesso (usuário recente)
+          if (isRecentUser) {
             console.log('[AUTH_CALLBACK] Primeiro acesso - mostrando formulário de senha');
             setIsFirstAccess(true);
             setLoading(false);
             return; // Não redirecionar, mostrar formulário
           } else {
-            console.log('[AUTH_CALLBACK] Usuário já confirmado - redirecionando para dashboard');
+            console.log('[AUTH_CALLBACK] Usuário não é recente - redirecionando para dashboard');
             // Atualizar estado de autenticação
             await refreshAuth();
             // Redirecionar para o dashboard
