@@ -531,12 +531,27 @@ export default function AdminUsersManagement() {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    // Busca mais abrangente: nome, email, telefone
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+      user.display_name?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.phone_number?.includes(searchTerm); // Busca exata para telefone
     
     // Determinar tipo baseado no WhatsApp ativo
     const userType = (user.whatsapp_active && user.phone_number) ? 'app_plus_bot' : 'app_only';
-    const matchesFilter = filterType === 'all' || userType === filterType;
+    
+    // Filtro combinado por tipo e status
+    let matchesFilter = true;
+    
+    if (filterType === 'app_only' || filterType === 'app_plus_bot') {
+      matchesFilter = userType === filterType;
+    } else if (filterType === 'admin') {
+      matchesFilter = user.is_admin;
+    } else if (filterType === 'user') {
+      matchesFilter = !user.is_admin;
+    }
+    // filterType === 'all' mantém matchesFilter = true
     
     return matchesSearch && matchesFilter;
   });
@@ -625,7 +640,7 @@ export default function AdminUsersManagement() {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="search"
-                  placeholder="Nome ou email..."
+                  placeholder="Nome, email ou telefone..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -643,6 +658,8 @@ export default function AdminUsersManagement() {
                 <option value="all">Todos</option>
                 <option value="app_only">Apenas App</option>
                 <option value="app_plus_bot">App + Bot</option>
+                <option value="admin">Apenas Admins</option>
+                <option value="user">Apenas Usuários</option>
               </select>
             </div>
           </div>
