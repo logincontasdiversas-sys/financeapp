@@ -835,7 +835,8 @@ export default function AdminUsersManagement() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Informações do usuário */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     {/* WhatsApp */}
                     <div className="flex items-center space-x-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
@@ -859,44 +860,46 @@ export default function AdminUsersManagement() {
                         <option value="app_plus_bot">App + Bot</option>
                       </select>
                     </div>
+                  </div>
 
-                    {/* Controles */}
-                    <div className="flex items-center space-x-2">
-                      {(user.whatsapp_active && user.phone_number) && (
-                        <Button
-                          size="sm"
-                          variant={user.whatsapp_active ? "destructive" : "default"}
-                          onClick={() => handleToggleWhatsApp(user.user_id, !user.whatsapp_active)}
-                        >
-                          {user.whatsapp_active ? 'Desativar' : 'Ativar'} WhatsApp
-                        </Button>
-                      )}
+                  {/* Botões de ação organizados */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t">
+                    {(user.whatsapp_active && user.phone_number) && (
                       <Button
                         size="sm"
-                        variant={user.is_admin ? "destructive" : "default"}
-                        onClick={() => handleToggleAdmin(user.user_id, !user.is_admin)}
+                        variant={user.whatsapp_active ? "destructive" : "default"}
+                        onClick={() => handleToggleWhatsApp(user.user_id, !user.whatsapp_active)}
+                        className="flex-shrink-0"
                       >
-                        {user.is_admin ? 'Remover Admin' : 'Tornar Admin'}
+                        {user.whatsapp_active ? 'Desativar' : 'Ativar'} WhatsApp
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSendPasswordReset(user.email, user.display_name || user.email)}
-                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-                      >
-                        <Key className="h-4 w-4 mr-1" />
-                        Redefinir Senha
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteUser(user.user_id, user.display_name || user.email)}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Remover
-                      </Button>
-                    </div>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={user.is_admin ? "destructive" : "default"}
+                      onClick={() => handleToggleAdmin(user.user_id, !user.is_admin)}
+                      className="flex-shrink-0"
+                    >
+                      {user.is_admin ? 'Remover Admin' : 'Tornar Admin'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSendPasswordReset(user.email, user.display_name || user.email)}
+                      className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 flex-shrink-0"
+                    >
+                      <Key className="h-4 w-4 mr-1" />
+                      Redefinir Senha
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteUser(user.user_id, user.display_name || user.email)}
+                      className="bg-red-600 hover:bg-red-700 flex-shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Remover
+                    </Button>
                   </div>
                 </div>
               );
