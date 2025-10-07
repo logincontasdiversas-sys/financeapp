@@ -216,10 +216,10 @@ export default function AdminUsersManagement() {
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
 
-      // Criar usuário via admin API
+      // Criar usuário via admin API (sem confirmação automática para permitir email)
       const { data: newUserData, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: newUser.email,
-        email_confirm: true, // Confirma email automaticamente
+        email_confirm: false, // Não confirma automaticamente para permitir envio de email
         user_metadata: { 
           display_name: newUser.display_name, 
           phone: newUser.phone_number, 
@@ -260,8 +260,26 @@ export default function AdminUsersManagement() {
 
       console.log('[ADMIN_USERS] Profile criado com sucesso');
 
-      // O Supabase enviará o email automaticamente se configurado corretamente
-      console.log('[ADMIN_USERS] Usuário criado - Supabase deve enviar email automaticamente');
+      // Enviar email de confirmação via API
+      try {
+        const emailResponse = await fetch('/api/send-invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: newUser.email,
+            displayName: newUser.display_name
+          })
+        });
+
+        if (emailResponse.ok) {
+          const emailData = await emailResponse.json();
+          console.log('[ADMIN_USERS] Email enviado via API:', emailData);
+        } else {
+          console.warn('[ADMIN_USERS] Erro ao enviar email via API');
+        }
+      } catch (emailError) {
+        console.warn('[ADMIN_USERS] Email error (não crítico):', emailError);
+      }
 
       console.log('[ADMIN_USERS] Sucesso completo:', userId);
 
