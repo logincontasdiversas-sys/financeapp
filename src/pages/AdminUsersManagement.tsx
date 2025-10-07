@@ -262,21 +262,20 @@ export default function AdminUsersManagement() {
 
       // Enviar email de confirmação AUTOMATICAMENTE via Supabase Admin API
       try {
-        console.log('[ADMIN_USERS] 📧 Enviando email de confirmação automaticamente...');
+        console.log('[ADMIN_USERS] 📧 Enviando email de convite automaticamente...');
         console.log('[ADMIN_USERS] Email:', newUser.email);
         console.log('[ADMIN_USERS] Redirect URL:', window.location.origin + '/auth/callback');
         
-        // Usar generateLink com type 'signup' para enviar email automaticamente
-        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'signup',  // Mudar de 'invite' para 'signup'
-          email: newUser.email,
-          options: {
-            emailRedirectTo: window.location.origin + '/auth/callback'
+        // Usar inviteUserByEmail para enviar email automaticamente
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+          newUser.email,
+          {
+            redirectTo: window.location.origin + '/auth/callback'
           }
-        });
+        );
 
         if (inviteError) {
-          console.error('[ADMIN_USERS] Erro ao gerar link de convite:', inviteError);
+          console.error('[ADMIN_USERS] Erro ao enviar convite:', inviteError);
           throw new Error(`Erro ao enviar email: ${inviteError.message}`);
         } else {
           console.log('[ADMIN_USERS] ✅ Email de convite enviado automaticamente:', inviteData);
