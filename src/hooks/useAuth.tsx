@@ -41,14 +41,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       console.log("[AUTH] Verificando status de admin para:", userId);
       
-      const { data: profile, error } = await supabase
+      // Adicionar timeout para evitar loop infinito
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout na verificação de admin')), 10000)
+      );
+      
+      const queryPromise = supabase
         .from('profiles')
         .select('user_id, display_name, email, role, is_admin')
         .eq('user_id', userId)
         .single();
 
+      const { data: profile, error } = await Promise.race([queryPromise, timeoutPromise]) as any;
+
       if (error) {
         console.error("[AUTH] Erro ao verificar admin:", error);
+        
+        // Se for erro de timeout, não fazer logout
+        if (error.message?.includes('Timeout')) {
+          console.log("[AUTH] Timeout na verificação - tentando novamente...");
+          setIsAdmin(false);
+          setAdminData(null);
+          return;
+        }
+        
         console.log("[AUTH] Usuário não encontrado na tabela profiles - acesso negado");
         
         // Se usuário não existe na tabela profiles, fazer logout
