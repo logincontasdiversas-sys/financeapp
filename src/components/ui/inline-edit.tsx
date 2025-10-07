@@ -340,8 +340,22 @@ export function InlineEditCategory({
     setIsEditing(false);
   };
 
-  const selectedCategory = categories.find(cat => cat.id === value);
-  const displayValue = selectedCategory ? `${selectedCategory.emoji} ${selectedCategory.name}` : placeholder;
+  // Para transações de dívida, buscar a subcategoria correta
+  let selectedCategory;
+  let displayValue = placeholder;
+  
+  if (value && value.startsWith('debt-')) {
+    // É uma transação de dívida
+    const debtId = value.replace('debt-', '');
+    const debt = debts?.find(d => d.id === debtId);
+    if (debt) {
+      displayValue = `🏦 ${debt.title}`;
+    }
+  } else {
+    // É uma categoria normal
+    selectedCategory = categories.find(cat => cat.id === value);
+    displayValue = selectedCategory ? `${selectedCategory.emoji} ${selectedCategory.name}` : placeholder;
+  }
 
   if (isEditing) {
     return (

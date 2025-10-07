@@ -45,6 +45,17 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   isDebtPayment = false,
   parentCategoryId
 }) => {
+  // Debug para valores de dívida
+  useEffect(() => {
+    if (value && value.startsWith('debt-')) {
+      console.log('[CATEGORY_SELECT] Valor de dívida recebido:', {
+        value,
+        debtId: value.replace('debt-', ''),
+        debts: debts.length,
+        matchingDebt: debts.find(d => d.id === value.replace('debt-', ''))
+      });
+    }
+  }, [value, debts]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryEmoji, setNewCategoryEmoji] = useState('📦');

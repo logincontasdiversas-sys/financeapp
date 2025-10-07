@@ -398,6 +398,7 @@ const Receitas = () => {
         }
       }
 
+      // Fechar popup imediatamente para melhor UX
       setIsDialogOpen(false);
       setEditingReceita(null);
       resetForm();

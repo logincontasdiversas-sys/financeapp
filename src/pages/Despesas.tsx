@@ -431,9 +431,11 @@ const Despesas = () => {
         await createExpenseTransaction(processedFormData);
       }
 
-      // Recarregar dados e limpar formulário
-      await reloadData();
+      // Fechar popup imediatamente para melhor UX
       resetFormAndClose();
+      
+      // Recarregar dados em background
+      await reloadData();
 
     } catch (error: any) {
       console.error('[DESPESAS] Error saving:', error);
@@ -903,6 +905,12 @@ const Despesas = () => {
       // Se foi uma atualização de categoria, recarregar categorias também
       if (field === 'category_id') {
         loadCategories();
+        
+        // Se a transação tem debt_id, recalcular o progresso da dívida
+        const transaction = despesas.find(d => d.id === id);
+        if (transaction?.debt_id) {
+          await recalculateDebt(transaction.debt_id);
+        }
       }
 
       // Garantia extra: recarregar (realtime também cobre)
@@ -1601,13 +1609,16 @@ const Despesas = () => {
                     </TableCell>
                     <TableCell>
                       <InlineEditCategory
-                        value={despesa.category_id || ""}
+                        value={despesa.debt_id ? `debt-${despesa.debt_id}` : (despesa.category_id || "")}
                         categories={categories}
                         onSave={(value) => handleInlineUpdate(despesa.id, 'category_id', value)}
                         placeholder="Selecionar categoria"
                         goals={goals}
                         debts={debts}
                         onCategoriesChange={setCategories}
+                        showSubcategories={!!despesa.debt_id}
+                        isDebtPayment={!!despesa.debt_id}
+                        parentCategoryId={despesa.debt_id || undefined}
                       />
                     </TableCell>
                     <TableCell className="text-red-600 font-semibold">

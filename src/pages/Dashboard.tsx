@@ -392,15 +392,126 @@ const Dashboard = () => {
         console.error('[DASHBOARD_DEBUG] Goals query error:', goalsError);
       }
 
-      // Fetch open debts
-      const { data: debtsData, error: debtsError } = await supabase
+      // Fetch all debts and filter by is_concluded (same logic as Dividas page)
+      const { data: allDebtsData, error: allDebtsError } = await supabase
         .from('debts')
-        .select('id')
-        .eq('tenant_id', tenantId)
-        .eq('settled', false);
+        .select('id, total_amount, paid_amount, is_concluded, special_category_id, title')
+        .eq('tenant_id', tenantId);
 
-      if (debtsError) {
-        console.error('[DASHBOARD_DEBUG] Debts query error:', debtsError);
+      console.log('[DASHBOARD_DEBUG] Todas as dívidas encontradas:', allDebtsData?.map(d => ({
+        id: d.id,
+        title: d.title,
+        total_amount: d.total_amount,
+        paid_amount: d.paid_amount,
+        is_concluded: d.is_concluded
+      })));
+
+      // Recalcular progresso de cada dívida baseado nas transações (mesmo que Dividas page)
+      for (const debt of allDebtsData || []) {
+        console.log('[DASHBOARD_DEBUG] Recalculando dívida:', debt.id, debt.title);
+        
+        // Buscar dados da dívida para verificar se foi quitada sem valores
+        const { data: debtData } = await supabase
+          .from('debts')
+          .select('total_amount, settled')
+          .eq('id', debt.id)
+          .single();
+
+        console.log('[DASHBOARD_DEBUG] Dados da dívida:', {
+          title: debt.title,
+          total_amount: debtData?.total_amount,
+          settled: debtData?.settled
+        });
+
+        // Verificar se a dívida foi quitada sem valores (dinheiro, negócios, desconto)
+        const isQuitadaSemValores = debtData?.settled === true;
+        
+        if (isQuitadaSemValores) {
+          console.log('[DASHBOARD_DEBUG] ✅ DÍVIDA QUITADA SEM VALORES:', debt.title);
+          debt.paid_amount = debtData?.total_amount || 0;
+          debt.is_concluded = true;
+        } else if (debt.special_category_id) {
+          // Buscar transações associadas a esta dívida
+          const { data: debtTransactions } = await supabase
+            .from('transactions')
+            .select('amount, status')
+            .eq('tenant_id', tenantId)
+            .eq('kind', 'expense')
+            .eq('debt_id', debt.id)
+            .eq('category_id', debt.special_category_id)
+            .eq('status', 'settled');
+
+          const newPaidAmount = debtTransactions?.reduce((sum, t) => sum + t.amount, 0) || 0;
+          const isFullyPaid = debtData?.total_amount ? newPaidAmount >= debtData.total_amount : false;
+          
+          console.log('[DASHBOARD_DEBUG] Transações encontradas:', debtTransactions?.length || 0);
+          console.log('[DASHBOARD_DEBUG] Valor pago calculado:', newPaidAmount);
+          console.log('[DASHBOARD_DEBUG] Total da dívida:', debtData?.total_amount);
+          console.log('[DASHBOARD_DEBUG] Está totalmente paga:', isFullyPaid);
+
+          // Atualizar o objeto da dívida
+          debt.paid_amount = newPaidAmount;
+          debt.is_concluded = isFullyPaid;
+        }
+      }
+
+      // Filter only non-concluded debts (same as Dividas page)
+      let debtsData = allDebtsData?.filter(debt => !debt.is_concluded) || [];
+      
+      console.log('[DASHBOARD_DEBUG] Dívidas filtradas (is_concluded = false):', debtsData.map(d => ({
+        id: d.id,
+        title: d.title,
+        total_amount: d.total_amount,
+        paid_amount: d.paid_amount,
+        is_concluded: d.is_concluded
+      })));
+      
+        console.log('[DASHBOARD_DEBUG] TÍTULOS DAS DÍVIDAS PENDENTES:', debtsData.map(d => d.title));
+        
+        // Log detalhado de cada dívida pendente
+        console.log('[DASHBOARD_DEBUG] === DETALHES DAS DÍVIDAS PENDENTES ===');
+        debtsData.forEach((debt, index) => {
+          console.log(`[DASHBOARD_DEBUG] Dívida ${index + 1}:`, {
+            id: debt.id,
+            title: debt.title,
+            total_amount: debt.total_amount,
+            paid_amount: debt.paid_amount,
+            is_concluded: debt.is_concluded,
+            progress: debt.total_amount ? ((debt.paid_amount / debt.total_amount) * 100).toFixed(2) + '%' : 'N/A'
+          });
+        });
+        console.log('[DASHBOARD_DEBUG] === FIM DETALHES ===');
+
+      if (allDebtsError) {
+        console.error('[DASHBOARD_DEBUG] Debts query error:', allDebtsError);
+      }
+
+      // Log detalhado das dívidas encontradas
+      console.log('[DASHBOARD_DEBUG] Dívidas encontradas:', {
+        total: debtsData?.length || 0,
+        debts: debtsData?.map(debt => ({
+          id: debt.id,
+          total_amount: debt.total_amount,
+          paid_amount: debt.paid_amount,
+          is_concluded: debt.is_concluded,
+          progress: debt.total_amount > 0 ? ((debt.paid_amount || 0) / debt.total_amount * 100).toFixed(1) + '%' : '0%'
+        }))
+      });
+
+      // Log individual de cada dívida para debug
+      if (debtsData && debtsData.length > 0) {
+        console.log('[DASHBOARD_DEBUG] === DETALHES DAS DÍVIDAS ===');
+        debtsData.forEach((debt, index) => {
+          console.log(`[DASHBOARD_DEBUG] Dívida ${index + 1}:`, {
+            id: debt.id,
+            total_amount: debt.total_amount,
+            paid_amount: debt.paid_amount,
+            is_concluded: debt.is_concluded,
+            progress: debt.total_amount > 0 ? ((debt.paid_amount || 0) / debt.total_amount * 100).toFixed(1) + '%' : '0%',
+            shouldShow: !debt.is_concluded
+          });
+        });
+        console.log('[DASHBOARD_DEBUG] === FIM DETALHES ===');
       }
 
       // Fetch banks to get initial balances
@@ -583,17 +694,17 @@ const Dashboard = () => {
           title="Evolução das Receitas e Despesas" 
         />
 
-      {/* Seção de Bancos e Cartões */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
-        <BanksSection 
-          startDate={dateFilter?.from}
-          endDate={dateFilter?.to}
-        />
-        <CreditCardsSection 
-          startDate={dateFilter?.from}
-          endDate={dateFilter?.to}
-        />
-      </div>
+      {/* Seção de Bancos */}
+      <BanksSection 
+        startDate={dateFilter?.from}
+        endDate={dateFilter?.to}
+      />
+
+      {/* Seção de Cartões de Crédito */}
+      <CreditCardsSection 
+        startDate={dateFilter?.from}
+        endDate={dateFilter?.to}
+      />
 
       {/* Seção de Histórico de Movimentação */}
       <TransactionHistory 

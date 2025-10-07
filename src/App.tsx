@@ -20,6 +20,11 @@ import Configuracoes from "./pages/Configuracoes";
 import NotFound from "./pages/NotFound";
 import PRDChecklist from "./pages/PRDChecklist";
 import AdminCorrection from "./pages/AdminCorrection";
+import AdminWhatsApp from "./pages/AdminWhatsApp";
+import AdminUsers from "./pages/AdminUsers";
+import AdminUsersManagement from "./pages/AdminUsersManagement";
+import Perfil from "./pages/Perfil";
+import { AdminRoute } from "./components/AdminRoute";
 import { ErrorBoundary } from "react-error-boundary";
 
 function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
@@ -121,6 +126,11 @@ const App = () => (
                     <Configuracoes />
                   </ProtectedRoute>
                 } />
+                <Route path="/perfil" element={
+                  <ProtectedRoute>
+                    <Perfil />
+                  </ProtectedRoute>
+                } />
                 {SHOW_PRD && (
                   <Route path="/prd" element={
                     <ProtectedRoute>
@@ -131,6 +141,27 @@ const App = () => (
                 <Route path="/admin/correction" element={
                   <ProtectedRoute>
                     <AdminCorrection />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/whatsapp" element={
+                  <ProtectedRoute>
+                    <AdminRoute permission="whatsapp_users.view">
+                      <AdminWhatsApp />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute>
+                    <AdminRoute permission="admin.dashboard">
+                      <AdminUsers />
+                    </AdminRoute>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users-management" element={
+                  <ProtectedRoute>
+                    <AdminRoute permission="admin.dashboard">
+                      <AdminUsersManagement />
+                    </AdminRoute>
                   </ProtectedRoute>
                 } />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

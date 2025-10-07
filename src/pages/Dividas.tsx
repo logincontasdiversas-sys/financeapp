@@ -96,6 +96,7 @@ const Dividas = () => {
 
       if (error) throw error;
 
+
       // Buscar categorias separadamente se existirem debts com category_id
       let debtsWithCategories = data || [];
       if (data && data.length > 0) {
@@ -104,22 +105,63 @@ const Dividas = () => {
           .filter(Boolean);
 
         if (categoryIds.length > 0) {
+          // Buscar todas as categorias (incluindo subcategorias) para garantir que encontremos a categoria correta
           const { data: categoriesData } = await supabase
             .from('categories')
-            .select('id, name, emoji')
+            .select('id, name, emoji, parent_id')
             .eq('tenant_id', tenantId)
             .in('id', categoryIds);
 
-          debtsWithCategories = data.map(debt => ({
-            ...debt,
-            categories: categoriesData?.find(cat => cat.id === debt.category_id) || null
-          }));
+          console.log('[DIVIDAS] Categorias encontradas para dívidas:', categoriesData);
+
+          debtsWithCategories = data.map(debt => {
+            const category = categoriesData?.find(cat => cat.id === debt.category_id);
+            console.log('[DIVIDAS] Associando categoria para dívida:', {
+              debtId: debt.id,
+              debtTitle: debt.title,
+              categoryId: debt.category_id,
+              foundCategory: category
+            });
+            return {
+              ...debt,
+              categories: category || null
+            };
+          });
         }
+
       }
 
       console.log('[DIVIDAS] ✅ Dívidas carregadas com sucesso:', debtsWithCategories?.length || 0, 'itens');
       
+      // IMPORTANTE: Definir o estado ANTES do recálculo
       setDebts(debtsWithCategories);
+
+      // Recalcular progresso baseado nas transações da subcategoria
+      for (const debt of debtsWithCategories) {
+        console.log('[DIVIDAS] 🔍 PROCESSANDO DÍVIDA:', {
+          id: debt.id,
+          title: debt.title,
+          special_category_id: debt.special_category_id,
+          hasSpecialCategory: !!debt.special_category_id
+        });
+        
+        if (debt.special_category_id) {
+          console.log('[DIVIDAS] ✅ Dívida TEM special_category_id - recalculando:', debt.title);
+          await recalculateDebtProgress(debt.id, debt.special_category_id);
+        } else {
+          console.log('[DIVIDAS] ❌ Dívida NÃO TEM special_category_id - pulando:', debt.title);
+        }
+        
+        // Log específico para dívidas que deveriam estar quitadas
+        if (debt.title === 'Aluguel Reveillon 71' || debt.title === 'Conserto Vw Polo Sedan') {
+          console.log('[DIVIDAS] 🎯 DÍVIDA ESPECÍFICA:', {
+            title: debt.title,
+            id: debt.id,
+            special_category_id: debt.special_category_id,
+            willBeRecalculated: !!debt.special_category_id
+          });
+        }
+      }
     } catch (error) {
       console.error('[DIVIDAS] Error loading:', error);
       toast({
@@ -129,6 +171,203 @@ const Dividas = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para recalcular o progresso da dívida baseado nas transações da subcategoria
+  const recalculateDebtProgress = async (debtId: string, specialCategoryId: string) => {
+    try {
+      console.log('[DIVIDAS] 🔄 Recalculando progresso da dívida:', { debtId, specialCategoryId });
+      
+      // Buscar transações da subcategoria específica
+      const { data: settledTransactions, error } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('tenant_id', tenantId)
+        .eq('kind', 'expense')
+        .eq('debt_id', debtId)
+        .eq('category_id', specialCategoryId) // FILTRO CRÍTICO: apenas subcategoria específica
+        .eq('status', 'settled');
+
+      // Se não encontrou transações, tentar buscar todas as transações da dívida
+      let allDebtTransactions = [];
+      if (!settledTransactions || settledTransactions.length === 0) {
+        console.log('[DIVIDAS] 🔍 Buscando TODAS as transações da dívida (sem filtro de categoria)');
+        const { data: allTransactions, error: allError } = await supabase
+          .from('transactions')
+          .select('amount, category_id, title')
+          .eq('tenant_id', tenantId)
+          .eq('kind', 'expense')
+          .eq('debt_id', debtId)
+          .eq('status', 'settled');
+
+        if (allError) {
+          console.error('[DIVIDAS] Erro ao buscar todas as transações:', allError);
+        } else {
+          allDebtTransactions = allTransactions || [];
+          console.log('[DIVIDAS] Todas as transações da dívida:', {
+            total: allDebtTransactions.length,
+            transactions: allDebtTransactions.map(t => ({
+              amount: t.amount,
+              category_id: t.category_id,
+              title: t.title
+            }))
+          });
+        }
+      }
+
+      console.log('[DIVIDAS] Query de transações:', {
+        debtId,
+        specialCategoryId,
+        transactionsFound: settledTransactions?.length || 0,
+        transactions: settledTransactions,
+        queryParams: {
+          tenantId,
+          kind: 'expense',
+          debt_id: debtId,
+          category_id: specialCategoryId,
+          status: 'settled'
+        }
+      });
+
+      // Log detalhado das transações encontradas
+      if (settledTransactions && settledTransactions.length > 0) {
+        console.log('[DIVIDAS] Transações encontradas:', settledTransactions.map(t => ({
+          amount: t.amount,
+          total: settledTransactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+        })));
+      } else {
+        console.log('[DIVIDAS] ⚠️ NENHUMA TRANSAÇÃO ENCONTRADA para:', {
+          debtId,
+          specialCategoryId,
+          query: `debt_id=${debtId} AND category_id=${specialCategoryId} AND status=settled`
+        });
+      }
+
+      if (error) {
+        console.error('[DIVIDAS] Erro ao buscar transações da dívida:', error);
+        return;
+      }
+
+      // Usar transações da query principal ou da query alternativa
+      const transactionsToUse = settledTransactions && settledTransactions.length > 0 
+        ? settledTransactions 
+        : allDebtTransactions;
+
+      const newPaidAmount = transactionsToUse?.reduce((sum, transaction) => {
+        return sum + Number(transaction.amount || 0);
+      }, 0) || 0;
+
+      console.log('[DIVIDAS] Transações usadas para cálculo:', {
+        debtId,
+        source: settledTransactions && settledTransactions.length > 0 ? 'primary' : 'alternative',
+        transactionsCount: transactionsToUse?.length || 0,
+        totalAmount: newPaidAmount
+      });
+
+      // Buscar dados da dívida para verificar se está totalmente paga
+      const { data: debtData } = await supabase
+        .from('debts')
+        .select('total_amount, settled')
+        .eq('id', debtId)
+        .single();
+
+      // Verificar se a dívida foi quitada sem valores (dinheiro, negócios, desconto)
+      // Se settled = true, significa que foi quitada por outros meios
+      const isQuitadaSemValores = debtData?.settled === true;
+      const isQuitadaComValores = debtData?.total_amount && newPaidAmount >= debtData.total_amount;
+      const isFullyPaid = isQuitadaSemValores || isQuitadaComValores;
+
+      console.log('[DIVIDAS] Progresso recalculado:', {
+        debtId,
+        specialCategoryId,
+        transactionsCount: settledTransactions?.length || 0,
+        newPaidAmount,
+        isFullyPaid,
+        totalAmount: debtData?.total_amount,
+        settled: debtData?.settled,
+        isQuitadaSemValores,
+        isQuitadaComValores,
+        progressPercentage: debtData?.total_amount ? (newPaidAmount / debtData.total_amount * 100).toFixed(2) + '%' : 'N/A',
+        comparison: debtData?.total_amount ? `${newPaidAmount} >= ${debtData.total_amount} = ${isFullyPaid}` : 'N/A'
+      });
+
+      // Log específico para dívidas que deveriam estar concluídas
+      if (isQuitadaSemValores) {
+        console.log('[DIVIDAS] ✅ DÍVIDA QUITADA SEM VALORES (dinheiro/negócios/desconto):', {
+          debtId,
+          settled: debtData?.settled,
+          isFullyPaid
+        });
+      } else if (debtData?.total_amount && newPaidAmount >= debtData.total_amount) {
+        console.log('[DIVIDAS] ✅ DÍVIDA DEVERIA ESTAR CONCLUÍDA:', {
+          debtId,
+          totalAmount: debtData.total_amount,
+          paidAmount: newPaidAmount,
+          difference: newPaidAmount - debtData.total_amount,
+          isFullyPaid
+        });
+      } else if (debtData?.total_amount) {
+        console.log('[DIVIDAS] ⚠️ DÍVIDA NÃO CONCLUÍDA:', {
+          debtId,
+          totalAmount: debtData.total_amount,
+          paidAmount: newPaidAmount,
+          remaining: debtData.total_amount - newPaidAmount,
+          isFullyPaid
+        });
+      }
+
+      // Atualizar o progresso na tabela de dívidas
+      await supabase
+        .from('debts')
+        .update({ 
+          paid_amount: newPaidAmount,
+          is_concluded: isFullyPaid
+        })
+        .eq('id', debtId);
+
+      // Atualizar o estado local
+      setDebts(prevDebts => {
+        const updatedDebts = prevDebts.map(d => 
+          d.id === debtId 
+            ? { ...d, paid_amount: newPaidAmount, is_concluded: isFullyPaid }
+            : d
+        );
+        
+        console.log('[DIVIDAS] Estado local atualizado:', {
+          debtId,
+          oldPaidAmount: prevDebts.find(d => d.id === debtId)?.paid_amount,
+          newPaidAmount,
+          isFullyPaid,
+          totalDebts: updatedDebts.length
+        });
+        
+        return updatedDebts;
+      });
+
+      console.log('[DIVIDAS] ✅ Progresso atualizado na interface:', {
+        debtId,
+        newPaidAmount,
+        isFullyPaid,
+        updated: true
+      });
+
+      // Log do estado completo após atualização
+      setDebts(currentDebts => {
+        console.log('[DIVIDAS] Estado completo após atualização:', {
+          totalDebts: currentDebts.length,
+          updatedDebt: currentDebts.find(d => d.id === debtId),
+          allDebts: currentDebts.map(d => ({
+            id: d.id,
+            title: d.title,
+            paidAmount: d.paid_amount,
+            isConcluded: d.is_concluded
+          }))
+        });
+        return currentDebts;
+      });
+    } catch (error) {
+      console.error('[DIVIDAS] Erro ao recalcular progresso da dívida:', error);
     }
   };
 
@@ -203,6 +442,7 @@ const Dividas = () => {
         image_url: formData.image_url || null,
         observations: formData.observations || null,
         is_concluded: formData.is_concluded,
+        settled: formData.is_concluded, // Se quitada sem valores, também marcar como settled
         user_id: user.id,
         tenant_id: tenantId,
       };

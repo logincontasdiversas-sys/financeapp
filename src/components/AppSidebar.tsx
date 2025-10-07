@@ -47,6 +47,7 @@ const menuItems = [
   { title: "Categorias", url: "/categorias", icon: FolderOpen },
   { title: "Metas", url: "/metas", icon: Target },
   { title: "Dívidas", url: "/dividas", icon: Debt },
+  { title: "Perfil", url: "/perfil", icon: User },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
   ...(SHOW_PRD ? [{ title: "PRD", url: "/prd", icon: ClipboardCheck }] : []),
 ];

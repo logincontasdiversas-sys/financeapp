@@ -1,6 +1,9 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { AdminMenu } from "@/components/AdminMenu";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfileStatus } from "@/hooks/useProfileStatus";
+import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SyncStatus } from "@/components/SyncStatus";
 import { Button } from "@/components/ui/button";
@@ -9,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { Link } from "react-router-dom";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,9 +20,49 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { loading, user } = useAuth();
+  const { isIncomplete, missingFields } = useProfileStatus();
   const { toast } = useToast();
   const { supported, permission, subscribe, requestPermission, saveSubscription, subscribing } = usePushNotifications();
   const HAS_VAPID = Boolean(import.meta.env.VITE_VAPID_PUBLIC_KEY);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  // Função para atualizar o nome (chamada externamente)
+  const updateDisplayName = (newName: string | null) => {
+    setDisplayName(newName);
+  };
+
+  // Expor a função globalmente para ser chamada de outras páginas
+  useEffect(() => {
+    (window as any).updateDisplayName = updateDisplayName;
+  }, []);
+
+  // Buscar nome de exibição do usuário
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      if (!user?.id) return;
+      
+      try {
+        console.log('[LAYOUT] Buscando nome de exibição para user:', user.id);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (error) {
+          console.error('[LAYOUT] Erro ao buscar nome de exibição:', error);
+          return;
+        }
+        
+        console.log('[LAYOUT] Nome encontrado:', data?.display_name);
+        setDisplayName(data?.display_name || null);
+      } catch (error) {
+        console.error('[LAYOUT] Erro ao buscar nome de exibição:', error);
+      }
+    };
+
+    fetchDisplayName();
+  }, [user?.id]);
 
   const handleLogout = async () => {
     try {
@@ -66,6 +110,7 @@ export function Layout({ children }: LayoutProps) {
             {/* Informações do usuário apenas em desktop/notebook */}
             <div className="hidden lg:flex items-center gap-3">
               <SyncStatus />
+              <AdminMenu />
               {supported && HAS_VAPID && permission !== "granted" && (
                 <Button
                   variant="secondary"
@@ -89,10 +134,18 @@ export function Layout({ children }: LayoutProps) {
                   Ativar Push
                 </Button>
               )}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Link 
+                to="/perfil" 
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors relative"
+              >
                 <User className="h-4 w-4" />
-                <span>{user?.email}</span>
-              </div>
+                <span>{displayName ? `Seja Bem Vindo ${displayName}` : "Meu Perfil"}</span>
+                {isIncomplete && (
+                  <div className="-ml-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                    {missingFields.length}
+                  </div>
+                )}
+              </Link>
               <ThemeToggle />
               <Button
                 variant="ghost"
