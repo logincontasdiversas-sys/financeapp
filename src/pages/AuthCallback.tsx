@@ -19,6 +19,7 @@ export default function AuthCallback() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isFirstAccess, setIsFirstAccess] = useState(false);
   const navigate = useNavigate();
   const { refreshAuth } = useAuth();
 
@@ -26,6 +27,8 @@ export default function AuthCallback() {
     const handleAuthCallback = async () => {
       try {
         console.log('[AUTH_CALLBACK] Processando callback de autenticação...');
+        console.log('[AUTH_CALLBACK] URL atual:', window.location.href);
+        console.log('[AUTH_CALLBACK] Hash:', window.location.hash);
         
         // Obter a sessão atual do Supabase
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -39,12 +42,22 @@ export default function AuthCallback() {
 
         if (session?.user) {
           console.log('[AUTH_CALLBACK] Usuário autenticado:', session.user.email);
+          console.log('[AUTH_CALLBACK] Email confirmado:', session.user.email_confirmed_at);
+          console.log('[AUTH_CALLBACK] Primeiro acesso:', !session.user.email_confirmed_at);
           
-          // Atualizar estado de autenticação
-          await refreshAuth();
-          
-          // Redirecionar para o dashboard
-          navigate('/', { replace: true });
+          // Verificar se é primeiro acesso (email não confirmado anteriormente)
+          if (!session.user.email_confirmed_at) {
+            console.log('[AUTH_CALLBACK] Primeiro acesso - mostrando formulário de senha');
+            setIsFirstAccess(true);
+            setLoading(false);
+            return; // Não redirecionar, mostrar formulário
+          } else {
+            console.log('[AUTH_CALLBACK] Usuário já confirmado - redirecionando para dashboard');
+            // Atualizar estado de autenticação
+            await refreshAuth();
+            // Redirecionar para o dashboard
+            navigate('/', { replace: true });
+          }
         } else {
           console.log('[AUTH_CALLBACK] Nenhuma sessão encontrada, redirecionando para login...');
           navigate('/auth', { replace: true });
@@ -93,7 +106,10 @@ export default function AuthCallback() {
       console.log('[AUTH_CALLBACK] Senha atualizada com sucesso!');
       setSuccess(true);
       
-      // Aguardar um pouco e redirecionar
+      // Atualizar estado de autenticação
+      await refreshAuth();
+      
+      // Aguardar um pouco e redirecionar para dashboard
       setTimeout(() => {
         navigate('/', { replace: true });
       }, 2000);
@@ -167,7 +183,11 @@ export default function AuthCallback() {
     );
   }
 
-  // Formulário de redefinição de senha
+  // Formulário de redefinição de senha (apenas para primeiro acesso)
+  if (!isFirstAccess) {
+    return null; // Não renderizar nada se não for primeiro acesso
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
