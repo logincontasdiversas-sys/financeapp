@@ -10,6 +10,7 @@ interface AuthContextType {
   isAdmin: boolean;
   adminData: any;
   signOut: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -19,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   adminData: null,
   signOut: async () => {},
+  refreshAuth: async () => {},
 });
 
 export const useAuth = () => {
@@ -155,6 +157,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const refreshAuth = async () => {
+    try {
+      console.log('[AUTH] Atualizando estado de autenticação...');
+      
+      // Obter sessão atual
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('[AUTH] Erro ao obter sessão:', error);
+        return;
+      }
+
+      if (session?.user) {
+        console.log('[AUTH] Sessão encontrada, atualizando estado...');
+        setUser(session.user);
+        setSession(session);
+        
+        // Verificar status de admin
+        await checkAdminStatus(session.user.id);
+      } else {
+        console.log('[AUTH] Nenhuma sessão encontrada');
+        setUser(null);
+        setSession(null);
+        setIsAdmin(false);
+        setAdminData(null);
+      }
+    } catch (err) {
+      console.error('[AUTH] Erro ao atualizar autenticação:', err);
+    }
+  };
+
   const value = {
     user,
     session,
@@ -162,6 +195,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isAdmin,
     adminData,
     signOut,
+    refreshAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

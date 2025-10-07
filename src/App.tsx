@@ -24,6 +24,7 @@ import AdminWhatsApp from "./pages/AdminWhatsApp";
 import AdminUsers from "./pages/AdminUsers";
 import AdminUsersManagement from "./pages/AdminUsersManagement";
 import Perfil from "./pages/Perfil";
+import AuthCallback from "./pages/AuthCallback";
 import { AdminRoute } from "./components/AdminRoute";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -81,6 +82,7 @@ const App = () => (
                     <Auth />
                   </PublicRoute>
                 } />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/" element={
                   <ProtectedRoute>
                     <Dashboard />
