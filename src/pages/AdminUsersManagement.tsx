@@ -18,6 +18,7 @@ import {
   Trash2,
   Loader2,
   AlertTriangle,
+  Key,
   CheckCircle,
   XCircle,
   Users,
@@ -402,6 +403,61 @@ export default function AdminUsersManagement() {
       toast({
         title: "Erro",
         description: "Erro ao atualizar permissões",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSendPasswordReset = async (userEmail: string, userName: string) => {
+    try {
+      console.log('[ADMIN_USERS] Enviando redefinição de senha para:', userEmail);
+      
+      // Verificar se o usuário atual é admin
+      const { data: currentUser, error: userError } = await supabase
+        .from('profiles')
+        .select('is_admin, role')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (userError) {
+        console.error('[ADMIN_USERS] Erro ao verificar usuário:', userError);
+        throw new Error('Erro ao verificar permissões');
+      }
+
+      if (!currentUser?.is_admin) {
+        console.error('[ADMIN_USERS] Usuário não é admin:', currentUser);
+        throw new Error('Apenas administradores podem enviar redefinição de senha');
+      }
+
+      console.log('[ADMIN_USERS] Usuário confirmado como admin, enviando redefinição...');
+      
+      // Enviar email de redefinição de senha
+      const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: userEmail,
+        options: {
+          redirectTo: window.location.origin + '/auth/callback'
+        }
+      });
+
+      if (error) {
+        console.error('[ADMIN_USERS] Erro ao gerar link de recuperação:', error);
+        throw new Error(`Erro ao enviar redefinição: ${error.message}`);
+      }
+
+      console.log('[ADMIN_USERS] Link de recuperação gerado com sucesso:', data);
+      
+      toast({
+        title: "Redefinição Enviada",
+        description: `Email de redefinição de senha enviado para ${userName}`,
+        variant: "default"
+      });
+
+    } catch (error: any) {
+      console.error('[ADMIN_USERS] Erro ao enviar redefinição:', error);
+      toast({
+        title: "Erro",
+        description: `Erro ao enviar redefinição: ${error.message}`,
         variant: "destructive"
       });
     }
@@ -821,6 +877,15 @@ export default function AdminUsersManagement() {
                         onClick={() => handleToggleAdmin(user.user_id, !user.is_admin)}
                       >
                         {user.is_admin ? 'Remover Admin' : 'Tornar Admin'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSendPasswordReset(user.email, user.display_name || user.email)}
+                        className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                      >
+                        <Key className="h-4 w-4 mr-1" />
+                        Redefinir Senha
                       </Button>
                       <Button
                         size="sm"
