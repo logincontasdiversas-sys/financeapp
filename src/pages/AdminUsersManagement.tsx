@@ -260,32 +260,37 @@ export default function AdminUsersManagement() {
 
       console.log('[ADMIN_USERS] Profile criado com sucesso');
 
-      // Enviar email de confirmação via API
+      // Enviar email de confirmação AUTOMATICAMENTE via Supabase Admin API
       try {
-        const emailResponse = await fetch('/api/send-invite', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: newUser.email,
-            displayName: newUser.display_name
-          })
+        console.log('[ADMIN_USERS] 📧 Enviando email de confirmação automaticamente...');
+        console.log('[ADMIN_USERS] Email:', newUser.email);
+        console.log('[ADMIN_USERS] Redirect URL:', window.location.origin + '/auth/callback');
+        
+        // Usar generateLink com type 'invite' para enviar email automaticamente
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'invite',
+          email: newUser.email,
+          options: {
+            emailRedirectTo: window.location.origin + '/auth/callback'
+          }
         });
 
-        if (emailResponse.ok) {
-          const emailData = await emailResponse.json();
-          console.log('[ADMIN_USERS] Email enviado via API:', emailData);
+        if (inviteError) {
+          console.error('[ADMIN_USERS] Erro ao gerar link de convite:', inviteError);
+          throw new Error(`Erro ao enviar email: ${inviteError.message}`);
         } else {
-          console.warn('[ADMIN_USERS] Erro ao enviar email via API');
+          console.log('[ADMIN_USERS] ✅ Email de convite enviado automaticamente:', inviteData);
         }
       } catch (emailError) {
-        console.warn('[ADMIN_USERS] Email error (não crítico):', emailError);
+        console.error('[ADMIN_USERS] Erro crítico no envio de email:', emailError);
+        throw new Error(`Erro ao enviar email: ${emailError.message}`);
       }
 
       console.log('[ADMIN_USERS] Sucesso completo:', userId);
 
       toast({
-        title: "Usuário criado com sucesso!",
-        description: `Usuário ${newUser.display_name} foi criado e receberá um email de confirmação.`
+        title: "✅ Usuário criado com sucesso!",
+        description: `Usuário ${newUser.display_name} foi criado e o email de convite foi enviado automaticamente para ${newUser.email}.`
       });
 
       // Limpar formulário e recarregar lista
