@@ -52,36 +52,12 @@ export default function AuthCallback() {
           console.log('[AUTH_CALLBACK] Último login:', session.user.last_sign_in_at);
           console.log('[AUTH_CALLBACK] Criado em:', session.user.created_at);
           
-          // Verificar se é redefinição de senha baseado no parâmetro da URL
-          if (isPasswordReset) {
-            console.log('[AUTH_CALLBACK] Redefinição de senha detectada - mostrando formulário');
-            setIsFirstAccess(true);
-            setLoading(false);
-            return; // Não redirecionar, mostrar formulário
-          }
-          
-          // Verificar se é primeiro acesso (usuário criado recentemente)
-          const userCreatedAt = new Date(session.user.created_at);
-          const now = new Date();
-          const timeDiff = now.getTime() - userCreatedAt.getTime();
-          const isRecentUser = timeDiff < 5 * 60 * 1000; // 5 minutos
-          
-          console.log('[AUTH_CALLBACK] Usuário criado há:', Math.round(timeDiff / 1000), 'segundos');
-          console.log('[AUTH_CALLBACK] É usuário recente:', isRecentUser);
-          
-          // Verificar se é primeiro acesso (usuário recente)
-          if (isRecentUser) {
-            console.log('[AUTH_CALLBACK] Primeiro acesso - mostrando formulário de senha');
-            setIsFirstAccess(true);
-            setLoading(false);
-            return; // Não redirecionar, mostrar formulário
-          } else {
-            console.log('[AUTH_CALLBACK] Usuário não é recente - redirecionando para dashboard');
-            // Atualizar estado de autenticação
-            await refreshAuth();
-            // Redirecionar para o dashboard
-            navigate('/', { replace: true });
-          }
+          // SEMPRE mostrar formulário de redefinição de senha no callback
+          // Isso garante que o usuário defina sua senha após o primeiro acesso
+          console.log('[AUTH_CALLBACK] Mostrando formulário de redefinição de senha');
+          setIsFirstAccess(true);
+          setLoading(false);
+          return; // Não redirecionar, mostrar formulário
         } else {
           console.log('[AUTH_CALLBACK] Nenhuma sessão encontrada, redirecionando para login...');
           navigate('/auth', { replace: true });
@@ -166,9 +142,9 @@ export default function AuthCallback() {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
-            <CardTitle className="text-2xl">Senha Atualizada!</CardTitle>
+            <CardTitle className="text-2xl">Conta Criada com Sucesso!</CardTitle>
             <CardDescription>
-              Sua senha foi atualizada com sucesso. Você será redirecionado para o dashboard.
+              Sua senha foi definida com sucesso. Você será redirecionado para o dashboard.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -221,7 +197,7 @@ export default function AuthCallback() {
           </div>
           <CardTitle className="text-2xl">Bem-vindo ao FinanceApp!</CardTitle>
           <CardDescription>
-            Sua conta foi confirmada com sucesso. Agora defina sua senha para começar a usar o sistema.
+            Sua conta foi criada com sucesso! Agora defina sua senha para começar a usar o sistema.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -300,7 +276,7 @@ export default function AuthCallback() {
                   Atualizando...
                 </>
               ) : (
-                'Definir Senha e Continuar'
+                'Criar Senha e Continuar'
               )}
             </Button>
           </form>
