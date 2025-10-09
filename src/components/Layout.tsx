@@ -1,5 +1,3 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { AdminMenu } from "@/components/AdminMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfileStatus } from "@/hooks/useProfileStatus";
@@ -86,48 +84,55 @@ export function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 border-b bg-gradient-card backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
-            {/* Botão do menu lateral */}
-            <div className="flex items-center">
-              <SidebarTrigger className="text-sidebar-foreground hover:text-sidebar-primary" />
+    <div className="min-h-screen flex w-full">
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-16 border-b bg-gradient-card backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
+          {/* Ícone de perfil no lugar do menu lateral */}
+          <div className="flex items-center">
+            <Link 
+              to="/perfil" 
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors relative"
+            >
+              <User className="h-5 w-5" />
+              {isIncomplete && (
+                <div className="-ml-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                  {missingFields.length}
+                </div>
+              )}
+            </Link>
+          </div>
+          
+          {/* Logo e marca centralizados */}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">F</span>
             </div>
-            
-            {/* Logo e marca centralizados */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">F</span>
-              </div>
-              <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                FinanceApp
-              </h1>
-            </div>
-            
-            {/* Informações do usuário apenas em desktop/notebook */}
-            <div className="hidden lg:flex items-center gap-3">
-              <SyncStatus />
-              <AdminMenu />
-              {supported && HAS_VAPID && permission !== "granted" && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={subscribing}
-                  onClick={async () => {
-                    const perm = await requestPermission();
-                    if (perm !== "granted") {
-                      toast({ title: "Permissão negada", description: "Ative as notificações nas configurações do navegador.", variant: "destructive" });
-                      return;
-                    }
-                    try {
-                      const sub = await subscribe();
-                      if (user?.id) await saveSubscription(user.id);
-                      if (sub) toast({ title: "Notificações ativadas!" });
-                    } catch (e: any) {
-                      toast({ title: "Erro ao ativar push", description: e.message, variant: "destructive" });
+            <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              FinanceApp
+            </h1>
+          </div>
+          
+          {/* Informações do usuário apenas em desktop/notebook */}
+          <div className="hidden lg:flex items-center gap-3">
+            <SyncStatus />
+            <AdminMenu />
+            {supported && HAS_VAPID && permission !== "granted" && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={subscribing}
+                onClick={async () => {
+                  const perm = await requestPermission();
+                  if (perm !== "granted") {
+                    toast({ title: "Permissão negada", description: "Ative as notificações nas configurações do navegador.", variant: "destructive" });
+                    return;
+                  }
+                  try {
+                    const sub = await subscribe();
+                    if (user?.id) await saveSubscription(user.id);
+                    if (sub) toast({ title: "Notificações ativadas!" });
+                  } catch (e: any) {
+                    toast({ title: "Erro ao ativar push", description: e.message, variant: "destructive" });
                     }
                   }}
                 >
@@ -164,6 +169,5 @@ export function Layout({ children }: LayoutProps) {
           </main>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    );
 }
