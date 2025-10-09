@@ -70,3 +70,4 @@ const { data, error } = await supabaseAdmin.auth.admin.generateLink({
 4. **Usar Supabase CLI para envio manual**
 
 **O problema é quase certamente o template "Confirm signup"!** 🎯
+

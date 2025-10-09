@@ -15,11 +15,18 @@ build/
 .env.test.local
 .env.production.local
 
-# IDE files
+# IDE and editor files
 .vscode/
 .idea/
+.cursor/
+.cache/
+.config/
+.docker/
+.fly/
+.windsurf/
 *.swp
 *.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -51,6 +58,15 @@ jspm_packages/
 
 # Optional npm cache directory
 .npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -86,10 +102,88 @@ jspm_packages/
 # TernJS port file
 .tern-port
 
-# Supabase
-.supabase/
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
 
-# Windows specific
+# Temporary folders
+tmp/
+temp/
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+
+# Test files
+test-*.js
+test-*.ts
+*test*.js
+*test*.ts
+
+# SQL files (except essential ones)
+*.sql
+!LIMPAR_TABELAS_DESNECESSARIAS.sql
+!TABELAS_NECESSARIAS.md
+
+# Documentation files (except essential ones)
+*.md
+!README.md
+!SETUP.md
+!DEPLOY_GUIDE.md
+!TABELAS_NECESSARIAS.md
+!PRD_EMAIL_AUTOMATICO_FUNCIONANDO.md
+
+# HTML template files
+*.html
+
+# Configuration files (except essential ones)
+*.json
+!package.json
+!components.json
+!tsconfig*.json
+!vercel.json
+
+# JavaScript files (except essential ones)
+*.js
+!vite.config.js
+!postcss.config.js
+!tailwind.config.js
+!eslint.config.js
+!vitest.config.js
+!tsconfig.js
+
+# TypeScript files (except essential ones)
+*.ts
+!vite.config.ts
+!tailwind.config.ts
+!tsconfig*.ts
+!vitest.config.ts
+!eslint.config.ts
+
+# System files
 AppData/
-Local/
-ProgramData/
+Contacts/
+Desktop/
+Documents/
+Downloads/
+EmuDeck/
+Favorites/
+Links/
+Music/
+OneDrive/
+PATH/
+Pictures/
+Saved Games/
+Searches/
+Videos/
+firebase-debug.log
+firebase-meta-scraper/
+ntuser.dat.LOG1
+ntuser.dat.LOG2
+ntuser.ini
+NTUSER.DAT
+NTUSER.DAT*

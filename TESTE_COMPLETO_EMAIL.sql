@@ -84,3 +84,4 @@ WHERE email = 'dmbusinessonlines@gmail.com';
 -- 2. Verifique template "Confirm signup" no Dashboard
 -- 3. Verifique Redirect URLs no Dashboard
 -- 4. Se não funcionar, configure SMTP no Dashboard
+

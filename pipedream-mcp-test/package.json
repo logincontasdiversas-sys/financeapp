@@ -1,0 +1,24 @@
+{
+  "name": "pipedream-mcp-test",
+  "version": "1.0.0",
+  "description": "Teste do MCP Server Pipedream no Cursor",
+  "type": "module",
+  "main": "test-mcp.js",
+  "scripts": {
+    "test": "node test-mcp.js",
+    "api": "node api-instantiate.js",
+    "steps": "node test-workflow-steps.js",
+    "final": "node test-final-workflow.js",
+    "manage": "node gerenciar-workflow.js",
+    "connect": "node conectar-pipedream.js",
+    "credentials": "node configurar-credenciais.js",
+    "endpoints": "node testar-endpoints.js",
+    "workspace": "node usar-workspace.js",
+    "connect-pd": "node usar-pipedream-connect.js",
+    "start": "node test-mcp.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {}
+}
