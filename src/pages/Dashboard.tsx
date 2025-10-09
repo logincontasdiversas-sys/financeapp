@@ -898,7 +898,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      {/* Barra de Navegação Inferior - Versão Mobile */}
+      {/* Barra de Navegação Inferior - Versão Mobile - Deploy Fix */}
       <div className="block sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
         <div className="flex justify-around items-center">
           <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
