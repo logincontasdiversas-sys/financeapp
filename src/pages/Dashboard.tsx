@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUpIcon, AlertTriangleIcon, User, Eye, EyeOff, ArrowUpIcon, ArrowDownIcon, CreditCard, Building2, Tag, Target, AlertTriangle, Home, Receipt } from "lucide-react";
+import { TrendingUpIcon, AlertTriangleIcon, Eye, EyeOff, ArrowUpIcon, ArrowDownIcon, CreditCard, Building2, Tag, Target, AlertTriangle, Home, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -663,27 +663,10 @@ const Dashboard = () => {
       {/* Filtro por Período */}
       <Card>
         <CardHeader>
-          {/* Versão Mobile - Header com ícones */}
+          {/* Versão Mobile - Header simplificado */}
           <div className="block sm:hidden">
-            <div className="flex items-center justify-between mb-4">
-              <Button variant="ghost" size="sm" className="p-2">
-                <User className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="p-2"
-                  onClick={() => setIsBalanceVisible(!isBalanceVisible)}
-                >
-                  {isBalanceVisible ? (
-                    <Eye className="h-5 w-5" />
-                  ) : (
-                    <EyeOff className="h-5 w-5" />
-                  )}
-                </Button>
-                <PDFReportButton />
-              </div>
+            <div className="flex items-center justify-end mb-4">
+              <PDFReportButton />
             </div>
             <div className="flex flex-col space-y-4">
               <div>
@@ -728,46 +711,47 @@ const Dashboard = () => {
         saldoMesPassado={stats.saldoMesPassado}
         loading={loading}
         isBalanceVisible={isBalanceVisible}
+        onToggleBalanceVisibility={() => setIsBalanceVisible(!isBalanceVisible)}
       />
 
       {/* Botões de Ação Rápida - Versão Mobile */}
       <div className="block sm:hidden">
-        <Card>
+        <Card className="shadow-lg">
           <CardContent className="p-4">
             <div className="grid grid-cols-4 gap-3">
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <ArrowUpIcon className="h-5 w-5 text-green-600" />
-                <span className="text-xs">Receitas</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-green-600 hover:bg-green-700 text-white shadow-md">
+                <ArrowUpIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Receitas</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <ArrowDownIcon className="h-5 w-5 text-red-600" />
-                <span className="text-xs">Despesas</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-red-600 hover:bg-red-700 text-white shadow-md">
+                <ArrowDownIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Despesas</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <CreditCard className="h-5 w-5 text-blue-600" />
-                <span className="text-xs">Cartões</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-blue-600 hover:bg-blue-700 text-white shadow-md">
+                <CreditCard className="h-6 w-6" />
+                <span className="text-sm font-medium">Cartões</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <Building2 className="h-5 w-5 text-purple-600" />
-                <span className="text-xs">Bancos</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-purple-600 hover:bg-purple-700 text-white shadow-md">
+                <Building2 className="h-6 w-6" />
+                <span className="text-sm font-medium">Bancos</span>
               </Button>
             </div>
             <div className="grid grid-cols-4 gap-3 mt-3">
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <Tag className="h-5 w-5 text-orange-600" />
-                <span className="text-xs">Categorias</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-orange-600 hover:bg-orange-700 text-white shadow-md">
+                <Tag className="h-6 w-6" />
+                <span className="text-sm font-medium">Categorias</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <Target className="h-5 w-5 text-indigo-600" />
-                <span className="text-xs">Metas</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
+                <Target className="h-6 w-6" />
+                <span className="text-sm font-medium">Metas</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                <span className="text-xs">Dívidas</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-yellow-600 hover:bg-yellow-700 text-white shadow-md">
+                <AlertTriangle className="h-6 w-6" />
+                <span className="text-sm font-medium">Dívidas</span>
               </Button>
-              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
-                <Home className="h-5 w-5 text-gray-600" />
-                <span className="text-xs">Dashboard</span>
+              <Button variant="default" className="flex flex-col items-center gap-2 h-20 bg-gray-600 hover:bg-gray-700 text-white shadow-md">
+                <Home className="h-6 w-6" />
+                <span className="text-sm font-medium">Dashboard</span>
               </Button>
             </div>
           </CardContent>
@@ -899,19 +883,19 @@ const Dashboard = () => {
       </div>
 
       {/* Barra de Navegação Inferior - Versão Mobile - Deploy Fix */}
-      <div className="block sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+      <div className="block sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-300 shadow-lg p-4 z-50">
         <div className="flex justify-around items-center">
-          <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
-            <Home className="h-5 w-5 text-primary" />
-            <span className="text-xs text-primary font-medium">Dashboard</span>
+          <Button variant="default" className="flex flex-col items-center gap-1 h-16 w-20 bg-primary hover:bg-primary/90 text-white shadow-md rounded-lg">
+            <Home className="h-6 w-6" />
+            <span className="text-xs font-semibold">Dashboard</span>
           </Button>
-          <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
-            <ArrowUpIcon className="h-5 w-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Receitas</span>
+          <Button variant="default" className="flex flex-col items-center gap-1 h-16 w-20 bg-green-600 hover:bg-green-700 text-white shadow-md rounded-lg">
+            <ArrowUpIcon className="h-6 w-6" />
+            <span className="text-xs font-semibold">Receitas</span>
           </Button>
-          <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
-            <ArrowDownIcon className="h-5 w-5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Despesas</span>
+          <Button variant="default" className="flex flex-col items-center gap-1 h-16 w-20 bg-red-600 hover:bg-red-700 text-white shadow-md rounded-lg">
+            <ArrowDownIcon className="h-6 w-6" />
+            <span className="text-xs font-semibold">Despesas</span>
           </Button>
         </div>
       </div>
