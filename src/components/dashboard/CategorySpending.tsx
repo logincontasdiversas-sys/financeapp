@@ -239,22 +239,32 @@ export const CategorySpending = ({ startDate, endDate }: CategorySpendingProps) 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="current" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="previous">{tabLabels.previous}</TabsTrigger>
-            <TabsTrigger value="current">{tabLabels.current}</TabsTrigger>
-            <TabsTrigger value="next">{tabLabels.next}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="previous" className="mt-4">
-            {renderSpendingList(previousMonth)}
-          </TabsContent>
-          <TabsContent value="current" className="mt-4">
+        {/* Versão Mobile - Sem abas, apenas Este mês */}
+        <div className="block sm:hidden">
+          <div className="mt-4">
             {renderSpendingList(currentMonth)}
-          </TabsContent>
-          <TabsContent value="next" className="mt-4">
-            {renderSpendingList(nextMonth)}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
+
+        {/* Versão Desktop - Com abas originais */}
+        <div className="hidden sm:block">
+          <Tabs defaultValue="current" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="previous">{tabLabels.previous}</TabsTrigger>
+              <TabsTrigger value="current">{tabLabels.current}</TabsTrigger>
+              <TabsTrigger value="next">{tabLabels.next}</TabsTrigger>
+            </TabsList>
+            <TabsContent value="previous" className="mt-4">
+              {renderSpendingList(previousMonth)}
+            </TabsContent>
+            <TabsContent value="current" className="mt-4">
+              {renderSpendingList(currentMonth)}
+            </TabsContent>
+            <TabsContent value="next" className="mt-4">
+              {renderSpendingList(nextMonth)}
+            </TabsContent>
+          </Tabs>
+        </div>
       </CardContent>
     </Card>
   );

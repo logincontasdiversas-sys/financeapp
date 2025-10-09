@@ -12,9 +12,10 @@ interface FinancialSummaryProps {
   loading?: boolean;
   isProjection?: boolean;
   isMaximum?: boolean;
+  isBalanceVisible?: boolean;
 }
 
-export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBancos, saldoMesPassado, loading, isProjection, isMaximum }: FinancialSummaryProps) => {
+export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBancos, saldoMesPassado, loading, isProjection, isMaximum, isBalanceVisible = true }: FinancialSummaryProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
   const formatCurrency = (value: number) => {
@@ -58,7 +59,7 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
                    isProjection ? "Saldo Projetado" : "Saldo Total"}
                 </CardTitle>
                 <div className={`text-3xl font-bold mt-2 ${saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
-                  {formatCurrency(saldo)}
+                  {isBalanceVisible ? formatCurrency(saldo) : '••••••'}
                 </div>
               </div>
               <Button variant="ghost" size="sm" className="p-2">

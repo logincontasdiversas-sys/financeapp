@@ -283,9 +283,9 @@ export const CategoryPieChart = ({ startDate, endDate }: CategoryPieChartProps) 
             Nenhum gasto registrado neste mês
           </p>
         ) : (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={350}>
                  <PieChart>
                    <Pie
                      data={categoryData}
@@ -293,7 +293,7 @@ export const CategoryPieChart = ({ startDate, endDate }: CategoryPieChartProps) 
                      cy="50%"
                      labelLine={false}
                      label={({ percentage }) => `${percentage.toFixed(0)}%`}
-                     outerRadius={140}
+                     outerRadius={120}
                      innerRadius={0}
                      fill="hsl(var(--muted))"
                      dataKey="amount"
@@ -309,20 +309,20 @@ export const CategoryPieChart = ({ startDate, endDate }: CategoryPieChartProps) 
               </ResponsiveContainer>
             </div>
             
-            <div className="space-y-2">
-              <h4 className="font-medium mb-3">Legenda</h4>
+            <div className="space-y-1">
+              <h4 className="font-medium mb-2 text-sm">Legenda</h4>
               {categoryData.map((category) => (
-                <div key={category.id} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
+                <div key={category.id} className="flex items-center justify-between text-xs py-1">
+                  <div className="flex items-center gap-1">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-2 h-2 rounded-full" 
                       style={{ backgroundColor: category.color }}
                     ></div>
                     <span>{category.emoji}</span>
-                    <span className="font-medium">{category.name}</span>
+                    <span className="font-medium truncate">{category.name}</span>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold text-destructive">
+                    <div className="font-bold text-destructive text-xs">
                       {formatCurrency(category.amount)}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -332,16 +332,16 @@ export const CategoryPieChart = ({ startDate, endDate }: CategoryPieChartProps) 
                 </div>
               ))}
               
-              <div className="pt-3 border-t space-y-2">
-                <div className="flex justify-between text-sm font-medium">
+              <div className="pt-2 border-t space-y-1">
+                <div className="flex justify-between text-xs font-medium">
                   <span>Total de Gastos:</span>
                   <span className="text-destructive">{formatCurrency(totalExpenses)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-medium">
+                <div className="flex justify-between text-xs font-medium">
                   <span>Receitas do Mês:</span>
                   <span className="text-green-600 dark:text-green-400">{formatCurrency(totalIncome)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold">
+                <div className="flex justify-between text-xs font-bold">
                   <span>Sobra:</span>
                   <span className={totalIncome - totalExpenses >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
                     {formatCurrency(totalIncome - totalExpenses)}

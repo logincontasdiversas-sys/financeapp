@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUpIcon, AlertTriangleIcon } from "lucide-react";
+import { TrendingUpIcon, AlertTriangleIcon, User, Eye, EyeOff, ArrowUpIcon, ArrowDownIcon, CreditCard, Building2, Tag, Target, AlertTriangle, Home, Receipt } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
@@ -41,6 +42,7 @@ const Dashboard = () => {
   
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<{ from: Date | undefined; to: Date | undefined } | null>(null);
+  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
 
   // Realtime sync para atualizar o dashboard em tempo real
   useRealtimeSync({
@@ -661,21 +663,59 @@ const Dashboard = () => {
       {/* Filtro por Período */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground">
-            Visão geral das suas finanças
-          </p>
-        </div>
+          {/* Versão Mobile - Header com ícones */}
+          <div className="block sm:hidden">
+            <div className="flex items-center justify-between mb-4">
+              <Button variant="ghost" size="sm" className="p-2">
+                <User className="h-5 w-5" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-2"
+                  onClick={() => setIsBalanceVisible(!isBalanceVisible)}
+                >
+                  {isBalanceVisible ? (
+                    <Eye className="h-5 w-5" />
+                  ) : (
+                    <EyeOff className="h-5 w-5" />
+                  )}
+                </Button>
+                <PDFReportButton />
+              </div>
+            </div>
+            <div className="flex flex-col space-y-4">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
+                <p className="text-muted-foreground">
+                  Visão geral das suas finanças
+                </p>
+              </div>
+              <DateFilter 
+                onFilterChange={handleDateFilterChange}
+                value={dateFilter}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Versão Desktop - Header original */}
+          <div className="hidden sm:flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h2>
+              <p className="text-muted-foreground">
+                Visão geral das suas finanças
+              </p>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4">
-      <DateFilter 
-        onFilterChange={handleDateFilterChange}
-        value={dateFilter}
-        className="sm:max-w-md"
-      />
-        <PDFReportButton />
-      </div>
+              <DateFilter 
+                onFilterChange={handleDateFilterChange}
+                value={dateFilter}
+                className="sm:max-w-md"
+              />
+              <PDFReportButton />
+            </div>
           </div>
         </CardHeader>
       </Card>
@@ -687,7 +727,52 @@ const Dashboard = () => {
         saldo={stats.saldo}
         saldoMesPassado={stats.saldoMesPassado}
         loading={loading}
+        isBalanceVisible={isBalanceVisible}
       />
+
+      {/* Botões de Ação Rápida - Versão Mobile */}
+      <div className="block sm:hidden">
+        <Card>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-4 gap-3">
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <ArrowUpIcon className="h-5 w-5 text-green-600" />
+                <span className="text-xs">Receitas</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <ArrowDownIcon className="h-5 w-5 text-red-600" />
+                <span className="text-xs">Despesas</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <CreditCard className="h-5 w-5 text-blue-600" />
+                <span className="text-xs">Cartões</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <Building2 className="h-5 w-5 text-purple-600" />
+                <span className="text-xs">Bancos</span>
+              </Button>
+            </div>
+            <div className="grid grid-cols-4 gap-3 mt-3">
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <Tag className="h-5 w-5 text-orange-600" />
+                <span className="text-xs">Categorias</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <Target className="h-5 w-5 text-indigo-600" />
+                <span className="text-xs">Metas</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <span className="text-xs">Dívidas</span>
+              </Button>
+              <Button variant="outline" className="flex flex-col items-center gap-2 h-16">
+                <Home className="h-5 w-5 text-gray-600" />
+                <span className="text-xs">Dashboard</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Gráfico Mensal de Receitas e Despesas */}
         <MonthlyChart 
@@ -812,6 +897,27 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Barra de Navegação Inferior - Versão Mobile */}
+      <div className="block sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50">
+        <div className="flex justify-around items-center">
+          <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
+            <Home className="h-5 w-5 text-primary" />
+            <span className="text-xs text-primary font-medium">Dashboard</span>
+          </Button>
+          <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
+            <ArrowUpIcon className="h-5 w-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Receitas</span>
+          </Button>
+          <Button variant="ghost" className="flex flex-col items-center gap-1 h-16 w-16">
+            <ArrowDownIcon className="h-5 w-5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Despesas</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Espaçamento para a barra inferior fixa */}
+      <div className="block sm:hidden h-20"></div>
     </div>
   );
 };
