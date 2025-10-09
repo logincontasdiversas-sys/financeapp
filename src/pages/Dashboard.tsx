@@ -916,6 +916,8 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Comentário para forçar deploy - Versão Bancária Completa */}
+
       {/* Espaçamento para a barra inferior fixa */}
       <div className="block sm:hidden h-20"></div>
     </div>

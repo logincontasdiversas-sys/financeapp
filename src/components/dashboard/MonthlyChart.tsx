@@ -203,9 +203,9 @@ export const MonthlyChart = ({ title = "Receitas e Despesas Mensais" }: MonthlyC
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80 sm:h-80 h-96">
+        <div className="h-96 sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }} barSize={80} barCategoryGap="2%">
+            <BarChart data={data} margin={{ top: 10, right: 30, left: 20, bottom: 10 }} barSize={60} barCategoryGap="5%">
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis 
                 dataKey="month" 

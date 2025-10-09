@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, TrendingUpIcon, ChevronDownIcon, ChevronUpIcon, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -13,9 +13,10 @@ interface FinancialSummaryProps {
   isProjection?: boolean;
   isMaximum?: boolean;
   isBalanceVisible?: boolean;
+  onToggleBalanceVisibility?: () => void;
 }
 
-export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBancos, saldoMesPassado, loading, isProjection, isMaximum, isBalanceVisible = true }: FinancialSummaryProps) => {
+export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBancos, saldoMesPassado, loading, isProjection, isMaximum, isBalanceVisible = true, onToggleBalanceVisibility }: FinancialSummaryProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
   const formatCurrency = (value: number) => {
@@ -58,8 +59,24 @@ export const FinancialSummary = ({ totalReceitas, totalDespesas, saldo, saldoBan
                   {isMaximum ? "Saldo Histórico Total" : 
                    isProjection ? "Saldo Projetado" : "Saldo Total"}
                 </CardTitle>
-                <div className={`text-3xl font-bold mt-2 ${saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
-                  {isBalanceVisible ? formatCurrency(saldo) : '••••••'}
+                <div className="flex items-center gap-2 mt-2">
+                  <div className={`text-3xl font-bold ${saldo >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                    {isBalanceVisible ? formatCurrency(saldo) : '••••••'}
+                  </div>
+                  {onToggleBalanceVisibility && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="p-1 h-8 w-8"
+                      onClick={onToggleBalanceVisibility}
+                    >
+                      {isBalanceVisible ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
               <Button variant="ghost" size="sm" className="p-2">
