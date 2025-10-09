@@ -664,6 +664,8 @@ const Receitas = () => {
         (receita.banks?.name || '').toLowerCase().includes(searchTerm) ||
         (receita.note || '').toLowerCase().includes(searchTerm) ||
         receita.amount.toString().includes(searchTerm) ||
+        receita.date.includes(searchTerm) ||
+        receita.status.toLowerCase().includes(searchTerm) ||
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receita.amount).toLowerCase().includes(searchTerm)
       );
     }
@@ -948,7 +950,7 @@ const Receitas = () => {
             </div>
             <div className="w-72">
               <Input
-                placeholder="Filtrar por título, banco, valor ou observações..."
+                placeholder="Filtrar por descrição, banco, valor, data, status..."
                 value={textFilter}
                 onChange={(e) => setTextFilter(e.target.value)}
                 className="h-9"

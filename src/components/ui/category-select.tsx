@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
@@ -61,6 +61,7 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
   const [newCategoryEmoji, setNewCategoryEmoji] = useState('📦');
   const [isCreating, setIsCreating] = useState(false);
   const [showErrorAnimation, setShowErrorAnimation] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { tenantId } = useTenant();
   const { toast } = useToast();
 
@@ -138,21 +139,23 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       showSubcategories,
       isDebtPayment,
       parentCategoryId,
-      totalCategories: categories.length
+      totalCategories: categories.length,
+      searchTerm
     });
 
+    let baseCategories = [];
+    
     if (isDebtPayment) {
       // Para dívidas: mostrar TODAS as categorias disponíveis (pai e sub)
-      const allCategories = categories.filter(cat => 
+      baseCategories = categories.filter(cat => 
         !cat.is_system && 
         !cat.name.includes(' - Fatura')
       );
       
-      console.log('[CATEGORY_SELECT] Todas as categorias para dívidas:', allCategories.length);
-      return allCategories;
+      console.log('[CATEGORY_SELECT] Todas as categorias para dívidas:', baseCategories.length);
     } else {
       // Para despesas normais: mostrar apenas categorias pai
-      const standardCategories = categories.filter(category => {
+      baseCategories = categories.filter(category => {
         const isStandard = (
           !category.name.includes(' - Fatura') && 
           !category.is_system &&
@@ -161,9 +164,20 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
         return isStandard;
       });
       
-      console.log('[CATEGORY_SELECT] Categorias padrão:', standardCategories.length);
-      return standardCategories;
+      console.log('[CATEGORY_SELECT] Categorias padrão:', baseCategories.length);
     }
+
+    // Aplicar filtro de busca por texto
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      baseCategories = baseCategories.filter(category => 
+        category.name.toLowerCase().includes(searchLower) ||
+        category.emoji.includes(searchTerm)
+      );
+      console.log('[CATEGORY_SELECT] Categorias após busca:', baseCategories.length);
+    }
+
+    return baseCategories;
   };
 
   const filteredCategories = getFilteredCategories();
@@ -186,6 +200,20 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-background border z-50 max-h-[300px] overflow-y-auto">
+          {/* Campo de busca */}
+          <div className="p-2 border-b">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar categoria..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 h-8 text-sm"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+
           {/* Opção para criar nova categoria */}
           {showCreateOption && (
             <>

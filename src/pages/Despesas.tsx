@@ -283,7 +283,10 @@ const Despesas = () => {
           card_id,
           status,
           payment_method,
-          note
+          note,
+          banks (
+            name
+          )
         `)
         .eq('kind', 'expense')
         .eq('tenant_id', tenantId)
@@ -1073,7 +1076,11 @@ const Despesas = () => {
     const matchesText = textFilter === "" || 
       despesa.title.toLowerCase().includes(textFilter.toLowerCase()) ||
       despesa.categories?.name.toLowerCase().includes(textFilter.toLowerCase()) ||
+      despesa.banks?.name.toLowerCase().includes(textFilter.toLowerCase()) ||
       despesa.amount.toString().includes(textFilter) ||
+      despesa.date.includes(textFilter) ||
+      despesa.status.toLowerCase().includes(textFilter.toLowerCase()) ||
+      (despesa.note && despesa.note.toLowerCase().includes(textFilter.toLowerCase())) ||
       new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(despesa.amount).toLowerCase().includes(textFilter.toLowerCase());
 
     const matchesPaymentMethod = paymentMethodFilter === 'all' ||
@@ -1122,8 +1129,38 @@ const Despesas = () => {
     }
 
     // Ordenação personalizada pelo usuário
-    const aValue = a[sortField as keyof Transaction];
-    const bValue = b[sortField as keyof Transaction];
+    let aValue: any;
+    let bValue: any;
+
+    switch (sortField) {
+      case 'title':
+        aValue = a.title.toLowerCase();
+        bValue = b.title.toLowerCase();
+        break;
+      case 'category':
+        aValue = (a.categories?.name || '').toLowerCase();
+        bValue = (b.categories?.name || '').toLowerCase();
+        break;
+      case 'bank':
+        aValue = (a.banks?.name || '').toLowerCase();
+        bValue = (b.banks?.name || '').toLowerCase();
+        break;
+      case 'amount':
+        aValue = a.amount;
+        bValue = b.amount;
+        break;
+      case 'date':
+        aValue = new Date(a.date).getTime();
+        bValue = new Date(b.date).getTime();
+        break;
+      case 'status':
+        aValue = a.status.toLowerCase();
+        bValue = b.status.toLowerCase();
+        break;
+      default:
+        aValue = a[sortField as keyof Transaction];
+        bValue = b[sortField as keyof Transaction];
+    }
     
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
@@ -1409,7 +1446,7 @@ const Despesas = () => {
             </div>
             <div className="w-72">
               <Input
-                placeholder="Filtrar por título, categoria, valor ou observações..."
+                placeholder="Filtrar por descrição, categoria, banco, valor, data, status..."
                 value={textFilter}
                 onChange={(e) => setTextFilter(e.target.value)}
                 className="h-9"
@@ -1564,6 +1601,15 @@ const Despesas = () => {
                   </TableHead>
                   <TableHead>
                     <SortableHeader 
+                      label="Banco"
+                      sortKey="bank"
+                      currentSort={sortField}
+                      sortDirection={sortDirection}
+                      onSort={handleSort}
+                    />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader 
                       label="Valor"
                       sortKey="amount"
                       currentSort={sortField}
@@ -1619,6 +1665,21 @@ const Despesas = () => {
                         showSubcategories={!!despesa.debt_id}
                         isDebtPayment={!!despesa.debt_id}
                         parentCategoryId={despesa.debt_id || undefined}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <InlineEditSelect
+                        value={despesa.bank_id || ""}
+                        options={[
+                          { value: "__none__", label: "Sem banco" },
+                          ...banks.map(bank => ({ value: bank.id, label: bank.name }))
+                        ]}
+                        onSave={(value) => handleInlineUpdate(despesa.id, 'bank_id', value || null)}
+                        getDisplayValue={(value) => {
+                          if (!value) return "Sem banco";
+                          const bank = banks.find(b => b.id === value);
+                          return bank?.name || "Sem banco";
+                        }}
                       />
                     </TableCell>
                     <TableCell className="text-red-600 font-semibold">
