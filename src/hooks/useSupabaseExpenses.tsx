@@ -315,6 +315,7 @@ export const useSupabaseExpenses = () => {
         .from('categories')
         .select('id, name, emoji')
         .eq('tenant_id', tenantId)
+        .eq('user_id', user?.id)  // Filtrar por usuário para isolamento
         .eq('archived', false)
         .order('name');
 

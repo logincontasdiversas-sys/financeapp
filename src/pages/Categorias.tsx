@@ -92,6 +92,7 @@ const Categorias = () => {
         .from('categories')
         .select('*')
         .eq('is_system', false)  // Só mostrar categorias não-automáticas
+        .eq('user_id', user?.id)  // Filtrar apenas categorias do usuário atual
         .order('name');
 
       if (error) throw error;
@@ -118,6 +119,7 @@ const Categorias = () => {
         emoji: formData.emoji,
         archived: false,
         tenant_id: tenantId,
+        user_id: user.id,  // Adicionar user_id para isolamento por usuário
       };
 
       if (editingCategory) {
