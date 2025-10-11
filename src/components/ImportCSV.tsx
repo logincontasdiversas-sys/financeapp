@@ -551,6 +551,64 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
       // Usar banco padrão se não foi mapeado do CSV
       const finalBankId = bank_id || (defaultBankId && defaultBankId !== 'none' ? defaultBankId : undefined);
       
+      // Função inteligente para interpretar forma de pagamento
+      const interpretPaymentMethod = (description: string, bankId?: string): string => {
+        if (!description) return bankId ? 'Débito em conta' : 'Dinheiro';
+        
+        const desc = description.toLowerCase();
+        
+        // Débito em conta - várias variações
+        if (desc.includes('débito') || desc.includes('debito') || 
+            desc.includes('débito em conta') || desc.includes('debito em conta') ||
+            desc.includes('conta corrente') || desc.includes('conta poupança') ||
+            desc.includes('transferência') || desc.includes('transferencia') ||
+            desc.includes('ted') || desc.includes('doc')) {
+          return 'Débito em conta';
+        }
+        
+        // PIX - várias variações
+        if (desc.includes('pix') || desc.includes('pagamento instantâneo') ||
+            desc.includes('pagamento instantaneo')) {
+          return 'PIX';
+        }
+        
+        // Cartão de crédito
+        if (desc.includes('cartão') || desc.includes('cartao') ||
+            desc.includes('crédito') || desc.includes('credito') ||
+            desc.includes('visa') || desc.includes('mastercard') ||
+            desc.includes('american express') || desc.includes('elo')) {
+          return 'Cartão de crédito';
+        }
+        
+        // Cartão de débito
+        if (desc.includes('débito') && (desc.includes('cartão') || desc.includes('cartao'))) {
+          return 'Cartão de débito';
+        }
+        
+        // Dinheiro
+        if (desc.includes('dinheiro') || desc.includes('espécie') || 
+            desc.includes('especie') || desc.includes('cash') ||
+            desc.includes('efetivo') || desc.includes('efectivo')) {
+          return 'Dinheiro';
+        }
+        
+        // Boleto
+        if (desc.includes('boleto') || desc.includes('pagamento bancário') ||
+            desc.includes('pagamento bancario')) {
+          return 'Boleto';
+        }
+        
+        // Se tem banco associado, assume débito em conta
+        if (bankId) {
+          return 'Débito em conta';
+        }
+        
+        // Padrão: dinheiro
+        return 'Dinheiro';
+      };
+      
+      const paymentMethod = interpretPaymentMethod(note || title, finalBankId);
+      
       const transaction = {
         title,
         amount,
@@ -560,7 +618,7 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
         note,
         kind,
         status,
-        payment_method: finalBankId ? 'Débito em conta' : 'Dinheiro',
+        payment_method: paymentMethod,
         user_id: user.id,
         tenant_id: tenantId,
         created_at: new Date().toISOString()
@@ -574,7 +632,8 @@ export const ImportCSV: React.FC<ImportCSVProps> = ({
           data: transaction.date,
           banco: transaction.bank_id || 'Sem banco',
           status: transaction.status,
-          tipo: transaction.kind
+          tipo: transaction.kind,
+          forma_pagamento: transaction.payment_method
         });
       }
 
