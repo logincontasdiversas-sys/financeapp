@@ -103,6 +103,19 @@ const Despesas = () => {
     isInvoiceCategory,
     getValidMonthYearOptions 
   } = useSupabaseExpenses();
+
+  // Função para mapear payment_method do formulário para o banco
+  const mapPaymentMethod = (formValue: string): string => {
+    const mapping: { [key: string]: string } = {
+      'cash': 'Dinheiro',
+      'debit_account': 'Débito em conta',
+      'credit_card': 'Cartão de crédito',
+      'pix': 'PIX',
+      'transfer_pix': 'PIX',
+      'transfer_doc': 'DOC/TED'
+    };
+    return mapping[formValue] || formValue;
+  };
   
   const [despesas, setDespesas] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -453,6 +466,9 @@ const Despesas = () => {
   // Função auxiliar para processar dados do formulário
   const processFormData = async (formData: any) => {
     const processedFormData = { ...formData };
+    
+    // Mapear payment_method para nomenclatura consistente
+    processedFormData.payment_method = mapPaymentMethod(formData.payment_method);
     
     if (formData.category_id.startsWith('goal-')) {
       return await processGoalData(formData, processedFormData);
@@ -1300,7 +1316,7 @@ const Despesas = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="cash">Dinheiro</SelectItem>
-                      <SelectItem value="debit">Débito</SelectItem>
+                      <SelectItem value="debit_account">Débito em conta</SelectItem>
                       <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
                       <SelectItem value="pix">PIX</SelectItem>
                       <SelectItem value="transfer_pix">Transferência PIX</SelectItem>
