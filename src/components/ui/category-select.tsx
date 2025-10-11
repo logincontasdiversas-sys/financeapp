@@ -77,6 +77,43 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     categories: categories.map(c => ({ id: c.id, name: c.name, is_system: c.is_system }))
   });
 
+  // Verificar duplicatas nas categorias recebidas
+  useEffect(() => {
+    const duplicates = categories.reduce((acc, cat, index) => {
+      const key = `${cat.name}-${cat.id}`;
+      if (acc.has(key)) {
+        console.warn('[CATEGORY_SELECT] Categoria duplicada encontrada:', {
+          name: cat.name,
+          id: cat.id,
+          index,
+          previousIndex: acc.get(key)
+        });
+      } else {
+        acc.set(key, index);
+      }
+      return acc;
+    }, new Map());
+
+    // Verificar duplicatas por nome (mesmo nome, IDs diferentes)
+    const nameGroups = categories.reduce((acc, cat) => {
+      if (!acc.has(cat.name)) {
+        acc.set(cat.name, []);
+      }
+      acc.get(cat.name)!.push(cat);
+      return acc;
+    }, new Map<string, Category[]>());
+
+    nameGroups.forEach((cats, name) => {
+      if (cats.length > 1) {
+        console.warn('[CATEGORY_SELECT] Categorias com mesmo nome:', {
+          name,
+          count: cats.length,
+          ids: cats.map(c => c.id)
+        });
+      }
+    });
+  }, [categories]);
+
   const handleCreateCategory = useCallback(async () => {
     if (!tenantId || !newCategoryName.trim()) return;
 
@@ -133,6 +170,37 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
     return isSpecial;
   };
 
+  // Função para remover duplicatas
+  const removeDuplicates = (categories: Category[]): Category[] => {
+    const seen = new Set<string>();
+    const unique = categories.filter(cat => {
+      const key = `${cat.name}-${cat.id}`;
+      if (seen.has(key)) {
+        console.warn('[CATEGORY_SELECT] Removendo categoria duplicada:', { name: cat.name, id: cat.id });
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+    
+    // Se ainda há duplicatas por nome, manter apenas a primeira
+    const nameMap = new Map<string, Category>();
+    const final = unique.filter(cat => {
+      if (nameMap.has(cat.name)) {
+        console.warn('[CATEGORY_SELECT] Removendo categoria com nome duplicado:', { 
+          name: cat.name, 
+          id: cat.id,
+          existingId: nameMap.get(cat.name)?.id 
+        });
+        return false;
+      }
+      nameMap.set(cat.name, cat);
+      return true;
+    });
+    
+    return final;
+  };
+
   // Lógica inteligente de filtro de categorias
   const getFilteredCategories = () => {
     console.log('[CATEGORY_SELECT] Filtrando categorias:', {
@@ -177,7 +245,11 @@ export const CategorySelect: React.FC<CategorySelectProps> = ({
       console.log('[CATEGORY_SELECT] Categorias após busca:', baseCategories.length);
     }
 
-    return baseCategories;
+    // Remover duplicatas
+    const uniqueCategories = removeDuplicates(baseCategories);
+    console.log('[CATEGORY_SELECT] Categorias após remoção de duplicatas:', uniqueCategories.length);
+
+    return uniqueCategories;
   };
 
   const filteredCategories = getFilteredCategories();
